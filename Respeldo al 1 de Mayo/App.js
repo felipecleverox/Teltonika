@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import MapView from './MapView'; // Asegúrate de que el path es correcto
-import LastKnownPosition from './LastKnownPosition'; // Asegúrate de que el path es correcto
-import MapWithQuadrants from './MapWithQuadrants'; // Asegúrate de que el path es correcto
-
+import MapView from './MapView';
+import LastKnownPosition from './LastKnownPosition'; // Asegúrate de haber creado este componente
+import './App.css';
 
 function App() {
   const [startDate, setStartDate] = useState('');
@@ -60,7 +59,6 @@ function App() {
       </div>
       <div className="last-position-container">
         <LastKnownPosition />
-        <MapWithQuadrants />
       </div>
     </div>
   );

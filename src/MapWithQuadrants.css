@@ -1,0 +1,14 @@
+.map-with-quadrants .quadrants-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Dos columnas de igual tamaño */
+    grid-template-rows: 1fr 1fr; /* Dos filas de igual tamaño */
+    width: 100%; /* Igual ancho que el mapa */
+    height: 300px; /* Igual alto que el mapa, ajustar según sea necesario */
+}
+
+.map-with-quadrants .quadrant {
+    border: 1px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
