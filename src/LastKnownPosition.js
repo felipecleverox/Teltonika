@@ -7,8 +7,8 @@ function LastKnownPosition() {
     useEffect(() => {
         const fetchLastKnownPosition = async () => {
             try {
-                const { data } = await axios.get('http://localhost:1337/api/last-known-position')
-                ;
+                const { data } = await axios.get('http://localhost:1337/api/last-known-position');
+                console.log("Received data:", data);  // Log para debug
                 setPosition(data);
             } catch (error) {
                 console.error('Failed to fetch last known position:', error);
@@ -26,7 +26,7 @@ function LastKnownPosition() {
                     <p>Device ID: {position.device_id}</p>
                     <p>Latitude: {position.latitude}</p>
                     <p>Longitude: {position.longitude}</p>
-                    <p>Timestamp: {new Date(position.unixTimestamp * 1000).toLocaleString()}</p>
+                    <p>Timestamp: {new Date(position.unixTimestamp).toLocaleString()}</p>
                 </div>
             ) : (
                 <p>Loading last known position...</p>
@@ -35,4 +35,6 @@ function LastKnownPosition() {
     );
 }
 
-export default LastKnownPosition;
+
+
+export default LastKnownPosition; // Agrega esta línea

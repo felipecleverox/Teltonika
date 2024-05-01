@@ -88,18 +88,20 @@ app.get('/api/get-gps-data', async (req, res) => {
     }
 });
 
-// Nuevo endpoint para obtener la última posición conocida
+// Endpoint para obtener la última posición conocida
 app.get('/api/last-known-position', async (req, res) => {
     try {
-        const [results, _] = await pool.query(`
-            SELECT device_id, latitude, longitude, UNIX_TIMESTAMP(timestamp) AS unixTimestamp
+        const [results] = await pool.query(`
+            SELECT device_id, latitude, longitude, timestamp * 1000 AS unixTimestamp
             FROM gps_data
             ORDER BY timestamp DESC
             LIMIT 1
         `);
+
+        // Imprimir los resultados con el timestamp convertido a milisegundos
+        console.log("Converted Timestamp to send:", results[0].unixTimestamp);
+
         if (results.length > 0) {
-            // Asegúrate de que el timestamp se convierte de segundos a milisegundos
-            results[0].unixTimestamp *= 1000;
             res.json(results[0]);
         } else {
             res.status(404).send('No data available');
