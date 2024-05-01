@@ -19,6 +19,7 @@
   "keywords": [],
   "license": "ISC",
   "dependencies": {
+    "@rodrigogs/mysql-events": "^0.6.0",
     "@types/leaflet": "^1.9.12",
     "axios": "^1.6.8",
     "cors": "^2.8.5",
