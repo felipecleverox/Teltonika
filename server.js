@@ -98,7 +98,6 @@ app.get('/api/last-known-position', async (req, res) => {
             LIMIT 1
         `);
 
-        // Imprimir los resultados con el timestamp convertido a milisegundos
         console.log("Converted Timestamp to send:", results[0].unixTimestamp);
 
         if (results.length > 0) {
@@ -112,6 +111,30 @@ app.get('/api/last-known-position', async (req, res) => {
     }
 });
 
+app.get('/api/active-beacons', async (req, res) => {
+    try {
+        const [latestRecord] = await pool.query(`
+            SELECT ble_beacons FROM gps_data
+            ORDER BY timestamp DESC
+            LIMIT 1
+        `);
+        
+        if (latestRecord.length && latestRecord[0].ble_beacons) {
+            const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
+            const activeBeaconIds = beaconsData.map(beacon => beacon.id);
+            const [activeBeacons] = await pool.query(`
+                SELECT id FROM beacons
+                WHERE id IN (?)
+            `, [activeBeaconIds]);
+            res.json({ activeBeaconIds: activeBeacons.map(b => b.id) });
+        } else {
+            res.json({ activeBeaconIds: [] });
+        }
+    } catch (error) {
+        console.error('Error fetching active beacons:', error);
+        res.status(500).send('Server Error');
+    }
+});
 
 
 // Start the server
