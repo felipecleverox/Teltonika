@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';  // Asegúrate de que esta línea está aquí
+import 'leaflet/dist/leaflet.css';
 
 const locationIcon = new L.Icon({
   iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg',
@@ -25,6 +25,9 @@ function LastKnownPosition() {
         };
 
         fetchLastKnownPosition();
+        const intervalId = setInterval(fetchLastKnownPosition, 10000); // Updates every 10 seconds
+
+        return () => clearInterval(intervalId); // Cleanup on unmount
     }, []);
 
     if (!position) {
