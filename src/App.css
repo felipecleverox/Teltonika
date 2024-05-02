@@ -10,10 +10,16 @@ body {
   }
   
   .header {
-    padding: 1rem;
-    background-color: #333;
-    color: #fff;
-  }
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #f8f9fa;
+}
+
+.header input, .header button {
+    margin: 0 10px;
+}
   
   .map-container {
     flex: 1;

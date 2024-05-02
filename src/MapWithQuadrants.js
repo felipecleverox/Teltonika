@@ -1,16 +1,15 @@
 import React from 'react';
-import LastKnownPosition from './LastKnownPosition'; // Importar el componente existente
 import './MapWithQuadrants.css'; // Importar los estilos
 
 function MapWithQuadrants() {
     return (
         <div className="map-with-quadrants">
-            <LastKnownPosition />
+            <h2>Ubicaciones en Interior</h2>
             <div className="quadrants-container">
-                <div className="quadrant">Cuadrante 1</div>
-                <div className="quadrant">Cuadrante 2</div>
-                <div className="quadrant">Cuadrante 3</div>
-                <div className="quadrant">Cuadrante 4</div>
+                <div className="quadrant">OFICINA 1</div>
+                <div className="quadrant">OFICINA 2</div>
+                <div className="quadrant">OFICINA 3</div>
+                <div className="quadrant">OFICINA 4</div>
             </div>
         </div>
     );
