@@ -1,26 +1,31 @@
-body {
-    margin: 0;
-    padding: 0;
-  }
-  
-  .App {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
-  
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px;
-    background-color: #f8f9fa;
+/* Aplicación de la paleta de colores y fuente Roboto */
+body, input, button, table {
+  font-family: 'Roboto', sans-serif;
 }
 
-.header input, .header button {
-    margin: 0 10px;
+/* Colores */
+:root {
+  --deep-blue: #043353;
+  --light-blue: #18A4E0;
+  --light-gray: #FAF8F0;
+  --gray: #D3DDE6;
 }
-  
-  .map-container {
-    flex: 1;
-  }
+
+/* Estilos específicos para los componentes */
+.header, .footer {
+  background-color: var(--deep-blue);
+  color: var(--light-gray);
+}
+
+.button-primary {
+  background-color: var(--light-blue);
+  color: var(--gray);
+}
+
+.table-header {
+  background-color: var(--gray);
+}
+
+.map-container {
+  border-color: var(--light-blue);
+}

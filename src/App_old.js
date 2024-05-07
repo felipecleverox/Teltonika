@@ -3,29 +3,25 @@ import axios from 'axios';
 import MapView from './MapView'; // Asegúrate de que el path es correcto
 import LastKnownPosition from './LastKnownPosition'; // Asegúrate de que el path es correcto
 import MapWithQuadrants from './MapWithQuadrants'; // Asegúrate de que el path es correcto
-import './App.css'; // Asegúrate de que el archivo CSS se importa correctamente
+
 
 function App() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [pathCoordinates, setPathCoordinates] = useState([]); // Inicializa como un arreglo vacío
+  const [pathCoordinates, setPathCoordinates] = useState([]);
 
   const fetchData = async () => {
     try {
       const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
       const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
-  
-      console.log("Sending timestamps:", startTimestamp, endTimestamp);  // Añadir para debug
-  
+
       const response = await axios.get('http://localhost:1337/api/get-gps-data', {
         params: {
           startDate: startTimestamp,
           endDate: endTimestamp
         }
       });
-  
-      console.log("Response data:", response.data);  // Añadir para ver la respuesta
-  
+
       if (response.data.length === 0) {
         setPathCoordinates([]);
       } else {
@@ -36,7 +32,6 @@ function App() {
       console.error('Error fetching data:', error);
     }
   };
-  
 
   return (
     <div className="App">
