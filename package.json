@@ -6,8 +6,7 @@
   "author": "",
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "concurrently": "^8.2.2",
-    "eslint": "^8.21.0"
+    "concurrently": "^8.2.2"
   },
   "eslintConfig": {},
   "scripts": {
@@ -24,6 +23,7 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4",
     "leaflet-markercluster": "^0.2.2",
     "leaflet.markercluster": "^1.5.3",
     "mysql2": "^3.9.7",
