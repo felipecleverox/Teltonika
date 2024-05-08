@@ -15,36 +15,50 @@ function App() {
     try {
       let startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
       let endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
-  
+
       // Asegurarse de que startTimestamp sea siempre menor o igual que endTimestamp
       if (startTimestamp > endTimestamp) {
         [startTimestamp, endTimestamp] = [endTimestamp, startTimestamp];
       }
-  
+
       const response = await axios.get('http://localhost:1337/api/get-gps-data', {
         params: {
           startDate: startTimestamp,
           endDate: endTimestamp
         }
       });
-  
+
+      console.log('Server Response:', response.data);
+
       if (response.data.length === 0) {
         console.log("No data available for the selected range.");
         setPathCoordinates([]);
       } else {
-        const newCoordinates = response.data.map(item => ({
-          timestamp: item.unixTimestamp, // Asumiendo que el backend envía 'unixTimestamp'
-          longitude: item.longitude,
-          latitude: item.latitude
-        }));
+        const newCoordinates = response.data.map(item => {
+          if (item.latitude && item.longitude) {
+            const latitude = parseFloat(item.latitude);
+            const longitude = parseFloat(item.longitude);
+            const timestamp = parseInt(item.unixTimestamp, 10); // Asegurarnos de que el timestamp es un entero
+
+            if (!isNaN(latitude) && !isNaN(longitude) && !isNaN(timestamp)) {
+              return [latitude, longitude, timestamp];
+            } else {
+              console.error('Invalid data item after parsing:', item);
+              return null;
+            }
+          } else {
+            console.error('Invalid data item:', item);
+            return null;
+          }
+        }).filter(coord => coord !== null);
+        console.log('Parsed Coordinates:', newCoordinates); // Log para verificar los datos
         setPathCoordinates(newCoordinates);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
-  
-  
+
   return (
     <div className="App">
       <div className="header">
@@ -67,7 +81,7 @@ function App() {
         {pathCoordinates.length === 0 ? (
           <p>No data available for the selected range</p>
         ) : (
-          <MapView pathCoordinates={pathCoordinates.map(p => [p.latitude, p.longitude])} />
+          <MapView pathCoordinates={pathCoordinates.map(p => [p[0], p[1]])} />
         )}
       </div>
       <div className="last-position-container">

@@ -67,7 +67,7 @@ app.get('/api/get-gps-data', async (req, res) => {
     const { startDate, endDate } = req.query;
 
     const query = `
-        SELECT device_id, latitude, longitude, UNIX_TIMESTAMP(timestamp) AS unixTimestamp
+        SELECT device_id, latitude, longitude, timestamp AS unixTimestamp
         FROM gps_data
         WHERE timestamp BETWEEN ? AND ?
     `;
@@ -87,6 +87,7 @@ app.get('/api/get-gps-data', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
 
 // Endpoint para obtener la última posición conocida
 app.get('/api/last-known-position', async (req, res) => {
