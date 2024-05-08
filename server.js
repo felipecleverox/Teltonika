@@ -7,7 +7,6 @@ const mysql = require('mysql2/promise');
 const app = express();
 const port = process.env.PORT || 1337;
 
-// Create a MySQL connection pool
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
@@ -18,19 +17,32 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-// Middleware to allow CORS and parse the request body as JSON
 app.use(cors());
 app.use(express.json());
 
-// Endpoint to receive GPS data
+// Logging middleware
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+});
+
 app.post('/gps-data', async (req, res) => {
-    const gpsDatas = req.body;
+    let gpsDatas = req.body;
+    if (!Array.isArray(gpsDatas)) {
+        gpsDatas = [gpsDatas]; // Envuelve en un array si no lo es
+    }
     console.log('GPS Data Received:', gpsDatas);
 
     try {
         for (const gpsData of gpsDatas) {
             const result = await pool.query(
-                'INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_enum, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                `INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_enum, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     JSON.stringify(gpsData['ble.beacons']),
                     gpsData['channel.id'],
@@ -62,82 +74,6 @@ app.post('/gps-data', async (req, res) => {
     }
 });
 
-// Endpoint for querying GPS data with filters
-app.get('/api/get-gps-data', async (req, res) => {
-    const { startDate, endDate } = req.query;
-
-    const query = `
-        SELECT device_id, latitude, longitude, UNIX_TIMESTAMP(timestamp) AS unixTimestamp
-        FROM gps_data
-        WHERE timestamp BETWEEN ? AND ?
-    `;
-
-    const params = [parseInt(startDate), parseInt(endDate)];
-
-    console.log('Query Params:', { startDate, endDate });
-    console.log('SQL Query:', query);
-    console.log('SQL Params:', params);
-
-    try {
-        const [results] = await pool.query(query, params);
-        console.log('Query Results:', results);
-        res.json(results);
-    } catch (error) {
-        console.error('Error fetching GPS data:', error);
-        res.status(500).send('Server Error');
-    }
-});
-
-// Endpoint para obtener la última posición conocida
-app.get('/api/last-known-position', async (req, res) => {
-    try {
-        const [results] = await pool.query(`
-            SELECT device_id, latitude, longitude, timestamp * 1000 AS unixTimestamp
-            FROM gps_data
-            ORDER BY timestamp DESC
-            LIMIT 1
-        `);
-
-        console.log("Converted Timestamp to send:", results[0].unixTimestamp);
-
-        if (results.length > 0) {
-            res.json(results[0]);
-        } else {
-            res.status(404).send('No data available');
-        }
-    } catch (error) {
-        console.error('Error fetching last known position:', error);
-        res.status(500).send('Server Error');
-    }
-});
-
-app.get('/api/active-beacons', async (req, res) => {
-    try {
-        const [latestRecord] = await pool.query(`
-            SELECT ble_beacons FROM gps_data
-            ORDER BY timestamp DESC
-            LIMIT 1
-        `);
-        
-        if (latestRecord.length && latestRecord[0].ble_beacons) {
-            const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
-            const activeBeaconIds = beaconsData.map(beacon => beacon.id);
-            const [activeBeacons] = await pool.query(`
-                SELECT id FROM beacons
-                WHERE id IN (?)
-            `, [activeBeaconIds]);
-            res.json({ activeBeaconIds: activeBeacons.map(b => b.id) });
-        } else {
-            res.json({ activeBeaconIds: [] });
-        }
-    } catch (error) {
-        console.error('Error fetching active beacons:', error);
-        res.status(500).send('Server Error');
-    }
-});
-
-
-// Start the server
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });

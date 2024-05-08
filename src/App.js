@@ -3,7 +3,7 @@ import axios from 'axios';
 import MapView from './MapView';
 import LastKnownPosition from './LastKnownPosition';
 import MapWithQuadrants from './MapWithQuadrants';
-import DataTable from './DataTable';
+import DataTable from './DataTable.js';
 import './App.css';
 
 function App() {
