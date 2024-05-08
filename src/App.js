@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import MapView from './MapView'; // Asegúrate de que el path es correcto
-import LastKnownPosition from './LastKnownPosition'; // Asegúrate de que el path es correcto
-import MapWithQuadrants from './MapWithQuadrants'; // Asegúrate de que el path es correcto
-
+import MapView from './MapView';
+import LastKnownPosition from './LastKnownPosition';
+import MapWithQuadrants from './MapWithQuadrants';
+import DataTable from './DataTable';
+import './App.css';
 
 function App() {
   const [startDate, setStartDate] = useState('');
@@ -12,27 +13,41 @@ function App() {
 
   const fetchData = async () => {
     try {
-      const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
-      const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
-
+      let startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
+      let endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
+  
+      // Asegurarse de que startTimestamp sea siempre menor o igual que endTimestamp
+      if (startTimestamp > endTimestamp) {
+        [startTimestamp, endTimestamp] = [endTimestamp, startTimestamp];
+      }
+  
       const response = await axios.get('http://localhost:1337/api/get-gps-data', {
         params: {
           startDate: startTimestamp,
           endDate: endTimestamp
         }
       });
-
+  
       if (response.data.length === 0) {
+        console.log("No data available for the selected range.");
         setPathCoordinates([]);
-      } else {
-        const newCoordinates = response.data.map(item => [item.latitude, item.longitude]);
+    } else {
+        console.log("Received data:", response.data);
+        const newCoordinates = response.data.map(item => ({
+            timestamp: item.timestamp, // Confirmar que esto es un número válido
+            longitude: item.longitude,
+            latitude: item.latitude
+        }));
         setPathCoordinates(newCoordinates);
-      }
+    }
+    
+    
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
-
+  
+  
   return (
     <div className="App">
       <div className="header">
@@ -55,13 +70,14 @@ function App() {
         {pathCoordinates.length === 0 ? (
           <p>No data available for the selected range</p>
         ) : (
-          <MapView pathCoordinates={pathCoordinates} />
+          <MapView pathCoordinates={pathCoordinates.map(p => [p.latitude, p.longitude])} />
         )}
       </div>
       <div className="last-position-container">
         <LastKnownPosition />
         <MapWithQuadrants />
       </div>
+      {pathCoordinates.length > 0 && <DataTable data={pathCoordinates} />}
     </div>
   );
 }
