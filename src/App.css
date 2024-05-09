@@ -1,31 +1,75 @@
-/* Aplicación de la paleta de colores y fuente Roboto */
-body, input, button, table {
-  font-family: 'Roboto', sans-serif;
-}
+/* Estilos generales para la App */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
-/* Colores */
 :root {
-  --deep-blue: #043353;
-  --light-blue: #18A4E0;
-  --light-gray: #FAF8F0;
-  --gray: #D3DDE6;
+    --deep-blue: #043353;
+    --light-blue: #18A4E0;
+    --light-gray: #FAF8F0;
+    --gray: #D3DDE6;
 }
 
-/* Estilos específicos para los componentes */
-.header, .footer {
-  background-color: var(--deep-blue);
-  color: var(--light-gray);
+body {
+    background-color: var(--gray);
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
-.button-primary {
-  background-color: var(--light-blue);
-  color: var(--gray);
+.App {
+  text-align: center;
 }
 
-.table-header {
-  background-color: var(--gray);
+.header {
+  margin-bottom: 20px;
 }
 
 .map-container {
-  border-color: var(--light-blue);
+  margin-bottom: 0;
+}
+
+.data-table-container {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.data-table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 auto;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+/* Estilos para la sección de consulta */
+.query-section {
+  background-color: var(--light-gray);
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.query-section h2 {
+  margin: 0 0 10px;
+  font-size: 24px;
+  color: var(--deep-blue);
+}
+
+.query-section h3 {
+  margin: 0 0 20px;
+  font-size: 18px;
+  color: var(--light-blue);
 }

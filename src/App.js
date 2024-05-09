@@ -16,7 +16,6 @@ function App() {
       let startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
       let endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
 
-      // Asegurarse de que startTimestamp sea siempre menor o igual que endTimestamp
       if (startTimestamp > endTimestamp) {
         [startTimestamp, endTimestamp] = [endTimestamp, startTimestamp];
       }
@@ -38,7 +37,7 @@ function App() {
           if (item.latitude && item.longitude) {
             const latitude = parseFloat(item.latitude);
             const longitude = parseFloat(item.longitude);
-            const timestamp = parseInt(item.unixTimestamp, 10); // Asegurarnos de que el timestamp es un entero
+            const timestamp = parseInt(item.unixTimestamp, 10);
 
             if (!isNaN(latitude) && !isNaN(longitude) && !isNaN(timestamp)) {
               return [latitude, longitude, timestamp];
@@ -51,7 +50,7 @@ function App() {
             return null;
           }
         }).filter(coord => coord !== null);
-        console.log('Parsed Coordinates:', newCoordinates); // Log para verificar los datos
+        console.log('Parsed Coordinates:', newCoordinates);
         setPathCoordinates(newCoordinates);
       }
     } catch (error) {
@@ -63,6 +62,15 @@ function App() {
     <div className="App">
       <div className="header">
         <h1>Device Location Tracker</h1>
+      </div>
+      <div className="map-container">
+        <h2>Last Known Position</h2>
+        <LastKnownPosition />
+        <MapWithQuadrants />
+      </div>
+      <div className="query-section">
+        <h2>Consulta Histórica de Movimientos en Exterior</h2>
+        <h3>Ingrese parámetros de búsqueda</h3>
         <input
           type="datetime-local"
           value={startDate}
@@ -78,22 +86,22 @@ function App() {
         <button onClick={fetchData}>Search</button>
       </div>
       <div className="map-container">
-          {pathCoordinates.length === 0 ? (
-            <p>No data available for the selected range</p>
-          ) : (
-            <MapView
-              pathCoordinates={pathCoordinates.map(([latitude, longitude]) => [
-                parseFloat(latitude),
-                parseFloat(longitude),
-              ])}
-            />
-          )}
-        </div>
-      <div className="last-position-container">
-        <LastKnownPosition />
-        <MapWithQuadrants />
+        <h2>Map View</h2>
+        {pathCoordinates.length === 0 ? (
+          <p>No data available for the selected range</p>
+        ) : (
+          <MapView pathCoordinates={pathCoordinates.map(([latitude, longitude]) => [
+            parseFloat(latitude),
+            parseFloat(longitude),
+          ])} />
+        )}
       </div>
-      {pathCoordinates.length > 0 && <DataTable data={pathCoordinates} />}
+      {pathCoordinates.length > 0 && (
+        <div className="data-table-container">
+          <h2>Tabla de Datos de Ubicaciones</h2>
+          <DataTable data={pathCoordinates} />
+        </div>
+      )}
     </div>
   );
 }
