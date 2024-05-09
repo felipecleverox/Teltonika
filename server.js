@@ -88,7 +88,6 @@ app.get('/api/get-gps-data', async (req, res) => {
     }
 });
 
-
 // Endpoint para obtener la última posición conocida
 app.get('/api/last-known-position', async (req, res) => {
     try {
@@ -120,14 +119,15 @@ app.get('/api/active-beacons', async (req, res) => {
             LIMIT 1
         `);
         
-        if (latestRecord.length && latestRecord[0].ble_beacons) {
+        if (latestRecord.length && latestRecord[0].ble_beacons && latestRecord[0].ble_beacons !== '[]') {
             const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
             const activeBeaconIds = beaconsData.map(beacon => beacon.id);
-            const [activeBeacons] = await pool.query(`
-                SELECT id FROM beacons
-                WHERE id IN (?)
-            `, [activeBeaconIds]);
-            res.json({ activeBeaconIds: activeBeacons.map(b => b.id) });
+
+            if (activeBeaconIds.length > 0) {
+                res.json({ activeBeaconIds });
+            } else {
+                res.json({ activeBeaconIds: [] });
+            }
         } else {
             res.json({ activeBeaconIds: [] });
         }
@@ -136,7 +136,6 @@ app.get('/api/active-beacons', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-
 
 // Start the server
 app.listen(port, () => {
