@@ -78,12 +78,17 @@ function App() {
         <button onClick={fetchData}>Search</button>
       </div>
       <div className="map-container">
-        {pathCoordinates.length === 0 ? (
-          <p>No data available for the selected range</p>
-        ) : (
-          <MapView pathCoordinates={pathCoordinates.map(p => [p[0], p[1]])} />
-        )}
-      </div>
+          {pathCoordinates.length === 0 ? (
+            <p>No data available for the selected range</p>
+          ) : (
+            <MapView
+              pathCoordinates={pathCoordinates.map(([latitude, longitude]) => [
+                parseFloat(latitude),
+                parseFloat(longitude),
+              ])}
+            />
+          )}
+        </div>
       <div className="last-position-container">
         <LastKnownPosition />
         <MapWithQuadrants />

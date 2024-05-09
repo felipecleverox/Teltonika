@@ -1,4 +1,38 @@
-.map-container {
-    height: 100vh;
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+:root {
+    --deep-blue: #043353;
+    --light-blue: #18A4E0;
+    --light-gray: #FAF8F0;
+    --gray: #D3DDE6;
+}
+
+.map-view-container {
+    font-family: 'Roboto', sans-serif;
+    height: 100vh; /* Mantener altura de la ventana */
     width: 100%;
+    min-height: 500px; /* Añadir altura mínima */
+    position: relative; /* Asegurar posicionamiento relativo */
+    margin-bottom: 20px; /* Añadir margen inferior para separar componentes */
+}
+
+/* Estilos adicionales para los controles de zoom */
+.leaflet-control-zoom {
+    border: none;
+    background-color: var(--deep-blue);
+    color: var(--light-gray);
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.leaflet-control-zoom a {
+    color: var(--light-gray);
+}
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 18px;
 }

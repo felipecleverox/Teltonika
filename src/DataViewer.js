@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './DataViewer.css'; // Importar la hoja de estilos CSS
 
 function DataViewer() {
     const [data, setData] = useState([]);
@@ -33,17 +34,46 @@ function DataViewer() {
 
     useEffect(fetchData, [filter]);
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error}</div>;
+    if (loading) return <div className="message-state">Loading...</div>;
+    if (error) return <div className="message-state">Error: {error}</div>;
 
     return (
-        <div>
+        <div className="data-viewer-container">
             <h1>GPS Data Viewer</h1>
-            <input name="deviceId" value={filter.deviceId} onChange={handleInputChange} placeholder="Filter by Device ID" />
-            <input type="date" name="startDate" value={filter.startDate} onChange={handleInputChange} />
-            <input type="date" name="endDate" value={filter.endDate} onChange={handleInputChange} />
-            <button onClick={fetchData}>Apply Filters</button>
-            <table>
+            <div className="filters-container">
+                <div className="filter-item">
+                    <label className="filter-label">Filter by Device ID</label>
+                    <input
+                        className="filter-input"
+                        name="deviceId"
+                        value={filter.deviceId}
+                        onChange={handleInputChange}
+                        placeholder="Device ID"
+                    />
+                </div>
+                <div className="filter-item">
+                    <label className="filter-label">Start Date</label>
+                    <input
+                        className="filter-input"
+                        type="date"
+                        name="startDate"
+                        value={filter.startDate}
+                        onChange={handleInputChange}
+                    />
+                </div>
+                <div className="filter-item">
+                    <label className="filter-label">End Date</label>
+                    <input
+                        className="filter-input"
+                        type="date"
+                        name="endDate"
+                        value={filter.endDate}
+                        onChange={handleInputChange}
+                    />
+                </div>
+                <button className="apply-filters-button" onClick={fetchData}>Apply Filters</button>
+            </div>
+            <table className="data-table">
                 <thead>
                     <tr>
                         <th>Device ID</th>
@@ -54,7 +84,7 @@ function DataViewer() {
                 </thead>
                 <tbody>
                     {data.map((item, index) => (
-                        <tr key={index}>
+                        <tr key={index} className={index % 2 === 0 ? 'even-row' : 'odd-row'}>
                             <td>{item.device_id}</td>
                             <td>{item.position_latitude}</td>
                             <td>{item.position_longitude}</td>
@@ -68,5 +98,3 @@ function DataViewer() {
 }
 
 export default DataViewer;
-
-npm 
