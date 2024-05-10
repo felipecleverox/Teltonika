@@ -1,3 +1,5 @@
+import './DataTable.css'; // Asegura que esta línea está descomentada y correctamente escrita
+
 const DataTable = ({ data }) => {
     return (
       <div className="data-table-wrapper">

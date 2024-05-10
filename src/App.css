@@ -72,3 +72,22 @@ input[type="datetime-local"] {
   margin: 10px 0;
   box-sizing: border-box;
 }
+table {
+  width: 100%; /* Todas las tablas a ancho completo */
+  border-collapse: collapse; /* Colapsar bordes para un look limpio */
+}
+
+th, td {
+  padding: 8px 16px; /* Espacio adecuado dentro de las celdas */
+  text-align: left; /* Alineación de texto */
+  border: 1px solid #ddd; /* Bordes sutiles */
+}
+
+th {
+  background-color: #6b9fd4; /* Fondo uniforme para los encabezados */
+  color: white; /* Texto en blanco para contraste */
+}
+
+tr:nth-child(odd) {
+  background-color: #f2f2f2; /* Filas zebra para tablas */
+}

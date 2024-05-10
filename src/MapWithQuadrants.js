@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './MapWithQuadrants.css';
-import planoOficina from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_vf.jpg'; // Imagen predeterminada del plano
-import planoIzq from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_izq.jpg'; // Imagen del plano cuando se detecta el beacon
+import planoBase from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_base_vf.jpg'; // Imagen base del plano
+import planoConBeacon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_base_B1_a.jpg'; // Imagen del plano cuando se detecta el beacon
 
 function MapWithQuadrants() {
     const [activeBeacons, setActiveBeacons] = useState([]);
     const [beaconLogs, setBeaconLogs] = useState({
-        '0C403019-61C7-55AA-B7EA-DAC30C720055': { entrada: null, salida: null },
-        'OTHER_BEACON_ID': { entrada: null, salida: null }
+        '0C403019-61C7-55AA-B7EA-DAC30C720055': { entrada: null, salida: null, detecciones: 0, noDetectCount: 0, noDetectStart: null }
     });
+    const [currentPlano, setCurrentPlano] = useState(planoBase);
 
     useEffect(() => {
         const fetchActiveBeacons = async () => {
             try {
                 const response = await axios.get('http://localhost:1337/api/active-beacons');
                 const activeBeaconIds = response.data.activeBeaconIds || [];
-
                 setActiveBeacons(activeBeaconIds);
                 updateBeaconLogs(activeBeaconIds);
             } catch (error) {
@@ -35,12 +34,24 @@ function MapWithQuadrants() {
 
         for (const beaconId in updatedLogs) {
             if (activeBeaconIds.includes(beaconId)) {
-                if (!updatedLogs[beaconId].entrada || updatedLogs[beaconId].salida) {
-                    updatedLogs[beaconId] = { entrada: new Date(), salida: null };
+                if (updatedLogs[beaconId].detecciones === 0) {
+                    updatedLogs[beaconId].entrada = new Date();
                 }
+                updatedLogs[beaconId].detecciones += 1;
+                updatedLogs[beaconId].noDetectCount = 0;
+                updatedLogs[beaconId].noDetectStart = null;
+                setCurrentPlano(planoConBeacon);
             } else {
-                if (updatedLogs[beaconId].entrada && !updatedLogs[beaconId].salida) {
-                    updatedLogs[beaconId].salida = new Date();
+                if (updatedLogs[beaconId].noDetectCount === 0) {
+                    updatedLogs[beaconId].noDetectStart = new Date();
+                }
+                updatedLogs[beaconId].noDetectCount += 1;
+
+                if (updatedLogs[beaconId].noDetectCount >= 5) {
+                    setCurrentPlano(planoBase);
+                    if (updatedLogs[beaconId].salida === null) {
+                        updatedLogs[beaconId].salida = updatedLogs[beaconId].noDetectStart;
+                    }
                 }
             }
         }
@@ -70,16 +81,11 @@ function MapWithQuadrants() {
                         <td>{formatTimestamp(beaconLogs['0C403019-61C7-55AA-B7EA-DAC30C720055'].entrada)}</td>
                         <td>{formatTimestamp(beaconLogs['0C403019-61C7-55AA-B7EA-DAC30C720055'].salida)}</td>
                     </tr>
-                    <tr>
-                        <td>Sector Entrada Principal</td>
-                        <td>{formatTimestamp(beaconLogs['OTHER_BEACON_ID'].entrada)}</td>
-                        <td>{formatTimestamp(beaconLogs['OTHER_BEACON_ID'].salida)}</td>
-                    </tr>
                 </tbody>
             </table>
             <div className="plano-container">
                 <img 
-                    src={activeBeacons.includes('0C403019-61C7-55AA-B7EA-DAC30C720055') ? planoIzq : planoOficina} 
+                    src={currentPlano} 
                     alt="Plano de la Oficina" 
                     className="plano-oficina" 
                 />
