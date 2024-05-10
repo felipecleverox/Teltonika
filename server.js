@@ -118,17 +118,16 @@ app.get('/api/active-beacons', async (req, res) => {
             ORDER BY timestamp DESC
             LIMIT 1
         `);
-        
+
+        console.log('Latest Record:', latestRecord);
+
         if (latestRecord.length && latestRecord[0].ble_beacons && latestRecord[0].ble_beacons !== '[]') {
             const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
             const activeBeaconIds = beaconsData.map(beacon => beacon.id);
-
-            if (activeBeaconIds.length > 0) {
-                res.json({ activeBeaconIds });
-            } else {
-                res.json({ activeBeaconIds: [] });
-            }
+            console.log('Active Beacon IDs:', activeBeaconIds);
+            res.json({ activeBeaconIds });
         } else {
+            console.log('No active beacons found.');
             res.json({ activeBeaconIds: [] });
         }
     } catch (error) {
@@ -136,6 +135,8 @@ app.get('/api/active-beacons', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+
 
 // Start the server
 app.listen(port, () => {

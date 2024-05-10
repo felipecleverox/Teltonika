@@ -13,8 +13,12 @@ function MapWithQuadrants() {
                 const response = await axios.get('http://localhost:1337/api/active-beacons');
                 const activeBeaconIds = response.data.activeBeaconIds || [];
 
+                console.log('Fetched Active Beacon IDs:', activeBeaconIds);
+
                 // Actualizar el estado para el beacon específico
-                setIsBeaconDetected(activeBeaconIds.includes('0C403019-61C7-55AA-B7EA-DAC30C720055'));
+                const beaconDetected = activeBeaconIds.includes('0C403019-61C7-55AA-B7EA-DAC30C720055');
+                console.log('Is Beacon Detected:', beaconDetected);
+                setIsBeaconDetected(beaconDetected);
             } catch (error) {
                 console.error('Failed to fetch active beacons:', error);
                 setIsBeaconDetected(false);
@@ -26,6 +30,10 @@ function MapWithQuadrants() {
 
         return () => clearInterval(intervalId); // Limpieza al desmontar
     }, []);
+
+    useEffect(() => {
+        console.log('Rendering Image. Is Beacon Detected:', isBeaconDetected);
+    }, [isBeaconDetected]);
 
     return (
         <div className="map-with-quadrants">
