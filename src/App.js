@@ -4,8 +4,9 @@ import MapView from './MapView';
 import LastKnownPosition from './LastKnownPosition';
 import MapWithQuadrants from './MapWithQuadrants';
 import DataTable from './DataTable';
+import Clock from './Clock'; // Importar el componente Clock
 import './App.css';
-import logo from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/tns_logo_blanco.png'; // Asegúrate de que la ruta sea correcta
+import logo from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/tns_logo_blanco.png';
 
 function App() {
   const [startDate, setStartDate] = useState('');
@@ -64,6 +65,7 @@ function App() {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <h1>Device Location Tracker</h1>
+        <Clock /> {/* Agregar el componente Clock */}
       </header>
       <div className="map-container">
         <h2>Last Known Position</h2>

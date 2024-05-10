@@ -13,7 +13,7 @@ body {
 .App-header {
   display: flex;
   align-items: center;
-  justify-content: center; /* Centramos el contenido horizontalmente */
+  justify-content: center; /* Centrar el contenido horizontalmente */
   background-color: #6b9fd4;
   color: white;
   padding: 20px;
@@ -24,6 +24,11 @@ body {
   height: 60px;
   position: absolute;
   left: 20px;
+}
+
+.clock {
+  position: absolute;
+  right: 20px;
 }
 
 .header h1 {

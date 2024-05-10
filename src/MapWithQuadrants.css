@@ -1,46 +1,37 @@
+/* MapWithQuadrants.css */
 .map-with-quadrants {
-    position: relative;
-}
-
-.plano-container {
-    position: relative;
-}
-
-.plano-oficina {
+    text-align: center;
+  }
+  
+  .plano-container {
+    margin: 20px auto;
+    width: 80%;
+  }
+  
+  .plano-oficina {
     width: 100%;
     height: auto;
-}
-
-.beacon-marker {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background-color: transparent;
-    border-radius: 50%;
-    border: 2px solid transparent;
-}
-
-.beacon-marker.active {
-    background-color: red;
-    border-color: red;
-    opacity: 0.7;
-}
-
-.beacon-marker.bottom-right {
-    bottom: 10px; /* Ajusta la posición según sea necesario */
-    right: 10px; /* Ajusta la posición según sea necesario */
-}
-
-.beacon-marker.top-right {
-    top: 10px; /* Ajusta la posición según sea necesario */
-    right: 10px; /* Ajusta la posición según sea necesario */
-}
-
-/* Nuevos estilos para iluminar las esquinas */
-.bottom-right.active ~ .plano-oficina {
-    box-shadow: inset -100px -100px 50px rgba(255, 0, 0, 0.5);
-}
-
-.top-right.active ~ .plano-oficina {
-    box-shadow: inset -100px 100px 50px rgba(255, 0, 0, 0.5);
-}
+    border: 1px solid #ddd;
+  }
+  
+  .beacon-logs-table {
+    width: 80%;
+    margin: 20px auto;
+    border-collapse: collapse;
+  }
+  
+  .beacon-logs-table th, .beacon-logs-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .beacon-logs-table th {
+    background-color: #6b9fd4;
+    color: white;
+  }
+  
+  .beacon-logs-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  
