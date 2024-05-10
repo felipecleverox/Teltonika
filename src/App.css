@@ -1,75 +1,69 @@
-/* Estilos generales para la App */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-
-:root {
-    --deep-blue: #043353;
-    --light-blue: #18A4E0;
-    --light-gray: #FAF8F0;
-    --gray: #D3DDE6;
-}
-
+/* App.css */
 body {
-    background-color: var(--gray);
-    font-family: 'Roboto', sans-serif;
-    margin: 0;
-    padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 0;
 }
 
 .App {
   text-align: center;
 }
 
-.header {
-  margin-bottom: 20px;
+.App-header {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Centramos el contenido horizontalmente */
+  background-color: #6b9fd4;
+  color: white;
+  padding: 20px;
+  position: relative;
+}
+
+.App-logo {
+  height: 60px;
+  position: absolute;
+  left: 20px;
+}
+
+.header h1 {
+  flex: 1;
+  margin: 0;
 }
 
 .map-container {
-  margin-bottom: 0;
+  margin: 20px;
+}
+
+.query-section {
+  background-color: #e7e7e7;
+  padding: 20px;
+  margin: 20px;
 }
 
 .data-table-container {
-  margin-top: 0;
-  padding-top: 0;
+  margin: 20px;
 }
 
-.data-table-wrapper {
-  overflow-x: auto;
+button {
+  background-color: #6b9fd4;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 10px 2px;
+  cursor: pointer;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0 auto;
+button:hover {
+  background-color: #6b9fd4;
 }
 
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-
-th {
-  background-color: #f2f2f2;
-  font-weight: bold;
-}
-
-/* Estilos para la sección de consulta */
-.query-section {
-  background-color: var(--light-gray);
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  text-align: left;
-}
-
-.query-section h2 {
-  margin: 0 0 10px;
-  font-size: 24px;
-  color: var(--deep-blue);
-}
-
-.query-section h3 {
-  margin: 0 0 20px;
-  font-size: 18px;
-  color: var(--light-blue);
+input[type="datetime-local"] {
+  padding: 10px;
+  margin: 10px 0;
+  box-sizing: border-box;
 }

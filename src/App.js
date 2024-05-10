@@ -5,6 +5,7 @@ import LastKnownPosition from './LastKnownPosition';
 import MapWithQuadrants from './MapWithQuadrants';
 import DataTable from './DataTable';
 import './App.css';
+import logo from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/tns_logo_blanco.png'; // Asegúrate de que la ruta sea correcta
 
 function App() {
   const [startDate, setStartDate] = useState('');
@@ -60,9 +61,10 @@ function App() {
 
   return (
     <div className="App">
-      <div className="header">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
         <h1>Device Location Tracker</h1>
-      </div>
+      </header>
       <div className="map-container">
         <h2>Last Known Position</h2>
         <LastKnownPosition />

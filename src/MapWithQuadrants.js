@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './MapWithQuadrants.css';
-import planoOficina from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano.jpg'; // Imagen predeterminada del plano
+import planoOficina from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_vf.jpg'; // Imagen predeterminada del plano
 import planoIzq from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_izq.jpg'; // Imagen del plano cuando se detecta el beacon
 
 function MapWithQuadrants() {
