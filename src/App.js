@@ -7,6 +7,9 @@ import DataTable from './DataTable';
 import Clock from './Clock'; // Importar el componente Clock
 import './App.css';
 import logo from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/tns_logo_blanco.png';
+import personal1 from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 1.png';
+import personal2 from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 2.png';
+import personal3 from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png';
 
 function App() {
   const [startDate, setStartDate] = useState('');
@@ -71,6 +74,22 @@ function App() {
         <h2>Last Known Position</h2>
         <LastKnownPosition />
         <MapWithQuadrants />
+      </div>
+      <div className="icon-legend">
+        <div className="icon-items">
+          <div className="icon-item">
+            <img src={personal1} alt="Personal 1" />
+            <span>Personal 1</span>
+          </div>
+          <div className="icon-item">
+            <img src={personal2} alt="Personal 2" />
+            <span>Personal 2</span>
+          </div>
+          <div className="icon-item">
+            <img src={personal3} alt="Personal 3" />
+            <span>Personal 3</span>
+          </div>
+        </div>
       </div>
       <div className="query-section">
         <h2>Consulta Histórica de Movimientos en Exterior</h2>

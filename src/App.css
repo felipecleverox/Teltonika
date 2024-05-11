@@ -91,3 +91,38 @@ th {
 tr:nth-child(odd) {
   background-color: #f2f2f2; /* Filas zebra para tablas */
 }
+/* Agrega esto a tu archivo App.css */
+
+.icon-legend {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  font-family: 'Roboto', sans-serif;
+  color: #D3DDE6;
+}
+
+.icon-items {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-item {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.icon-item img {
+  height: 30px; /* Ajusta la altura según sea necesario */
+  margin-right: 10px;
+}
+
+.icon-item span {
+  font-size: 14px; /* Ajusta el tamaño de fuente según sea necesario */
+}
+
+/* Opcional: Elimina el margen derecho del último ícono para una mejor apariencia */
+.icon-item:last-child {
+  margin-right: 0;
+}

@@ -10,6 +10,7 @@ function MapWithQuadrants() {
         '0C403019-61C7-55AA-B7EA-DAC30C720055': { entrada: null, salida: null, detecciones: 0, noDetectCount: 0, noDetectStart: null }
     });
     const [currentPlano, setCurrentPlano] = useState(planoBase);
+    const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
 
     useEffect(() => {
         const fetchActiveBeacons = async () => {
@@ -18,6 +19,7 @@ function MapWithQuadrants() {
                 const activeBeaconIds = response.data.activeBeaconIds || [];
                 setActiveBeacons(activeBeaconIds);
                 updateBeaconLogs(activeBeaconIds);
+                setLastRefreshTime(new Date());
             } catch (error) {
                 console.error('Failed to fetch active beacons:', error);
             }
@@ -47,7 +49,7 @@ function MapWithQuadrants() {
                 }
                 updatedLogs[beaconId].noDetectCount += 1;
 
-                if (updatedLogs[beaconId].noDetectCount >= 5) {
+                if (updatedLogs[beaconId].noDetectCount >= 10) {
                     setCurrentPlano(planoBase);
                     if (updatedLogs[beaconId].salida === null) {
                         updatedLogs[beaconId].salida = updatedLogs[beaconId].noDetectStart;
@@ -61,6 +63,12 @@ function MapWithQuadrants() {
 
     const formatTimestamp = (timestamp) => {
         return timestamp ? new Date(timestamp).toLocaleString() : 'N/A';
+    };
+
+    const formatMinus45Minutes = (timestamp) => {
+        const date = new Date(timestamp);
+        date.setMinutes(date.getMinutes() - 45);
+        return date.toLocaleString();
     };
 
     return (
@@ -77,9 +85,29 @@ function MapWithQuadrants() {
                 </thead>
                 <tbody>
                     <tr>
+                        <td>Puerta Principal</td>
+                        <td>{formatMinus45Minutes(lastRefreshTime)}</td>
+                        <td></td>
+                    </tr>
+                    <tr>
                         <td>Sector Oficina Seguridad (NOC)</td>
                         <td>{formatTimestamp(beaconLogs['0C403019-61C7-55AA-B7EA-DAC30C720055'].entrada)}</td>
                         <td>{formatTimestamp(beaconLogs['0C403019-61C7-55AA-B7EA-DAC30C720055'].salida)}</td>
+                    </tr>
+                    <tr>
+                        <td>Sala Directorio</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Puerta Lateral</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Oficina Gerencia Informática</td>
+                        <td></td>
+                        <td></td>
                     </tr>
                 </tbody>
             </table>
