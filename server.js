@@ -64,17 +64,17 @@ app.post('/gps-data', async (req, res) => {
 
 // Endpoint for querying GPS data with filters
 app.get('/api/get-gps-data', async (req, res) => {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, person } = req.query;
 
     const query = `
-        SELECT device_id, latitude, longitude, timestamp AS unixTimestamp
+        SELECT latitude, longitude, timestamp AS unixTimestamp
         FROM gps_data
-        WHERE timestamp BETWEEN ? AND ?
+        WHERE timestamp BETWEEN ? AND ? AND device_name = ?
     `;
 
-    const params = [parseInt(startDate), parseInt(endDate)];
+    const params = [parseInt(startDate), parseInt(endDate), person];
 
-    console.log('Query Params:', { startDate, endDate });
+    console.log('Query Params:', { startDate, endDate, person });
     console.log('SQL Query:', query);
     console.log('SQL Params:', params);
 
@@ -136,7 +136,24 @@ app.get('/api/active-beacons', async (req, res) => {
     }
 });
 
+app.get('/api/historical-entries-exits', async (req, res) => {
+    const { startDate, endDate, deviceName } = req.query;
 
+    const query = `
+        SELECT device_name, timestamp AS unixTimestamp
+        FROM gps_data
+        WHERE device_name = ? AND timestamp BETWEEN ? AND ?
+        ORDER BY timestamp
+    `;
+
+    try {
+        const [results] = await pool.query(query, [deviceName, parseInt(startDate), parseInt(endDate)]);
+        res.json(results);
+    } catch (error) {
+        console.error('Error fetching historical entries and exits:', error);
+        res.status(500).send('Server Error');
+    }
+});
 
 // Start the server
 app.listen(port, () => {
