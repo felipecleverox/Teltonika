@@ -5,6 +5,7 @@ import LastKnownPosition from './LastKnownPosition';
 import MapWithQuadrants from './MapWithQuadrants';
 import DataTable from './DataTable';
 import Clock from './Clock'; // Importar el componente Clock
+import PersonSearch from './PersonSearch'; // Importar el nuevo componente PersonSearch
 import './App.css';
 import logo from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/tns_logo_blanco.png';
 import personal1 from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 1.png';
@@ -125,6 +126,7 @@ function App() {
           <DataTable data={pathCoordinates} />
         </div>
       )}
+      <PersonSearch /> {/* Agregar el nuevo componente PersonSearch */}
     </div>
   );
 }
