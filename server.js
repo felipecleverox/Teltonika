@@ -67,7 +67,7 @@ app.get('/api/get-gps-data', async (req, res) => {
     const { startDate, endDate } = req.query;
 
     const query = `
-        SELECT device_id, latitude, longitude, timestamp AS unixTimestamp
+        SELECT latitude, longitude, timestamp AS unixTimestamp
         FROM gps_data
         WHERE timestamp BETWEEN ? AND ?
     `;
@@ -136,7 +136,31 @@ app.get('/api/active-beacons', async (req, res) => {
     }
 });
 
+// Nuevo endpoint para consultar datos de interiores
+app.get('/api/get-interior-data', async (req, res) => {
+    const { startDate, endDate, person } = req.query;
 
+    const query = `
+        SELECT latitude, longitude, timestamp AS unixTimestamp
+        FROM gps_data
+        WHERE timestamp BETWEEN ? AND ? AND device_name = ?
+    `;
+
+    const params = [parseInt(startDate), parseInt(endDate), person];
+
+    console.log('Query Params:', { startDate, endDate, person });
+    console.log('SQL Query:', query);
+    console.log('SQL Params:', params);
+
+    try {
+        const [results] = await pool.query(query, params);
+        console.log('Query Results:', results);
+        res.json(results);
+    } catch (error) {
+        console.error('Error fetching GPS data:', error);
+        res.status(500).send('Server Error');
+    }
+});
 
 // Start the server
 app.listen(port, () => {
