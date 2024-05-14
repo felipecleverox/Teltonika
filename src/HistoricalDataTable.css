@@ -1,0 +1,30 @@
+.historical-data-table-wrapper {
+    margin: 20px auto;
+    max-width: 800px;
+    overflow-x: auto;
+  }
+  
+  .historical-data-table-wrapper table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .historical-data-table-wrapper th, .historical-data-table-wrapper td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .historical-data-table-wrapper th {
+    background-color: #f2f2f2;
+    color: black;
+  }
+  
+  .historical-data-table-wrapper tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  .historical-data-table-wrapper tr:hover {
+    background-color: #ddd;
+  }
+  
