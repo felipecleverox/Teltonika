@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './MapWithQuadrants.css';
-import planoBase from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_base_vf.jpg'; // Imagen base del plano
-import planoConBeacon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_base_B1_a.jpg'; // Imagen del plano cuando se detecta el beacon
+import planoBase from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_base_vf.jpg'; // Asegúrate de que el path es correcto
+import personal3Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png'; // Asegúrate de que el path es correcto
+import personal1Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 1.png'; // Asegúrate de que el path es correcto
 
 function MapWithQuadrants() {
     const [activeBeacons, setActiveBeacons] = useState([]);
     const [beaconLogs, setBeaconLogs] = useState({
-        '0C403019-61C7-55AA-B7EA-DAC30C720055': { entrada: null, salida: null, detecciones: 0, noDetectCount: 0, noDetectStart: null }
+        '0C403019-61C7-55AA-B7EA-DAC30C720055': { entrada: new Date(), salida: null, detecciones: 0, noDetectCount: 0, noDetectStart: null }
     });
-    const [currentPlano, setCurrentPlano] = useState(planoBase);
-    const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
+    const [showPersonal3, setShowPersonal3] = useState(false);
 
     useEffect(() => {
         const fetchActiveBeacons = async () => {
@@ -19,7 +19,7 @@ function MapWithQuadrants() {
                 const activeBeaconIds = response.data.activeBeaconIds || [];
                 setActiveBeacons(activeBeaconIds);
                 updateBeaconLogs(activeBeaconIds);
-                setLastRefreshTime(new Date());
+                setShowPersonal3(activeBeaconIds.includes('0C403019-61C7-55AA-B7EA-DAC30C720055'));
             } catch (error) {
                 console.error('Failed to fetch active beacons:', error);
             }
@@ -28,7 +28,7 @@ function MapWithQuadrants() {
         fetchActiveBeacons();
         const intervalId = setInterval(fetchActiveBeacons, 20000); // Actualiza cada 20 segundos
 
-        return () => clearInterval(intervalId); // Limpieza al desmontar
+        return () => clearInterval(intervalId);
     }, []);
 
     const updateBeaconLogs = (activeBeaconIds) => {
@@ -42,7 +42,6 @@ function MapWithQuadrants() {
                 updatedLogs[beaconId].detecciones += 1;
                 updatedLogs[beaconId].noDetectCount = 0;
                 updatedLogs[beaconId].noDetectStart = null;
-                setCurrentPlano(planoConBeacon);
             } else {
                 if (updatedLogs[beaconId].noDetectCount === 0) {
                     updatedLogs[beaconId].noDetectStart = new Date();
@@ -50,7 +49,6 @@ function MapWithQuadrants() {
                 updatedLogs[beaconId].noDetectCount += 1;
 
                 if (updatedLogs[beaconId].noDetectCount >= 10) {
-                    setCurrentPlano(planoBase);
                     if (updatedLogs[beaconId].salida === null) {
                         updatedLogs[beaconId].salida = updatedLogs[beaconId].noDetectStart;
                     }
@@ -61,63 +59,54 @@ function MapWithQuadrants() {
         setBeaconLogs(updatedLogs);
     };
 
-    const formatTimestamp = (timestamp) => {
-        return timestamp ? new Date(timestamp).toLocaleString() : 'N/A';
-    };
-
-    const formatMinus45Minutes = (timestamp) => {
-        const date = new Date(timestamp);
-        date.setMinutes(date.getMinutes() - 45);
-        return date.toLocaleString();
-    };
+    const formattedTimeMinus45 = new Date();
+    formattedTimeMinus45.setMinutes(formattedTimeMinus45.getMinutes() - 45);
 
     return (
         <div className="map-with-quadrants">
             <h2>Ubicaciones en Interior</h2>
-            <h3>Fecha y Hora de Ingreso por sector</h3>
+            <div className="plano-container" style={{ position: 'relative', width: '100%', height: 'auto' }}>
+                <img src={planoBase} alt="Plano de la Oficina" className="plano-oficina" style={{ width: '100%', height: 'auto' }}/>
+                {showPersonal3 && (
+                    <img 
+                        src={personal3Icon} 
+                        alt="Personal 3" 
+                        className="personal-icon" 
+                        style={{ 
+                            position: 'absolute', 
+                            bottom: '25%', // Ajuste de la posición
+                            right: '72%', // Ajuste de la posición
+                            width: '2%' // Tamaño del ícono
+                        }} 
+                    />
+                )}
+            </div>
             <table className="beacon-logs-table">
                 <thead>
                     <tr>
+                        <th>Personal</th>
                         <th>Sector</th>
                         <th>Entrada</th>
                         <th>Salida</th>
                     </tr>
                 </thead>
                 <tbody>
+                    {Object.keys(beaconLogs).map(beaconId => (
+                        <tr key={beaconId}>
+                            <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
+                            <td>Oficina Seguridad (NOC)</td>
+                            <td>{beaconLogs[beaconId].entrada.toLocaleString()}</td>
+                            <td>{beaconLogs[beaconId].salida ? beaconLogs[beaconId].salida.toLocaleString() : 'N/A'}</td>
+                        </tr>
+                    ))}
                     <tr>
+                        <td><img src={personal1Icon} alt="Personal 1" style={{ width: '10px' }} /></td>
                         <td>Puerta Principal</td>
-                        <td>{formatMinus45Minutes(lastRefreshTime)}</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>Sector Oficina Seguridad (NOC)</td>
-                        <td>{formatTimestamp(beaconLogs['0C403019-61C7-55AA-B7EA-DAC30C720055'].entrada)}</td>
-                        <td>{formatTimestamp(beaconLogs['0C403019-61C7-55AA-B7EA-DAC30C720055'].salida)}</td>
-                    </tr>
-                    <tr>
-                        <td>Sala Directorio</td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>Puerta Lateral</td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>Oficina Gerencia Informática</td>
-                        <td></td>
-                        <td></td>
+                        <td>{formattedTimeMinus45.toLocaleString()}</td>
+                        <td>N/A</td>
                     </tr>
                 </tbody>
             </table>
-            <div className="plano-container">
-                <img 
-                    src={currentPlano} 
-                    alt="Plano de la Oficina" 
-                    className="plano-oficina" 
-                />
-            </div>
         </div>
     );
 }
