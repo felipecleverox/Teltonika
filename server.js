@@ -137,8 +137,12 @@ app.get('/api/active-beacons', async (req, res) => {
     }
 });
 
+// ... (resto del código)
+
 // Nuevo endpoint para buscar entradas y salidas de beacons para "Personal 3"
-// server.js
+// ... (resto del código)
+
+// Nuevo endpoint para buscar entradas y salidas de beacons para "Personal 3"
 app.get('/api/beacon-entries-exits', async (req, res) => {
     const { startDate, endDate } = req.query;
 
@@ -159,40 +163,34 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
         let inSector = false;
         let entryTime = null;
         let noDetectCount = 0;  // Contador para ciclos sin detección
-        const noDetectThreshold = 2;  // Umbral para considerar una salida (2 ciclos)
-        const minIntervalBetweenEvents = 30; // Mínimo 30 segundos entre eventos de entrada y salida para evitar falsos positivos
 
         results.forEach((record, index) => {
             const beacons = JSON.parse(record.ble_beacons || '[]');
             const detected = beacons.some(beacon => beacon.id === "0C403019-61C7-55AA-B7EA-DAC30C720055");
 
             if (detected) {
-                noDetectCount = 0;  // Reiniciar contador si el beacon es detectado
-                if (!inSector) {
+                noDetectCount = 0; // Restablecer el contador si se detecta el beacon
+
+                // Solo registrar una nueva entrada si no está en el sector
+                if (!inSector) { 
                     inSector = true;
                     entryTime = record.timestamp;
-                }
+                } 
             } else {
-                if (inSector) {
-                    noDetectCount++;
-                    if (noDetectCount >= noDetectThreshold) {
-                        inSector = false;
-                        const previousExit = entriesExits.length > 0 ? entriesExits[entriesExits.length - 1].exit : null;
-                        if (previousExit && (record.timestamp - previousExit < minIntervalBetweenEvents)) {
-                            // Si el tiempo entre la salida anterior y la nueva entrada es menor que el umbral, combina los eventos
-                            entriesExits[entriesExits.length - 1].exit = record.timestamp;
-                        } else {
-                            entriesExits.push({ entry: entryTime, exit: record.timestamp });
-                        }
-                        entryTime = null;
-                        noDetectCount = 0;
-                    }
+                // Si no se detecta el beacon, aumentar el contador
+                noDetectCount++;
+
+                if (inSector && noDetectCount >= 2) {
+                    // Si estaba en el sector y se detecta 2 o más veces que no está, marcar la salida
+                    inSector = false;
+                    entriesExits.push({ entry: entryTime, exit: record.timestamp }); 
                 }
             }
         });
 
+        // Si al final está en el sector, marcar la salida (si no hay salida previa)
         if (inSector && entryTime) {
-            entriesExits.push({ entry: entryTime, exit: null });
+            entriesExits.push({ entry: entryTime, exit: null }); 
         }
 
         console.log('Entries and Exits:', entriesExits); // Verificar los datos
@@ -202,9 +200,8 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-
-
 // Start the server
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+   
+ console.log(`Server running on port ${port}`);
 });
