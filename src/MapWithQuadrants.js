@@ -4,6 +4,7 @@ import './MapWithQuadrants.css';
 import planoBase from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_base_vf.jpg'; // Asegúrate de que el path es correcto
 import personal3Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png'; // Asegúrate de que el path es correcto
 import personal1Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 1.png'; // Asegúrate de que el path es correcto
+
 function MapWithQuadrants() {
     const [activeBeacons, setActiveBeacons] = useState([]);
     const [beaconLogs, setBeaconLogs] = useState({
@@ -16,6 +17,7 @@ function MapWithQuadrants() {
             try {
                 const response = await axios.get('http://localhost:1337/api/active-beacons');
                 const activeBeaconIds = response.data.activeBeaconIds || [];
+                console.log('Fetched Active Beacon IDs:', activeBeaconIds);  // Añadir log para ver los beacons activos
                 setActiveBeacons(activeBeaconIds);
                 updateBeaconLogs(activeBeaconIds);
                 setShowPersonal3(activeBeaconIds.includes('0C403019-61C7-55AA-B7EA-DAC30C720055'));

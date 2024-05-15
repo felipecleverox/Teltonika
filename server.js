@@ -25,14 +25,25 @@ app.use(express.json());
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
     const gpsDatas = req.body;
-    console.log('GPS Data Received:', gpsDatas);
+    console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));  // Log detallado de los datos recibidos
 
     try {
         for (const gpsData of gpsDatas) {
+            console.log('Processing GPS Data:', JSON.stringify(gpsData, null, 2));  // Añadir log para ver los datos individuales
+            const beacons = gpsData['ble.beacons'] || [];
+            console.log('Beacons:', JSON.stringify(beacons, null, 2));  // Añadir log para ver los beacons
+
+            const beaconExists = beacons.some(beacon => beacon.id === "0C403019-61C7-55AA-B7EA-DAC30C720055");
+            if (beaconExists) {
+                console.log('Beacon 0C403019-61C7-55AA-B7EA-DAC30C720055 found!');
+            } else {
+                console.log('Beacon 0C403019-61C7-55AA-B7EA-DAC30C720055 not found!');
+            }
+
             const result = await pool.query(
                 'INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_enum, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
-                    JSON.stringify(gpsData['ble.beacons']),
+                    JSON.stringify(beacons),
                     gpsData['channel.id'],
                     gpsData['codec.id'],
                     gpsData['device.id'],
@@ -53,7 +64,7 @@ app.post('/gps-data', async (req, res) => {
                     gpsData.timestamp
                 ]
             );
-            console.log('Data inserted successfully:', result);
+            console.log('Data inserted successfully:', JSON.stringify(result, null, 2));
         }
         res.sendStatus(200);
     } catch (error) {
@@ -137,11 +148,6 @@ app.get('/api/active-beacons', async (req, res) => {
     }
 });
 
-// ... (resto del código)
-
-// Nuevo endpoint para buscar entradas y salidas de beacons para "Personal 3"
-// ... (resto del código)
-
 // Nuevo endpoint para buscar entradas y salidas de beacons para "Personal 3"
 app.get('/api/beacon-entries-exits', async (req, res) => {
     const { startDate, endDate } = req.query;
@@ -166,6 +172,7 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
 
         results.forEach((record, index) => {
             const beacons = JSON.parse(record.ble_beacons || '[]');
+            console.log('Processing Record:', JSON.stringify(record, null, 2));  // Añadir log para ver los datos del registro
             const detected = beacons.some(beacon => beacon.id === "0C403019-61C7-55AA-B7EA-DAC30C720055");
 
             if (detected) {
@@ -193,15 +200,15 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
             entriesExits.push({ entry: entryTime, exit: null }); 
         }
 
-        console.log('Entries and Exits:', entriesExits); // Verificar los datos
+        console.log('Entries and Exits:', JSON.stringify(entriesExits, null, 2)); // Verificar los datos
         res.json(entriesExits);
     } catch (error) {
         console.error('Error processing beacon entries and exits:', error);
         res.status(500).send('Server Error');
     }
 });
+
 // Start the server
 app.listen(port, () => {
-   
- console.log(`Server running on port ${port}`);
+    console.log(`Server running on port ${port}`);
 });
