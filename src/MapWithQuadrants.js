@@ -8,7 +8,7 @@ import personal1Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/a
 function MapWithQuadrants() {
     const [activeBeacons, setActiveBeacons] = useState([]);
     const [beaconLogs, setBeaconLogs] = useState({
-        '0C403019-61C7-55AA-B7EA-DAC30C720055': { entrada: new Date(), salida: null, detecciones: 0, noDetectCount: 0, noDetectStart: null }
+        '0C403019-61C7-55AA-B7EA-DAC30C720055': { entrada: null, salida: null, detecciones: 0, noDetectCount: 0, noDetectStart: null }
     });
     const [showPersonal3, setShowPersonal3] = useState(false);
 
@@ -17,7 +17,7 @@ function MapWithQuadrants() {
             try {
                 const response = await axios.get('http://localhost:1337/api/active-beacons');
                 const activeBeaconIds = response.data.activeBeaconIds || [];
-                console.log('Fetched Active Beacon IDs:', activeBeaconIds);  // Añadir log para ver los beacons activos
+                console.log('Fetched Active Beacon IDs:', activeBeaconIds);
                 setActiveBeacons(activeBeaconIds);
                 updateBeaconLogs(activeBeaconIds);
                 setShowPersonal3(activeBeaconIds.includes('0C403019-61C7-55AA-B7EA-DAC30C720055'));
@@ -43,13 +43,14 @@ function MapWithQuadrants() {
                 updatedLogs[beaconId].detecciones += 1;
                 updatedLogs[beaconId].noDetectCount = 0;
                 updatedLogs[beaconId].noDetectStart = null;
+                updatedLogs[beaconId].salida = null;
             } else {
                 if (updatedLogs[beaconId].noDetectCount === 0) {
                     updatedLogs[beaconId].noDetectStart = new Date();
                 }
                 updatedLogs[beaconId].noDetectCount += 1;
 
-                if (updatedLogs[beaconId].noDetectCount >= 10) {
+                if (updatedLogs[beaconId].noDetectCount >= 2) {
                     if (updatedLogs[beaconId].salida === null) {
                         updatedLogs[beaconId].salida = updatedLogs[beaconId].noDetectStart;
                     }
@@ -67,7 +68,7 @@ function MapWithQuadrants() {
         <div className="map-with-quadrants">
             <h2>Ubicaciones en Interior</h2>
             <div className="plano-container" style={{ position: 'relative', width: '100%', height: 'auto' }}>
-                <img src={planoBase} alt="Plano de la Oficina" className="plano-oficina" style={{ width: '100%', height: 'auto' }}/>
+                <img src={planoBase} alt="Plano de la Oficina" className="plano-oficina" style={{ width: '100%', height: 'auto' }} />
                 {showPersonal3 && (
                     <img 
                         src={personal3Icon} 
@@ -96,12 +97,12 @@ function MapWithQuadrants() {
                         <tr key={beaconId}>
                             <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
                             <td>Oficina Seguridad (NOC)</td>
-                            <td>{beaconLogs[beaconId].entrada.toLocaleString()}</td>
+                            <td>{beaconLogs[beaconId].entrada ? beaconLogs[beaconId].entrada.toLocaleString() : 'N/A'}</td>
                             <td>{beaconLogs[beaconId].salida ? beaconLogs[beaconId].salida.toLocaleString() : 'N/A'}</td>
                         </tr>
                     ))}
                     <tr>
-                        <td><img src={personal1Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
+                        <td><img src={personal1Icon} alt="Personal 1" style={{ width: '10px' }} /></td>
                         <td>Puerta Principal</td>
                         <td>{formattedTimeMinus45.toLocaleString()}</td>
                         <td>N/A</td>
