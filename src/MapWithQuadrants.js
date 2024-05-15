@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './MapWithQuadrants.css';
-import planoBase from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_base_vf.jpg'; // Asegúrate de que el path es correcto
+import planoBase from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_super.jpg'; // Asegúrate de que el path es correcto
 import personal3Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png'; // Asegúrate de que el path es correcto
 import personal1Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 1.png'; // Asegúrate de que el path es correcto
 
@@ -68,7 +68,7 @@ function MapWithQuadrants() {
         <div className="map-with-quadrants">
             <h2>Ubicaciones en Interior</h2>
             <div className="plano-container" style={{ position: 'relative', width: '100%', height: 'auto' }}>
-                <img src={planoBase} alt="Plano de la Oficina" className="plano-oficina" style={{ width: '100%', height: 'auto' }} />
+                <img src={planoBase} alt="Plano de la Oficina" className="plano-oficina" style={{ width: '70%', height: 'auto' }} />
                 {showPersonal3 && (
                     <img 
                         src={personal3Icon} 
@@ -76,8 +76,8 @@ function MapWithQuadrants() {
                         className="personal-icon" 
                         style={{ 
                             position: 'absolute', 
-                            bottom: '25%', // Ajuste de la posición
-                            right: '72%', // Ajuste de la posición
+                            bottom: '26%', // Ajuste de la posición
+                            right: '55.5%', // Ajuste de la posición
                             width: '2%' // Tamaño del ícono
                         }} 
                     />
