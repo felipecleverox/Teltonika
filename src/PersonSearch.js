@@ -15,9 +15,10 @@ function PersonSearch() {
                 params: {
                     startDate,
                     endDate,
-                    person: 'Personal 3'
+                    person: '352592573522828 (autocreated)' // Nombre del dispositivo
                 }
             });
+            console.log('Data received:', response.data);
             setSearchResults(response.data);
         } catch (error) {
             console.error('Error fetching search results:', error);
@@ -28,6 +29,15 @@ function PersonSearch() {
         if (!timestamp) return 'N/A';
         const date = new Date(timestamp);
         return date.toLocaleString();
+    };
+
+    const getSector = (beaconId) => {
+        if (beaconId === '0C403019-61C7-55AA-B7EA-DAC30C720055') {
+            return <span style={{ color: '#6b9fd4' }}>E/S Bodega</span>;
+        } else if (beaconId === 'E9EB8F18-61C7-55AA-9496-3AC30C720055') {
+            return <span style={{ color: '#00ab41' }}>Farmacia</span>;
+        }
+        return 'Unknown';
     };
 
     return (
@@ -60,10 +70,7 @@ function PersonSearch() {
                     {searchResults.map((result, index) => (
                         <tr key={index}>
                             <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
-                            <td>
-                                {result.beaconId === '0C403019-61C7-55AA-B7EA-DAC30C720055' && 'E/S Bodega'}
-                                {result.beaconId === 'E9EB8F18-61C7-55AA-9496-3AC30C720055' && 'Farmacia'}
-                            </td>
+                            <td>{getSector(result.beaconId)}</td>
                             <td>{formatDate(result.entrada)}</td>
                         </tr>
                     ))}

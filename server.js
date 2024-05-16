@@ -152,86 +152,78 @@ app.get('/api/active-beacons', async (req, res) => {
 app.get('/api/beacon-entries-exits', async (req, res) => {
     const { startDate, endDate, person } = req.query;
 
-    console.log('Received search request:', { startDate, endDate, person }); // Registro de depuración
+    console.log("Received search request:", { startDate, endDate, person });
 
-    let beaconId;
-    let sector;
+    const startTimestamp = new Date(startDate).getTime() / 1000;
+    const endTimestamp = new Date(endDate).getTime() / 1000;
 
-    switch (person) {
-        case 'Personal 1':
-            beaconId = 'ID_BEACON_PERSONAL_1'; // Asegúrate de usar el ID correcto
-            sector = 'Sector Personal 1';
-            break;
-        case 'Personal 2':
-            beaconId = 'E9EB8F18-61C7-55AA-9496-3AC30C720055';
-            sector = 'E/S Bodega';
-            break;
-        case 'Personal 3':
-            beaconId = '0C403019-61C7-55AA-B7EA-DAC30C720055';
-            sector = 'Oficina Seguridad (NOC)';
-            break;
-        // Agrega más casos si es necesario
-        default:
-            return res.status(400).json({ error: 'Invalid person selected' });
-    }
+    console.log("Converted timestamps:", { startTimestamp, endTimestamp });
 
     const query = `
         SELECT timestamp, ble_beacons
         FROM gps_data
-        WHERE device_name = '352592573522828 (autocreated)'
-          AND timestamp BETWEEN ? AND ?
+        WHERE device_name = ? AND timestamp BETWEEN ? AND ?
         ORDER BY timestamp ASC
     `;
 
-    const startTimestamp = new Date(startDate).getTime() / 1000; // Convertir a UNIX timestamp
-    const endTimestamp = new Date(endDate).getTime() / 1000; // Convertir a UNIX timestamp
-
-    console.log('Converted Timestamps:', { startTimestamp, endTimestamp }); // Registro de depuración
-
-    const params = [startTimestamp, endTimestamp];
-
     try {
-        const [results] = await pool.query(query, params);
-        console.log('Query results:', results); // Registro de depuración
+        const [results] = await pool.query(query, [person, startTimestamp, endTimestamp]);
+        console.log("Query results:", results);
 
-        let entriesExits = [];
-        let inSector = false;
-        let entryTime = null;
-        let noDetectCount = 0;
+        // Procesar resultados para derivar entradas y salidas
+        const processedResults = [];
+        let currentBeacon = null;
+        let entryTimestamp = null;
 
-        results.forEach((record, index) => {
-            const beacons = JSON.parse(record.ble_beacons || '[]');
-            const detected = beacons.some(beacon => beacon.id === beaconId);
-
-            if (detected) {
-                noDetectCount = 0;
-
-                if (!inSector) {
-                    inSector = true;
-                    entryTime = record.timestamp * 1000; // Convertir a milisegundos para Date
+        results.forEach(record => {
+            const beacons = JSON.parse(record.ble_beacons);
+            beacons.forEach(beacon => {
+                if (beacon.id === '0C403019-61C7-55AA-B7EA-DAC30C720055') {
+                    if (currentBeacon !== 'Oficina Seguridad (NOC)') {
+                        if (currentBeacon !== null) {
+                            processedResults.push({
+                                beaconId: '0C403019-61C7-55AA-B7EA-DAC30C720055',
+                                sector: 'Oficina Seguridad (NOC)',
+                                entrada: entryTimestamp,
+                                salida: record.timestamp * 1000
+                            });
+                        }
+                        currentBeacon = 'Oficina Seguridad (NOC)';
+                        entryTimestamp = record.timestamp * 1000;
+                    }
+                } else if (beacon.id === 'E9EB8F18-61C7-55AA-9496-3AC30C720055') {
+                    if (currentBeacon !== 'E/S Bodega') {
+                        if (currentBeacon !== null) {
+                            processedResults.push({
+                                beaconId: 'E9EB8F18-61C7-55AA-9496-3AC30C720055',
+                                sector: 'E/S Bodega',
+                                entrada: entryTimestamp,
+                                salida: record.timestamp * 1000
+                            });
+                        }
+                        currentBeacon = 'E/S Bodega';
+                        entryTimestamp = record.timestamp * 1000;
+                    }
                 }
-            } else {
-                noDetectCount++;
-
-                if (inSector && noDetectCount >= 2) {
-                    inSector = false;
-                    entriesExits.push({ beaconId, sector, entrada: entryTime, salida: record.timestamp * 1000 });
-                }
-            }
+            });
         });
 
-        if (inSector && entryTime) {
-            entriesExits.push({ beaconId, sector, entrada: entryTime, salida: null });
+        if (currentBeacon !== null) {
+            processedResults.push({
+                beaconId: currentBeacon === 'Oficina Seguridad (NOC)' ? '0C403019-61C7-55AA-B7EA-DAC30C720055' : 'E9EB8F18-61C7-55AA-9496-3AC30C720055',
+                sector: currentBeacon,
+                entrada: entryTimestamp,
+                salida: null // Actualmente no hay salida
+            });
         }
 
-        console.log('Entries and Exits:', entriesExits); // Registro de depuración
-        res.json(entriesExits);
+        console.log("Processed results:", processedResults);
+        res.json(processedResults);
     } catch (error) {
-        console.error('Error processing beacon entries and exits:', error);
+        console.error('Error fetching beacon entries and exits:', error);
         res.status(500).send('Server Error');
     }
 });
-
 
 // Start the server
 app.listen(port, () => {
