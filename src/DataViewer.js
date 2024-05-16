@@ -1,5 +1,6 @@
+// DataViewer.js
 import React, { useState, useEffect } from 'react';
-import './DataViewer.css'; // Importar la hoja de estilos CSS
+import './DataViewer.css';
 
 function DataViewer() {
     const [data, setData] = useState([]);
