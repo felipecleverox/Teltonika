@@ -76,7 +76,7 @@ function App() {
         <LastKnownPosition />
         <MapWithQuadrants />
       </div>
-      <div className="icon-legend">
+      <div className="icon-legend"> {/* Mover la leyenda aquí */}
         <div className="icon-items">
           <div className="icon-item">
             <img src={personal1} alt="Personal 1" />
@@ -92,6 +92,7 @@ function App() {
           </div>
         </div>
       </div>
+      <PersonSearch /> {/* Mover el componente PersonSearch antes de la consulta histórica */}
       <div className="query-section">
         <h2>Consulta Histórica de Movimientos en Exterior</h2>
         <h3>Ingrese parámetros de búsqueda</h3>
@@ -126,7 +127,6 @@ function App() {
           <DataTable data={pathCoordinates} />
         </div>
       )}
-      <PersonSearch /> {/* Agregar el nuevo componente PersonSearch */}
     </div>
   );
 }

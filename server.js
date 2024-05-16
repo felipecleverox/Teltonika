@@ -150,7 +150,30 @@ app.get('/api/active-beacons', async (req, res) => {
 
 // Nuevo endpoint para buscar entradas y salidas de beacons para "Personal 3"
 app.get('/api/beacon-entries-exits', async (req, res) => {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, person } = req.query;
+
+    console.log('Received search request:', { startDate, endDate, person }); // Registro de depuración
+
+    let beaconId;
+    let sector;
+
+    switch (person) {
+        case 'Personal 1':
+            beaconId = 'ID_BEACON_PERSONAL_1'; // Asegúrate de usar el ID correcto
+            sector = 'Sector Personal 1';
+            break;
+        case 'Personal 2':
+            beaconId = 'E9EB8F18-61C7-55AA-9496-3AC30C720055';
+            sector = 'E/S Bodega';
+            break;
+        case 'Personal 3':
+            beaconId = '0C403019-61C7-55AA-B7EA-DAC30C720055';
+            sector = 'Oficina Seguridad (NOC)';
+            break;
+        // Agrega más casos si es necesario
+        default:
+            return res.status(400).json({ error: 'Invalid person selected' });
+    }
 
     const query = `
         SELECT timestamp, ble_beacons
@@ -160,53 +183,55 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
         ORDER BY timestamp ASC
     `;
 
-    const params = [parseInt(startDate), parseInt(endDate)];
+    const startTimestamp = new Date(startDate).getTime() / 1000; // Convertir a UNIX timestamp
+    const endTimestamp = new Date(endDate).getTime() / 1000; // Convertir a UNIX timestamp
+
+    console.log('Converted Timestamps:', { startTimestamp, endTimestamp }); // Registro de depuración
+
+    const params = [startTimestamp, endTimestamp];
 
     try {
         const [results] = await pool.query(query, params);
+        console.log('Query results:', results); // Registro de depuración
 
         let entriesExits = [];
         let inSector = false;
         let entryTime = null;
-        let noDetectCount = 0;  // Contador para ciclos sin detección
+        let noDetectCount = 0;
 
         results.forEach((record, index) => {
             const beacons = JSON.parse(record.ble_beacons || '[]');
-            console.log('Processing Record:', JSON.stringify(record, null, 2));  // Añadir log para ver los datos del registro
-            const detected = beacons.some(beacon => beacon.id === "0C403019-61C7-55AA-B7EA-DAC30C720055");
+            const detected = beacons.some(beacon => beacon.id === beaconId);
 
             if (detected) {
-                noDetectCount = 0; // Restablecer el contador si se detecta el beacon
+                noDetectCount = 0;
 
-                // Solo registrar una nueva entrada si no está en el sector
-                if (!inSector) { 
+                if (!inSector) {
                     inSector = true;
-                    entryTime = record.timestamp;
-                } 
+                    entryTime = record.timestamp * 1000; // Convertir a milisegundos para Date
+                }
             } else {
-                // Si no se detecta el beacon, aumentar el contador
                 noDetectCount++;
 
                 if (inSector && noDetectCount >= 2) {
-                    // Si estaba en el sector y se detecta 2 o más veces que no está, marcar la salida
                     inSector = false;
-                    entriesExits.push({ entry: entryTime, exit: record.timestamp }); 
+                    entriesExits.push({ beaconId, sector, entrada: entryTime, salida: record.timestamp * 1000 });
                 }
             }
         });
 
-        // Si al final está en el sector, marcar la salida (si no hay salida previa)
         if (inSector && entryTime) {
-            entriesExits.push({ entry: entryTime, exit: null }); 
+            entriesExits.push({ beaconId, sector, entrada: entryTime, salida: null });
         }
 
-        console.log('Entries and Exits:', JSON.stringify(entriesExits, null, 2)); // Verificar los datos
+        console.log('Entries and Exits:', entriesExits); // Registro de depuración
         res.json(entriesExits);
     } catch (error) {
         console.error('Error processing beacon entries and exits:', error);
         res.status(500).send('Server Error');
     }
 });
+
 
 // Start the server
 app.listen(port, () => {

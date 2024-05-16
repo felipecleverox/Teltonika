@@ -3,14 +3,17 @@ import axios from 'axios';
 import './MapWithQuadrants.css';
 import planoBase from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_super.jpg'; // Asegúrate de que el path es correcto
 import personal3Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png'; // Asegúrate de que el path es correcto
+import personal2Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 2.png'; // Asegúrate de que el path es correcto
 import personal1Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 1.png'; // Asegúrate de que el path es correcto
 
 function MapWithQuadrants() {
     const [activeBeacons, setActiveBeacons] = useState([]);
     const [beaconLogs, setBeaconLogs] = useState({
-        '0C403019-61C7-55AA-B7EA-DAC30C720055': { entrada: null, salida: null, detecciones: 0, noDetectCount: 0, noDetectStart: null }
+        '0C403019-61C7-55AA-B7EA-DAC30C720055': { entrada: null, salida: null, detecciones: 0, noDetectCount: 0, noDetectStart: null },
+        'E9EB8F18-61C7-55AA-9496-3AC30C720055': { entrada: null, salida: null, detecciones: 0, noDetectCount: 0, noDetectStart: null }
     });
     const [showPersonal3, setShowPersonal3] = useState(false);
+    const [showPersonal2, setShowPersonal2] = useState(false);
 
     useEffect(() => {
         const fetchActiveBeacons = async () => {
@@ -21,6 +24,7 @@ function MapWithQuadrants() {
                 setActiveBeacons(activeBeaconIds);
                 updateBeaconLogs(activeBeaconIds);
                 setShowPersonal3(activeBeaconIds.includes('0C403019-61C7-55AA-B7EA-DAC30C720055'));
+                setShowPersonal2(activeBeaconIds.includes('E9EB8F18-61C7-55AA-9496-3AC30C720055'));
             } catch (error) {
                 console.error('Failed to fetch active beacons:', error);
             }
@@ -82,6 +86,19 @@ function MapWithQuadrants() {
                         }} 
                     />
                 )}
+                {showPersonal2 && (
+                    <img 
+                        src={personal2Icon} 
+                        alt="Personal 2" 
+                        className="personal-icon" 
+                        style={{ 
+                            position: 'absolute', 
+                            bottom: '72%', // Ajuste de la posición para el Personal 2
+                            right: '57%', // Ajuste de la posición para el Personal 2
+                            width: '2%' // Tamaño del ícono
+                        }} 
+                    />
+                )}
             </div>
             <table className="beacon-logs-table">
                 <thead>
@@ -93,20 +110,26 @@ function MapWithQuadrants() {
                     </tr>
                 </thead>
                 <tbody>
-                    {Object.keys(beaconLogs).map(beaconId => (
-                        <tr key={beaconId}>
-                            <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
-                            <td>Oficina Seguridad (NOC)</td>
-                            <td>{beaconLogs[beaconId].entrada ? beaconLogs[beaconId].entrada.toLocaleString() : 'N/A'}</td>
-                            <td>{beaconLogs[beaconId].salida ? beaconLogs[beaconId].salida.toLocaleString() : 'N/A'}</td>
-                        </tr>
-                    ))}
                     <tr>
                         <td><img src={personal1Icon} alt="Personal 1" style={{ width: '10px' }} /></td>
                         <td>Puerta Principal</td>
                         <td>{formattedTimeMinus45.toLocaleString()}</td>
                         <td>N/A</td>
                     </tr>
+                    {Object.keys(beaconLogs).map(beaconId => (
+                        <tr key={beaconId}>
+                            <td>
+                                {beaconId === '0C403019-61C7-55AA-B7EA-DAC30C720055' && <img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} />}
+                                {beaconId === 'E9EB8F18-61C7-55AA-9496-3AC30C720055' && <img src={personal2Icon} alt="Personal 2" style={{ width: '10px' }} />}
+                            </td>
+                            <td>
+                                {beaconId === '0C403019-61C7-55AA-B7EA-DAC30C720055' && 'Farmacia'}
+                                {beaconId === 'E9EB8F18-61C7-55AA-9496-3AC30C720055' && 'E/S Bodega'}
+                            </td>
+                            <td>{beaconLogs[beaconId].entrada ? beaconLogs[beaconId].entrada.toLocaleString() : 'N/A'}</td>
+                            <td>{beaconLogs[beaconId].salida ? beaconLogs[beaconId].salida.toLocaleString() : 'N/A'}</td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
         </div>
