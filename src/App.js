@@ -4,8 +4,8 @@ import MapView from './MapView';
 import LastKnownPosition from './LastKnownPosition';
 import MapWithQuadrants from './MapWithQuadrants';
 import DataTable from './DataTable';
-import Clock from './Clock'; // Importar el componente Clock
-import PersonSearch from './PersonSearch'; // Importar el nuevo componente PersonSearch
+import Clock from './Clock'; 
+import PersonSearch from './PersonSearch'; 
 import './App.css';
 import logo from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/tns_logo_blanco.png';
 import personal1 from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 1.png';
@@ -16,8 +16,10 @@ function App() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [pathCoordinates, setPathCoordinates] = useState([]);
+  const [historicalDataError, setHistoricalDataError] = useState(null); 
 
-  const fetchData = async () => {
+  const fetchHistoricalData = async () => {
+    setHistoricalDataError(null); // Clear any previous errors
     try {
       let startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
       let endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
@@ -60,23 +62,25 @@ function App() {
         setPathCoordinates(newCoordinates);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching historical data:', error);
+      setHistoricalDataError(error.message); // Set the error state
     }
   };
+
 
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <h1>Device Location Tracker</h1>
-        <Clock /> {/* Agregar el componente Clock */}
+        <Clock /> 
       </header>
       <div className="map-container">
         <h2>Last Known Position</h2>
         <LastKnownPosition />
         <MapWithQuadrants />
       </div>
-      <div className="icon-legend"> {/* Mover la leyenda aquí */}
+      <div className="icon-legend"> 
         <div className="icon-items">
           <div className="icon-item">
             <img src={personal1} alt="Personal 1" />
@@ -92,7 +96,7 @@ function App() {
           </div>
         </div>
       </div>
-      <PersonSearch /> {/* Mover el componente PersonSearch antes de la consulta histórica */}
+      <PersonSearch /> 
       <div className="query-section">
         <h2>Consulta Histórica de Movimientos en Exterior</h2>
         <h3>Ingrese parámetros de búsqueda</h3>
@@ -108,7 +112,8 @@ function App() {
           onChange={e => setEndDate(e.target.value)}
           placeholder="End Date and Time"
         />
-        <button onClick={fetchData}>Search</button>
+        <button onClick={fetchHistoricalData}>Search</button>
+        {historicalDataError && <div className="error-message">Error: {historicalDataError}</div>} 
       </div>
       <div className="map-container">
         <h2>Map View</h2>

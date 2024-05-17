@@ -126,3 +126,63 @@ tr:nth-child(odd) {
 .icon-item:last-child {
   margin-right: 0;
 }
+/* Media query for tablet-sized screens */
+@media (max-width: 768px) {
+  .map-container {
+    width: 100%; /* Make maps full width */
+    margin: 10px 0; /* Adjust margins */
+  }
+
+  .query-section, 
+  .data-table-container {
+    width: 95%; /* Adjust width for tables and forms */
+    margin: 10px auto; /* Center content */
+  }
+
+  .icon-legend {
+    flex-direction: column; /* Stack icons vertically */
+    align-items: flex-start; /* Align icons to the left */
+  }
+
+  .icon-items {
+    flex-direction: column; /* Stack icons vertically */
+    align-items: flex-start; /* Align icons to the left */
+  }
+
+  .icon-item {
+    margin-bottom: 10px; /* Add space between stacked icons */
+  }
+}
+
+/* Media query for mobile-sized screens */
+@media (max-width: 480px) {
+  .App-header {
+    flex-direction: column; /* Stack header elements vertically */
+  }
+
+  .App-logo {
+    position: static; /* Remove absolute positioning */
+    margin-bottom: 10px; /* Add space below logo */
+  }
+
+  .clock {
+    position: static; /* Remove absolute positioning */
+  }
+
+  .map-container {
+    height: 300px; /* Reduce map height for smaller screens */
+  }
+
+  .query-section input[type="datetime-local"],
+  .query-section button {
+    width: 100%; /* Make inputs and buttons full width */
+    box-sizing: border-box; /* Include padding and border in width */
+  }
+}
+/* ... other styles in App.css ... */
+
+.error-message {
+  color: red;
+  font-weight: bold;
+  margin-top: 10px;
+}
