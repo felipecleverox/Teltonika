@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import axios from 'axios';
 import MapView from './MapView';
 import LastKnownPosition from './LastKnownPosition';
@@ -6,13 +7,14 @@ import MapWithQuadrants from './MapWithQuadrants';
 import DataTable from './DataTable';
 import Clock from './Clock'; 
 import PersonSearch from './PersonSearch'; 
+import LandingPage from './LandingPage';
 import './App.css';
-import logo from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/tns_logo_blanco.png';
-import personal1 from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 1.png';
-import personal2 from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 2.png';
-import personal3 from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png';
+import logo from './assets/images/tns_logo_blanco.png';
+import personal1 from './assets/images/Personal 1.png';
+import personal2 from './assets/images/Personal 2.png';
+import personal3 from './assets/images/Personal 3.png';
 
-function App() {
+function ActualApp() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [pathCoordinates, setPathCoordinates] = useState([]);
@@ -66,7 +68,6 @@ function App() {
       setHistoricalDataError(error.message); // Set the error state
     }
   };
-
 
   return (
     <div className="App">
@@ -133,6 +134,17 @@ function App() {
         </div>
       )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/app" element={<ActualApp />} />
+      </Routes>
+    </Router>
   );
 }
 
