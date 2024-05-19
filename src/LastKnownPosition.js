@@ -1,3 +1,4 @@
+// LastKnownPosition.js
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -28,7 +29,7 @@ function CenterMap({ position }) {
     return null;
 }
 
-function LastKnownPosition() {
+function LastKnownPosition({ showHeader = true }) {
     const [position, setPosition] = useState(null); // Start state as null
     const [timestamp, setTimestamp] = useState(null);
     const [error, setError] = useState(null); // Add error state
@@ -63,7 +64,7 @@ function LastKnownPosition() {
 
     return (
         <div> 
-            <Header title="Last Known Position" />
+            {showHeader && <Header title="Last Known Position" />}
             {error && <div className="error-message">Error: {error}</div>}
             <MapContainer center={position || defaultPosition} zoom={13} style={{ height: '300px', width: '100%' }}>
                 <TileLayer

@@ -6,6 +6,7 @@ import PersonSearch from './PersonSearch';
 import LandingPage from './LandingPage';
 import SelectRoutine from './SelectRoutine'; 
 import HistoricalMovementsSearch from './HistoricalMovementsSearch';
+import Header from './Header'; // Importar el componente Header
 
 function App() {
   return (

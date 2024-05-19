@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import MapView from './MapView';
+import LastKnownPosition from './LastKnownPosition'; // Importar el componente LastKnownPosition
 import DataTable from './DataTable';
-import Header from './Header'; // Importa el encabezado
+import Header from './Header'; // Importar el encabezado
+import './HistoricalMovementsSearch.css'; // Importar estilos
 
 const HistoricalMovementsSearch = () => {
   const [startDate, setStartDate] = useState('');
@@ -45,7 +47,8 @@ const HistoricalMovementsSearch = () => {
   return (
     <div>
       <Header title="Consulta Histórica de Movimientos en Exterior" />
-      <div>
+      <LastKnownPosition showHeader={false} /> {/* Eliminar el header dentro de LastKnownPosition */}
+      <div className="search-parameters">
         <input
           type="datetime-local"
           value={startDate}

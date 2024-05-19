@@ -1,17 +1,18 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './SelectRoutine.css';
-import lastKnownPositionImage from './assets/images/last_known_position.jpg';
-import interiorLocationsImage from './assets/images/plano_super.jpg';
+import lastKnownPositionImage from './assets/images/last_known_position.webp';
+import interiorLocationsImage from './assets/images/plano_super.webp';
 import personSearchImage from './assets/images/person_search.webp';
 import historicalMovementsImage from './assets/images/historical_movements.webp';
+import Header from './Header'; // Importar el componente Header
 
 const SelectRoutine = () => {
   const navigate = useNavigate();
 
   return (
     <div className="select-routine">
-      <h1>Dashboard Apps</h1>
+      <Header title="Dashboard TNS Track" /> {/* Agregar el Header */}
       <div className="routine-sectors">
         <div className="routine-row">
           <div className="routine-sector">
@@ -34,6 +35,7 @@ const SelectRoutine = () => {
           </div>
         </div>
       </div>
+      <button className="back-button" onClick={() => navigate('/')}>Volver a la Página Principal</button> {/* Agregar botón para volver a la página de inicio */}
     </div>
   );
 };
