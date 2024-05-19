@@ -8,7 +8,7 @@ const LandingPage = () => {
   const navigate = useNavigate();
 
   const handleEnterClick = () => {
-    navigate('/app'); // Cambia esta ruta según sea necesario
+    navigate('/select-routine'); // Redirige a la nueva página de selección de rutina
   };
 
   return (
@@ -18,7 +18,7 @@ const LandingPage = () => {
       </header>
       <main className="landing-content">
         <img src={productImage} alt="Producto" className="landing-product-image" />
-        <button onClick={handleEnterClick} className="enter-button">Entrar</button>
+        <button onClick={handleEnterClick} className="enter-button">Enter</button>
       </main>
     </div>
   );

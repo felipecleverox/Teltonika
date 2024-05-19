@@ -8,6 +8,7 @@ import DataTable from './DataTable';
 import Clock from './Clock'; 
 import PersonSearch from './PersonSearch'; 
 import LandingPage from './LandingPage';
+import SelectRoutine from './SelectRoutine'; // Importa el nuevo componente
 import './App.css';
 import logo from './assets/images/tns_logo_blanco.png';
 import personal1 from './assets/images/Personal 1.png';
@@ -142,7 +143,11 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/app" element={<ActualApp />} />
+        <Route path="/select-routine" element={<SelectRoutine />} />
+        <Route path="/last-known-position" element={<LastKnownPosition />} />
+        <Route path="/ubicaciones-interior" element={<MapWithQuadrants />} />
+        <Route path="/busqueda-entradas-persona" element={<PersonSearch />} />
+        <Route path="/consulta-historica-movimientos" element={<ActualApp />} />
       </Routes>
     </Router>
   );
