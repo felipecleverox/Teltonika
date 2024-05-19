@@ -20,7 +20,7 @@ const CenterMap = ({ mapCenter }) => {
 
   useEffect(() => {
     if (mapCenter[0] !== 0 && mapCenter[1] !== 0) {
-      map.setView(mapCenter, 13);
+      map.setView(mapCenter, 16);
     }
   }, [mapCenter, map]);
 
@@ -82,7 +82,7 @@ const MapView = ({ pathCoordinates }) => {
 
   return (
     <div className="map-view-container">
-      <MapContainer center={mapCenter} zoom={13} style={{ height: "500px", width: "100%" }} zoomControl={true}>
+      <MapContainer center={mapCenter} zoom={20} style={{ height: "500px", width: "100%" }} zoomControl={true}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

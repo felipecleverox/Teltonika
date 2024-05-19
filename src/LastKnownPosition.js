@@ -22,7 +22,7 @@ function CenterMap({ position }) {
 
     useEffect(() => {
         if (position) {
-            map.setView([position.lat, position.lng], 13);
+            map.setView([position.lat, position.lng], 25);
         }
     }, [position, map]);
 
@@ -64,7 +64,7 @@ function LastKnownPosition({ showHeader = true }) {
 
     return (
         <div> 
-            {showHeader && <Header title="Last Known Position" />}
+            {showHeader && <Header title="Ubicación Exteriores Tiempo Real" />}
             {error && <div className="error-message">Error: {error}</div>}
             <MapContainer center={position || defaultPosition} zoom={13} style={{ height: '300px', width: '100%' }}>
                 <TileLayer
