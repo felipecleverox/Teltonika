@@ -9,6 +9,7 @@ import Clock from './Clock';
 import PersonSearch from './PersonSearch'; 
 import LandingPage from './LandingPage';
 import SelectRoutine from './SelectRoutine'; // Importa el nuevo componente
+import Header from './Header'; // Importa el nuevo encabezado
 import './App.css';
 import logo from './assets/images/tns_logo_blanco.png';
 import personal1 from './assets/images/Personal 1.png';
@@ -72,11 +73,7 @@ function ActualApp() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <h1>Device Location Tracker</h1>
-        <Clock /> 
-      </header>
+      <Header title="Device Location Tracker" />
       <div className="map-container">
         <h2>Last Known Position</h2>
         <LastKnownPosition />

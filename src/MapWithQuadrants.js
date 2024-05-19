@@ -4,6 +4,8 @@ import axios from 'axios';
 import './MapWithQuadrants.css';
 import planoBase from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/plano_super.jpg';
 import personal3Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png';
+import Header from './Header'; // Importa el nuevo encabezado
+
 
 function MapWithQuadrants() {
     const [activeBeacons, setActiveBeacons] = useState([]);
@@ -55,7 +57,7 @@ function MapWithQuadrants() {
 
     return (
         <div className="map-with-quadrants">
-            <h2>Ubicaciones en Interior</h2>
+            <Header title="Ubicaciones Interior Tiempo Real" />
             <div className="plano-container" style={{ position: 'relative', width: '100%', height: 'auto' }}>
                 <img src={planoBase} alt="Plano de la Oficina" className="plano-oficina" style={{ width: '70%', height: 'auto' }} />
                 {!bothBeaconsDetected && activeBeacons.includes('0C403019-61C7-55AA-B7EA-DAC30C720055') && (

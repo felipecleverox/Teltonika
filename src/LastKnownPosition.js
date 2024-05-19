@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import axios from 'axios';
+import Header from './Header'; // Importa el nuevo encabezado
 
 const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Santiago de Chile
 
@@ -62,6 +63,7 @@ function LastKnownPosition() {
 
     return (
         <div> 
+            <Header title="Last Known Position" />
             {error && <div className="error-message">Error: {error}</div>}
             <MapContainer center={position || defaultPosition} zoom={13} style={{ height: '300px', width: '100%' }}>
                 <TileLayer

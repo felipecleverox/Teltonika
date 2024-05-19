@@ -2,10 +2,12 @@
 import React from 'react';
 import './PersonDataTable.css';
 import './DataViewer.css'; // Importamos los estilos de DataViewer.css
+import Header from './Header';
 
 const PersonDataTable = ({ data }) => {
     return (
         <div className="data-table-container">
+            
             <table className="data-table">
                 <thead>
                     <tr>

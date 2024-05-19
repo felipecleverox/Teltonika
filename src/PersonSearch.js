@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import './PersonSearch.css';
 import personal3Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png';
+import Header from './Header'; // Importa el nuevo encabezado
 
 function PersonSearch() {
     const [startDate, setStartDate] = useState('');
@@ -42,7 +43,7 @@ function PersonSearch() {
 
     return (
         <div className="person-search">
-            <h2>Búsqueda de Entradas por Persona en Interior</h2>
+            <Header title="Búsqueda de Entradas por Persona en Interior" />
             <div className="search-parameters">
                 <input
                     type="datetime-local"
