@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 import logo from './assets/images/tns_logo_blanco.png'; // Asegúrate de que esta ruta sea correcta
-import productImage from './assets/images/producto.jpg'; // Asegúrate de que esta ruta sea correcta
+import productImage from './assets/images/producto.webp'; // Asegúrate de que esta ruta sea correcta
 
 const LandingPage = () => {
   const navigate = useNavigate();

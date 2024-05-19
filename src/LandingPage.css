@@ -1,6 +1,7 @@
 .landing-page {
     text-align: center;
     padding: 20px;
+    background-color: #6b9fd4;
   }
   
   .landing-header {
@@ -8,7 +9,7 @@
   }
   
   .landing-logo {
-    width: 200px;
+    width: 600px;
     height: auto;
   }
   
@@ -19,7 +20,7 @@
   }
   
   .landing-product-image {
-    width: 300px;
+    width: 600px;
     height: auto;
     margin-bottom: 20px;
   }
