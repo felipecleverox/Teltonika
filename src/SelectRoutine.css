@@ -3,15 +3,50 @@
     padding: 20px;
   }
   
-  .routine-buttons {
+  .routine-sectors {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    align-items: center;
+    gap: 20px;
   }
   
-  .routine-buttons button {
+  .routine-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+  }
+  
+  .routine-sector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 45%; /* Ajusta este valor según sea necesario */
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  .routine-image {
+    width: 100%; /* Ajusta este valor según sea necesario */
+    height: auto;
+    border-radius: 8px;
+  }
+  
+  .routine-button {
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+  }
+  
+  .routine-button:hover {
+    background-color: #0056b3;
   }
   
