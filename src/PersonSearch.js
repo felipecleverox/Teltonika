@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import './PersonSearch.css';
 import personal3Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png';
+import planoSectores from './assets/images/plano_sectores.jpg'; // Asegúrate de que esta ruta sea correcta
 import Header from './Header'; // Importa el nuevo encabezado
 
 function PersonSearch() {
@@ -43,7 +44,10 @@ function PersonSearch() {
 
     return (
         <div className="person-search">
-            <Header title="Búsqueda de Entradas por Persona en Interior" />
+            <Header title="Busqueda Histórica Ubicación Interiores" />
+            <div className="image-container">
+                <img src={planoSectores} alt="Plano Sectores" className="plano-sectores" />
+            </div>
             <div className="search-parameters">
                 <input
                     type="datetime-local"

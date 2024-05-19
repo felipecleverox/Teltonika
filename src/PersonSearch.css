@@ -1,3 +1,15 @@
+/* PersonSearch.css */
 .person-search {
-    margin: 20px;
+    text-align: center;
+}
+
+.image-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.plano-sectores {
+    max-width: 50%;
+    height: auto;
 }
