@@ -1,18 +1,18 @@
-/* PersonSearch.css */
-
-.person-search {
-    padding: 20px;
+/* HistoricalMovementsSearch.css */
+.header {
+    font-family: 'Roboto', sans-serif;
 }
 
-.image-container {
-    text-align: center;
-    margin-bottom: 20px;
+.map-container {
+    margin-bottom: 0; /* Asegúrate de que no haya margen inferior */
 }
 
-.plano-sectores {
-    width: 100%;
-    height: auto;
-    max-width: 800px;
+.data-table-container {
+    margin-top: 0; /* Asegúrate de que no haya margen superior */
+}
+
+.error-message {
+    margin: 10px 0; /* Ajusta el margen según sea necesario */
 }
 
 .search-parameters {
@@ -28,20 +28,20 @@
     font-size: 16px;
 }
 
-.search-results-table {
+.data-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
 }
 
-.search-results-table th,
-.search-results-table td {
+.data-table th,
+.data-table td {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: left;
 }
 
-.search-results-table th {
+.data-table th {
     background-color: #f2f2f2;
     font-weight: bold;
 }

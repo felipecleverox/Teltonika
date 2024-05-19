@@ -15,8 +15,6 @@ function ActualApp() {
   const [pathCoordinates, setPathCoordinates] = useState([]);
   const [historicalDataError, setHistoricalDataError] = useState(null);
 
-  // ... (el resto del código existente)
-
   return (
     <div className="App">
       {location.pathname === '/consulta-historica-movimientos' ? (
@@ -36,6 +34,9 @@ function ActualApp() {
             <LastKnownPosition />
             <MapWithQuadrants />
           </div>
+        </>
+      )}
+    </div>
   );
 }
 

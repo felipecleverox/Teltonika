@@ -1,4 +1,9 @@
 /* MapWithQuadrants.css */
+/* Ejemplo en un archivo CSS específico, como Header.css */
+.header {
+  font-family: 'Roboto', sans-serif;
+}
+
 .map-with-quadrants {
     text-align: center;
   }

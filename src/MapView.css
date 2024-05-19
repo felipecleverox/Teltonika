@@ -1,4 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+/* Ejemplo en un archivo CSS específico, como Header.css */
+.header {
+    font-family: 'Roboto', sans-serif;
+}
 
 :root {
     --deep-blue: #043353;
