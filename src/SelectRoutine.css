@@ -1,57 +1,65 @@
-/* Ejemplo en un archivo CSS específico, como Header.css */
-.header {
-  font-family: 'Roboto', sans-serif;
+/* SelectRoutine.css */
+.select-routine {
+  text-align: center;
 }
 
-.select-routine {
-    text-align: center;
-    padding: 20px;
-  }
-  
-  .routine-sectors {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-  
-  .routine-row {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    width: 50%;
-  }
-  
-  .routine-sector {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    width: 45%; /* Ajusta este valor según sea necesario */
-    border: 1px solid #ddd;
-    padding: 20px;
-    border-radius: 8px;
-  }
-  
-  .routine-image {
-    width: 100%; /* Ajusta este valor según sea necesario */
-    height: auto;
-    border-radius: 8px;
-  }
-  
-  .routine-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    margin-top: 10px;
-    transition: background-color 0.3s;
-  }
-  
-  .routine-button:hover {
-    background-color: #0056b3;
-  }
-  
+.routine-sectors {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.routine-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.routine-sector {
+  position: relative;
+  width: 300px;
+  text-align: center;
+}
+
+.routine-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.routine-image {
+  width: 100%;
+  height: auto;
+  cursor: pointer; /* Cambia el cursor al pasar sobre la imagen */
+}
+
+.routine-button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.routine-button:hover {
+  background-color: #0056b3;
+}
+
+.back-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}

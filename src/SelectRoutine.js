@@ -1,3 +1,4 @@
+// SelectRoutine.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './SelectRoutine.css';
@@ -16,22 +17,46 @@ const SelectRoutine = () => {
       <div className="routine-sectors">
         <div className="routine-row">
           <div className="routine-sector">
-            <img src={lastKnownPositionImage} alt="Ubicación Exteriores Tiempo Real" className="routine-image" />
-            <button onClick={() => navigate('/last-known-position')} className="routine-button">Ubicación Exteriores Tiempo Real</button>
+            <div className="routine-title">Ubicación Exteriores Tiempo Real</div>
+            <img 
+              src={lastKnownPositionImage} 
+              alt="Ubicación Exteriores Tiempo Real" 
+              className="routine-image" 
+              onClick={() => navigate('/last-known-position')} 
+            />
+            <button onClick={() => navigate('/last-known-position')} className="routine-button">Ir a la App</button>
           </div>
           <div className="routine-sector">
-            <img src={interiorLocationsImage} alt="Ubicación Interiores Tiempo Real" className="routine-image" />
-            <button onClick={() => navigate('/ubicaciones-interior')} className="routine-button">Ubicación Interiores Tiempo Real</button>
+            <div className="routine-title">Ubicación Interiores Tiempo Real</div>
+            <img 
+              src={interiorLocationsImage} 
+              alt="Ubicación Interiores Tiempo Real" 
+              className="routine-image" 
+              onClick={() => navigate('/ubicaciones-interior')} 
+            />
+            <button onClick={() => navigate('/ubicaciones-interior')} className="routine-button">Ir a la App</button>
           </div>
         </div>
         <div className="routine-row">
           <div className="routine-sector">
-            <img src={personSearchImage} alt="Busqueda Histórica Ubicación Interiores" className="routine-image" />
-            <button onClick={() => navigate('/busqueda-entradas-persona')} className="routine-button">Busqueda Histórica Ubicación Interiores</button>
+            <div className="routine-title">Busqueda Histórica Ubicación Interiores</div>
+            <img 
+              src={personSearchImage} 
+              alt="Busqueda Histórica Ubicación Interiores" 
+              className="routine-image" 
+              onClick={() => navigate('/busqueda-entradas-persona')} 
+            />
+            <button onClick={() => navigate('/busqueda-entradas-persona')} className="routine-button">Ir a la App</button>
           </div>
           <div className="routine-sector">
-            <img src={historicalMovementsImage} alt="Busqueda Histórica Ubicación Exteriores" className="routine-image" />
-            <button onClick={() => navigate('/consulta-historica-movimientos')} className="routine-button">Busqueda Histórica Ubicación Exteriores</button>
+            <div className="routine-title">Busqueda Histórica Ubicación Exteriores</div>
+            <img 
+              src={historicalMovementsImage} 
+              alt="Busqueda Histórica Ubicación Exteriores" 
+              className="routine-image" 
+              onClick={() => navigate('/consulta-historica-movimientos')} 
+            />
+            <button onClick={() => navigate('/consulta-historica-movimientos')} className="routine-button">Ir a la App</button>
           </div>
         </div>
       </div>

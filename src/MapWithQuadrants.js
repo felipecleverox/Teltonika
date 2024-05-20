@@ -6,13 +6,15 @@ import planoBase from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/asset
 import personal3Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png';
 import Header from './Header'; // Importa el nuevo encabezado
 
-
 function MapWithQuadrants() {
     const [activeBeacons, setActiveBeacons] = useState([]);
     const [bothBeaconsDetected, setBothBeaconsDetected] = useState(false);
     const [beaconLogs, setBeaconLogs] = useState({
         '0C403019-61C7-55AA-B7EA-DAC30C720055': { entrada: null, detecciones: 0 },
-        'E9EB8F18-61C7-55AA-9496-3AC30C720055': { entrada: null, detecciones: 0 }
+        'E9EB8F18-61C7-55AA-9496-3AC30C720055': { entrada: null, detecciones: 0 },
+        'F7826DA6-BC5B-71E0-893E-4B484D67696F': { entrada: null, detecciones: 0 }, // Nuevo beacon 1
+        'F7826DA6-BC5B-71E0-893E-6D424369696F': { entrada: null, detecciones: 0 },  // Nuevo beacon 2
+        'F7826DA6-BC5B-71E0-893E-54654370696F': { entrada: null, detecciones: 0 }  // Nuevo beacon 3
     });
 
     useEffect(() => {
@@ -86,6 +88,45 @@ function MapWithQuadrants() {
                         }} 
                     />
                 )}
+                {!bothBeaconsDetected && activeBeacons.includes('F7826DA6-BC5B-71E0-893E-4B484D67696F') && (
+                    <img 
+                        src={personal3Icon} 
+                        alt="Personal 3" 
+                        className="personal-icon" 
+                        style={{ 
+                            position: 'absolute', 
+                            bottom: '40%', 
+                            right: '70%', 
+                            width: '2%' 
+                        }} 
+                    />
+                )}
+                {!bothBeaconsDetected && activeBeacons.includes('F7826DA6-BC5B-71E0-893E-6D424369696F') && (
+                    <img 
+                        src={personal3Icon} 
+                        alt="Personal 3" 
+                        className="personal-icon" 
+                        style={{ 
+                            position: 'absolute', 
+                            bottom: '50%', 
+                            right: '65%', 
+                            width: '2%' 
+                        }} 
+                    />
+                )}
+                {!bothBeaconsDetected && activeBeacons.includes('F7826DA6-BC5B-71E0-893E-54654370696F') && (
+                    <img 
+                        src={personal3Icon} 
+                        alt="Personal 3" 
+                        className="personal-icon" 
+                        style={{ 
+                            position: 'absolute', 
+                            bottom: '68%', 
+                            right: '30%', 
+                            width: '2%' 
+                        }} 
+                    />
+                )}
             </div>
             <table className="beacon-logs-table">
                 <thead>
@@ -102,6 +143,9 @@ function MapWithQuadrants() {
                             <td>
                                 {beaconId === '0C403019-61C7-55AA-B7EA-DAC30C720055' && 'E/S Bodega'}
                                 {beaconId === 'E9EB8F18-61C7-55AA-9496-3AC30C720055' && 'Farmacia'}
+                                {beaconId === 'F7826DA6-BC5B-71E0-893E-4B484D67696F' && 'Entrada'}
+                                {beaconId === 'F7826DA6-BC5B-71E0-893E-6D424369696F' && 'Pasillo Central'}
+                                {beaconId === 'F7826DA6-BC5B-71E0-893E-54654370696F' && 'Electro'}
                             </td>
                             <td>{beaconLogs[beaconId].entrada ? beaconLogs[beaconId].entrada.toLocaleString() : 'N/A'}</td>
                         </tr>

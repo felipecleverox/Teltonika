@@ -1,3 +1,4 @@
+// server.js
 'use strict';
 
 const express = require('express');
@@ -204,13 +205,56 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
                         currentBeacon = 'E/S Bodega';
                         entryTimestamp = record.timestamp * 1000;
                     }
+                } else if (beacon.id === 'F7826DA6-BC5B-71E0-893E-4B484D67696F') {
+                    if (currentBeacon !== 'Entrada') {
+                        if (currentBeacon !== null) {
+                            processedResults.push({
+                                beaconId: 'F7826DA6-BC5B-71E0-893E-4B484D67696F',
+                                sector: 'Entrada',
+                                entrada: entryTimestamp,
+                                salida: record.timestamp * 1000
+                            });
+                        }
+                        currentBeacon = 'Entrada';
+                        entryTimestamp = record.timestamp * 1000;
+                    }
+                } else if (beacon.id === 'F7826DA6-BC5B-71E0-893E-6D424369696F') {
+                    if (currentBeacon !== 'Pasillo Central') {
+                        if (currentBeacon !== null) {
+                            processedResults.push({
+                                beaconId: 'F7826DA6-BC5B-71E0-893E-6D424369696F',
+                                sector: 'Pasillo Central',
+                                entrada: entryTimestamp,
+                                salida: record.timestamp * 1000
+                            });
+                        }
+                        currentBeacon = 'Pasillo Central';
+                        entryTimestamp = record.timestamp * 1000;
+                    }
+                } else if (beacon.id === 'F7826DA6-BC5B-71E0-893E-54654370696F') {
+                    if (currentBeacon !== 'Electro') {
+                        if (currentBeacon !== null) {
+                            processedResults.push({
+                                beaconId: 'F7826DA6-BC5B-71E0-893E-54654370696F',
+                                sector: 'Electro',
+                                entrada: entryTimestamp,
+                                salida: record.timestamp * 1000
+                            });
+                        }
+                        currentBeacon = 'Electro';
+                        entryTimestamp = record.timestamp * 1000;
+                    }
                 }
             });
         });
 
         if (currentBeacon !== null) {
             processedResults.push({
-                beaconId: currentBeacon === 'Oficina Seguridad (NOC)' ? '0C403019-61C7-55AA-B7EA-DAC30C720055' : 'E9EB8F18-61C7-55AA-9496-3AC30C720055',
+                beaconId: currentBeacon === 'Oficina Seguridad (NOC)' ? '0C403019-61C7-55AA-B7EA-DAC30C720055' : 
+                          currentBeacon === 'E/S Bodega' ? 'E9EB8F18-61C7-55AA-9496-3AC30C720055' :
+                          currentBeacon === 'Entrada' ? 'F7826DA6-BC5B-71E0-893E-4B484D67696F' :
+                          currentBeacon === 'Pasillo Central' ? 'F7826DA6-BC5B-71E0-893E-6D424369696F' :
+                          'F7826DA6-BC5B-71E0-893E-54654370696F',
                 sector: currentBeacon,
                 entrada: entryTimestamp,
                 salida: null // Actualmente no hay salida
