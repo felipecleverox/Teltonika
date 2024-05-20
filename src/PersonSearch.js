@@ -35,15 +35,15 @@ function PersonSearch() {
     const getSector = (beaconId) => {
         switch (beaconId) {
             case '0C403019-61C7-55AA-B7EA-DAC30C720055':
-                return <span style={{ color: '#6b9fd4' }}>E/S Bodega</span>;
+                return <span style={{ color: '#c1ff72' }}>E/S Bodega</span>;
             case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
-                return <span style={{ color: '#00ab41' }}>Farmacia</span>;
+                return <span style={{ color: '#8c52ff' }}>Farmacia</span>;
             case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
-                return <span style={{ color: '#ff6600' }}>Entrada</span>;
+                return <span style={{ color: '#ffbd59' }}>Entrada</span>;
             case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
-                return <span style={{ color: '#ff33cc' }}>Pasillo Central</span>;
+                return <span style={{ color: '#5ce16e' }}>Pasillo Central</span>;
             case 'F7826DA6-BC5B-71E0-893E-54654370696F':
-                return <span style={{ color: '#00ffcc' }}>Electro</span>;
+                return <span style={{ color: '#ffde59' }}>Electro</span>;
             default:
                 return 'Unknown';
         }
