@@ -1,4 +1,3 @@
-// SelectRoutine.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './SelectRoutine.css';
@@ -37,7 +36,7 @@ const SelectRoutine = () => {
             <button onClick={() => navigate('/ubicaciones-interior')} className="routine-button">Ir a la App</button>
           </div>
         </div>
-        <div className="routine-row">
+        <div className="routine-row second-row">
           <div className="routine-sector">
             <div className="routine-title">Busqueda Histórica Ubicación Interiores</div>
             <img 
