@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 import logo from './assets/images/tns_logo_blanco.png'; // Asegúrate de que esta ruta sea correcta
 import productImage from './assets/images/producto.webp'; // Asegúrate de que esta ruta sea correcta
+import Clock from './Clock'; // Importar el componente Clock
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -20,6 +21,10 @@ const LandingPage = () => {
         <img src={productImage} alt="Producto" className="landing-product-image" />
         <button onClick={handleEnterClick} className="enter-button">Enter</button>
       </main>
+      <footer className="landing-footer">
+        <div className="software-version">Ver. 1.0.1</div>
+        <Clock />
+      </footer>
     </div>
   );
 };

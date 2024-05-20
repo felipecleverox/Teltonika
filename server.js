@@ -128,6 +128,7 @@ app.get('/api/active-beacons', async (req, res) => {
     try {
         const [latestRecord] = await pool.query(`
             SELECT ble_beacons FROM gps_data
+            where ble_beacons != '[]'
             ORDER BY timestamp DESC
             LIMIT 1
         `);
@@ -163,7 +164,7 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
     const query = `
         SELECT timestamp, ble_beacons
         FROM gps_data
-        WHERE device_name = ? AND timestamp BETWEEN ? AND ?
+        WHERE device_name = ? AND timestamp BETWEEN ? AND ? AND ble_beacons != "[]"
         ORDER BY timestamp ASC
     `;
 

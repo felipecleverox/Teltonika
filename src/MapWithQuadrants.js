@@ -1,4 +1,3 @@
-// MapWithQuadrants.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './MapWithQuadrants.css';
@@ -50,11 +49,41 @@ function MapWithQuadrants() {
 
         setBothBeaconsDetected(bothDetected);
 
-        if (bothDetected) {
-            console.log("DOS Beacons JUNTOS");
-        }
-
         setBeaconLogs(updatedLogs);
+    };
+
+    const getSector = (beaconId) => {
+        switch (beaconId) {
+            case '0C403019-61C7-55AA-B7EA-DAC30C720055':
+                return 'E/S Bodega';
+            case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
+                return 'Farmacia';
+            case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
+                return 'Entrada';
+            case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
+                return 'Pasillo Central';
+            case 'F7826DA6-BC5B-71E0-893E-54654370696F':
+                return 'Electro';
+            default:
+                return 'Unknown';
+        }
+    };
+
+    const getIconPosition = (beaconId) => {
+        switch (beaconId) {
+            case '0C403019-61C7-55AA-B7EA-DAC30C720055':
+                return { bottom: '70%', right: '55%', width: '2%' };
+            case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
+                return { bottom: '25%', right: '55%', width: '2%' };
+            case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
+                return { bottom: '10%', right: '72%', width: '2%' };
+            case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
+                return { bottom: '41%', right: '28%', width: '2%' };
+            case 'F7826DA6-BC5B-71E0-893E-54654370696F':
+                return { bottom: '68%', right: '30%', width: '2%' };
+            default:
+                return {};
+        }
     };
 
     return (
@@ -62,71 +91,15 @@ function MapWithQuadrants() {
             <Header title="Ubicaciones Interior Tiempo Real" />
             <div className="plano-container" style={{ position: 'relative', width: '100%', height: 'auto' }}>
                 <img src={planoBase} alt="Plano de la Oficina" className="plano-oficina" style={{ width: '70%', height: 'auto' }} />
-                {!bothBeaconsDetected && activeBeacons.includes('0C403019-61C7-55AA-B7EA-DAC30C720055') && (
+                {activeBeacons.map(beaconId => (
                     <img 
+                        key={beaconId}
                         src={personal3Icon} 
                         alt="Personal 3" 
                         className="personal-icon" 
-                        style={{ 
-                            position: 'absolute', 
-                            bottom: '70%', 
-                            right: '55%', 
-                            width: '2%' 
-                        }} 
+                        style={{ position: 'absolute', ...getIconPosition(beaconId) }} 
                     />
-                )}
-                {!bothBeaconsDetected && activeBeacons.includes('E9EB8F18-61C7-55AA-9496-3AC30C720055') && (
-                    <img 
-                        src={personal3Icon} 
-                        alt="Personal 3" 
-                        className="personal-icon" 
-                        style={{ 
-                            position: 'absolute', 
-                            bottom: '25%', 
-                            right: '55%', 
-                            width: '2%' 
-                        }} 
-                    />
-                )}
-                {!bothBeaconsDetected && activeBeacons.includes('F7826DA6-BC5B-71E0-893E-4B484D67696F') && (
-                    <img 
-                        src={personal3Icon} 
-                        alt="Personal 3" 
-                        className="personal-icon" 
-                        style={{ 
-                            position: 'absolute', 
-                            bottom: '40%', 
-                            right: '70%', 
-                            width: '2%' 
-                        }} 
-                    />
-                )}
-                {!bothBeaconsDetected && activeBeacons.includes('F7826DA6-BC5B-71E0-893E-6D424369696F') && (
-                    <img 
-                        src={personal3Icon} 
-                        alt="Personal 3" 
-                        className="personal-icon" 
-                        style={{ 
-                            position: 'absolute', 
-                            bottom: '50%', 
-                            right: '65%', 
-                            width: '2%' 
-                        }} 
-                    />
-                )}
-                {!bothBeaconsDetected && activeBeacons.includes('F7826DA6-BC5B-71E0-893E-54654370696F') && (
-                    <img 
-                        src={personal3Icon} 
-                        alt="Personal 3" 
-                        className="personal-icon" 
-                        style={{ 
-                            position: 'absolute', 
-                            bottom: '68%', 
-                            right: '30%', 
-                            width: '2%' 
-                        }} 
-                    />
-                )}
+                ))}
             </div>
             <table className="beacon-logs-table">
                 <thead>
@@ -140,13 +113,7 @@ function MapWithQuadrants() {
                     {Object.keys(beaconLogs).map(beaconId => (
                         <tr key={beaconId}>
                             <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
-                            <td>
-                                {beaconId === '0C403019-61C7-55AA-B7EA-DAC30C720055' && 'E/S Bodega'}
-                                {beaconId === 'E9EB8F18-61C7-55AA-9496-3AC30C720055' && 'Farmacia'}
-                                {beaconId === 'F7826DA6-BC5B-71E0-893E-4B484D67696F' && 'Entrada'}
-                                {beaconId === 'F7826DA6-BC5B-71E0-893E-6D424369696F' && 'Pasillo Central'}
-                                {beaconId === 'F7826DA6-BC5B-71E0-893E-54654370696F' && 'Electro'}
-                            </td>
+                            <td>{getSector(beaconId)}</td>
                             <td>{beaconLogs[beaconId].entrada ? beaconLogs[beaconId].entrada.toLocaleString() : 'N/A'}</td>
                         </tr>
                     ))}

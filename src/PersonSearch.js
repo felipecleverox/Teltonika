@@ -1,4 +1,3 @@
-// PersonSearch.js
 import React, { useState } from 'react';
 import axios from 'axios';
 import './PersonSearch.css';
@@ -34,18 +33,20 @@ function PersonSearch() {
     };
 
     const getSector = (beaconId) => {
-        if (beaconId === '0C403019-61C7-55AA-B7EA-DAC30C720055') {
-            return <span style={{ color: '#6b9fd4' }}>E/S Bodega</span>;
-        } else if (beaconId === 'E9EB8F18-61C7-55AA-9496-3AC30C720055') {
-            return <span style={{ color: '#00ab41' }}>Farmacia</span>;
-        } else if (beaconId === 'F7826DA6-BC5B-71E0-893E-4B484D67696F') {
-            return <span style={{ color: '#ff6600' }}>Entrada</span>;
-        } else if (beaconId === 'F7826DA6-BC5B-71E0-893E-6D424369696F') {
-            return <span style={{ color: '#ff33cc' }}>Pasillo Central</span>;
-        } else if (beaconId === 'F7826DA6-BC5B-71E0-893E-54654370696F') {
-            return <span style={{ color: '#00ffcc' }}>Electro</span>;
+        switch (beaconId) {
+            case '0C403019-61C7-55AA-B7EA-DAC30C720055':
+                return <span style={{ color: '#6b9fd4' }}>E/S Bodega</span>;
+            case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
+                return <span style={{ color: '#00ab41' }}>Farmacia</span>;
+            case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
+                return <span style={{ color: '#ff6600' }}>Entrada</span>;
+            case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
+                return <span style={{ color: '#ff33cc' }}>Pasillo Central</span>;
+            case 'F7826DA6-BC5B-71E0-893E-54654370696F':
+                return <span style={{ color: '#00ffcc' }}>Electro</span>;
+            default:
+                return 'Unknown';
         }
-        return 'Unknown';
     };
 
     return (
