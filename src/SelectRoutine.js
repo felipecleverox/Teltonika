@@ -13,7 +13,7 @@ const SelectRoutine = () => {
 
   return (
     <div className="select-routine">
-      <Header title="Dashboard TNS Track" /> {/* Agregar el Header */}
+      <Header title="Dashboard TN Track" /> {/* Agregar el Header */}
       <div className="routine-sectors">
         <div className="routine-row">
           <div className="routine-sector">

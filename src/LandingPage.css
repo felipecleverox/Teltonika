@@ -24,13 +24,25 @@
   text-align: center;
 }
 
+.image-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 70%; /* Para que las imágenes se alineen a los extremos */
+  padding: 0 10%; /* Ajustar el padding para alinear proporcionalmente */
+  margin-bottom: 80px; /* Agregar espacio entre las imágenes y el botón */
+}
+
+.new-logo {
+  width: 400px; /* Disminuir tamaño del logo en un 30% */
+}
+
 .landing-product-image {
   width: 300px;
-  margin-bottom: 20px;
 }
 
 .enter-button {
-  padding: 10px 20px;
+  padding: 10px 50px;
   font-size: 16px;
   cursor: pointer;
   background-color: #6b9fd4;
@@ -40,7 +52,7 @@
 }
 
 .enter-button:hover {
-  background-color: #6b9fd4;
+  background-color: #0056b3;
 }
 
 .landing-footer {

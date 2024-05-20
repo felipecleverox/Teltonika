@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 import logo from './assets/images/tns_logo_blanco.png'; // Asegúrate de que esta ruta sea correcta
 import productImage from './assets/images/producto.webp'; // Asegúrate de que esta ruta sea correcta
+import newLogo from './assets/images/TNS track azul.jpg'; // Importar el nuevo logo
 import Clock from './Clock'; // Importar el componente Clock
 
 const LandingPage = () => {
@@ -18,7 +19,10 @@ const LandingPage = () => {
         <img src={logo} alt="Logo de la Empresa" className="landing-logo" />
       </header>
       <main className="landing-content">
-        <img src={productImage} alt="Producto" className="landing-product-image" />
+        <div className="image-container">
+          <img src={newLogo} alt="Nuevo Logo" className="new-logo" />
+          <img src={productImage} alt="Producto" className="landing-product-image" />
+        </div>
         <button onClick={handleEnterClick} className="enter-button">Enter</button>
       </main>
       <footer className="landing-footer">
