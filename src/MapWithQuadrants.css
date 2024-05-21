@@ -1,0 +1,53 @@
+/* MapWithQuadrants.css */
+
+/* Ejemplo en un archivo CSS específico, como Header.css */
+.header {
+  font-family: 'Roboto', sans-serif;
+}
+
+.map-with-quadrants {
+    text-align: center;
+}
+
+.plano-container {
+    margin: 20px auto;
+    width: 90%; /* Ajustar el ancho al 90% para dispositivos móviles */
+}
+
+.plano-oficina {
+    width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+}
+
+.beacon-logs-table {
+    width: 90%; /* Ajustar el ancho al 90% para dispositivos móviles */
+    margin: 20px auto;
+    border-collapse: collapse;
+}
+
+.beacon-logs-table th,
+.beacon-logs-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+.beacon-logs-table th {
+    background-color: #6b9fd4;
+    color: white;
+}
+
+.beacon-logs-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+    .plano-container {
+        width: 100%; /* Ajustar el ancho al 100% para dispositivos móviles */
+    }
+    .beacon-logs-table {
+        width: 100%; /* Ajustar el ancho al 100% para dispositivos móviles */
+    }
+}

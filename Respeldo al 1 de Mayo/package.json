@@ -7,41 +7,34 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "concurrently": "^8.2.2",
-    "react-app-rewired": "^2.2.1"
+    "eslint": "^8.21.0"
   },
   "eslintConfig": {},
   "scripts": {
-    "start": "craco start",
-    "build": "craco build",
-    "test": "craco test",
-    "eject": "react-scripts eject",
     "start-server": "node server.js",
-    "start-react": "craco start",
-    "start-all": "concurrently \"npm run start-server\" \"npm run start-react\""
+    "start-react": "set PORT=3000 && react-scripts start",
+    "start-all": "concurrently \"npm run start-server\" \"npm run start-react\"",
+    "build": "react-scripts build"
   },
   "keywords": [],
   "license": "ISC",
   "dependencies": {
-    "@craco/craco": "^7.1.0",
     "@types/leaflet": "^1.9.12",
     "axios": "^1.6.8",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "leaflet": "^1.9.4",
-    "leaflet-draw": "^1.0.4",
     "leaflet-markercluster": "^0.2.2",
     "leaflet.markercluster": "^1.5.3",
     "mysql2": "^3.9.7",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-leaflet": "^4.2.1",
-    "react-leaflet-draw": "^0.20.4",
     "react-leaflet-markercluster": "^3.0.0-rc1",
-    "react-router-dom": "^6.23.1",
     "react-scripts": "^5.0.1",
     "webpack-dev-server": "^5.0.4"
   },
-  "proxy": "http://thenext.ddns.net:1337",
+  "proxy": "http://localhost:1337",
   "browserslist": {
     "production": [
       ">0.2%",

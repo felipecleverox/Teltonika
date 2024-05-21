@@ -1,0 +1,80 @@
+/* HistoricalMovementsSearch.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0; /* Eliminar márgenes predeterminados */
+    padding: 0;
+}
+
+.search-parameters {
+    display: flex;
+    flex-direction: column; /* Establecer dirección de flexbox a columna */
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0; /* Ajusta el margen según sea necesario */
+}
+
+.search-parameters input,
+.search-parameters button {
+    width: 100%; /* Ajustar el ancho de los elementos al 100% del contenedor */
+    margin: 10px 0; /* Añadir márgenes a los elementos */
+    padding: 10px;
+    font-size: 16px;
+}
+
+.map-container {
+    width: 100%; /* Ajustar el ancho del mapa al 100% del contenedor */
+    height: 400px; /* Establecer una altura mínima para el mapa */
+    margin-top: 20px;
+}
+
+.data-table {
+    width: 100%; /* Ajustar el ancho de la tabla al 100% del contenedor */
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.data-table th,
+.data-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.data-table th {
+    background-color: #6b9fd4;
+    font-weight: bold;
+}
+
+.error-message {
+    color: red;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+    .search-parameters input,
+    .search-parameters button {
+        font-size: 14px; /* Reducir el tamaño de fuente */
+    }
+    .map-container {
+        height: 300px; /* Reducir la altura del mapa */
+    }
+    .data-table td {
+        font-size: 12px; /* Reducir el tamaño de fuente en las celdas de la tabla */
+    }
+}
+
+/* Estilos para tablets */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .search-parameters input,
+    .search-parameters button {
+        font-size: 15px; /* Ajustar el tamaño de fuente */
+    }
+    .map-container {
+        height: 350px; /* Ajustar la altura del mapa */
+    }
+}
