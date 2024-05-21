@@ -13,6 +13,7 @@
 
 .routine-row {
   display: flex;
+  flex-wrap: wrap; /* Permite que los elementos se envuelvan */
   justify-content: center;
   gap: 20px;
 }
@@ -23,8 +24,10 @@
 
 .routine-sector {
   position: relative;
-  width: 300px;
+  width: 100%; /* Se ajusta al ancho disponible */
+  max-width: 300px; /* Ancho máximo para dispositivos grandes */
   text-align: center;
+  margin-bottom: 20px; /* Espacio entre sectores */
 }
 
 .routine-title {
@@ -67,4 +70,11 @@
 
 .back-button:hover {
   background-color: #5a6268;
+}
+
+/* Responsive styles for smaller screens */
+@media (max-width: 768px) {
+  .routine-row {
+    flex-direction: column; /* Apila las filas en dispositivos móviles */
+  }
 }

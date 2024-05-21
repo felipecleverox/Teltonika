@@ -2,4 +2,48 @@
 /* Ejemplo en un archivo CSS específico, como Header.css */
 .header {
     font-family: 'Roboto', sans-serif;
+    display: flex;
+    flex-direction: column; /* Apila elementos en columna para dispositivos móviles */
+    align-items: center; /* Centra los elementos horizontalmente */
+    gap: 1rem; /* Espacio entre elementos */
+}
+
+/* Estilos adicionales para adaptar el contenido */
+.header h1, .header h2, .header p {
+    text-align: center; /* Centra el texto */
+}
+
+/* Estilos para la tabla */
+table {
+    width: 100%; /* Ancho completo para dispositivos móviles */
+}
+
+th, td {
+    text-align: left; /* Alineación a la izquierda por defecto */
+    padding: 0.5rem; /* Espacio interno para mejor legibilidad */
+}
+
+@media (min-width: 768px) { /* Estilos para tablets y pantallas más grandes */
+    .header {
+        flex-direction: row; /* Alinea los elementos en fila */
+        justify-content: space-between; /* Distribuye el espacio entre los elementos */
+        align-items: flex-start; /* Alinea los elementos al inicio */
+    }
+
+    table {
+        width: auto; /* Ancho automático para mejor adaptación */
+    }
+
+    /* Estilos adicionales para pantallas más grandes */
+    .header h1 {
+        font-size: 2rem;
+    }
+
+    .header h2 {
+        font-size: 1.5rem;
+    }
+
+    .header p {
+        font-size: 1rem;
+    }
 }

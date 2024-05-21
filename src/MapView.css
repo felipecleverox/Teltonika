@@ -1,8 +1,6 @@
+/* MapView.css */
+
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-/* Ejemplo en un archivo CSS específico, como Header.css */
-.header {
-    font-family: 'Roboto', sans-serif;
-}
 
 :root {
     --deep-blue: #043353;
@@ -13,11 +11,17 @@
 
 .map-view-container {
     font-family: 'Roboto', sans-serif;
-    height: 100vh; /* Mantener altura de la ventana */
     width: 100%;
-    min-height: 500px; /* Añadir altura mínima */
+    min-height: 300px; /* Ajustar altura mínima para dispositivos móviles */
     position: relative; /* Asegurar posicionamiento relativo */
     margin-bottom: 20px; /* Añadir margen inferior para separar componentes */
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+    .map-view-container {
+        height: 400px; /* Ajustar altura del mapa para dispositivos móviles */
+    }
 }
 
 /* Estilos adicionales para los controles de zoom */

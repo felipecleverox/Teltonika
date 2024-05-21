@@ -1,9 +1,6 @@
-/* Aplicación de la paleta de colores y fuente Roboto */
+/* DataViewer.css */
+
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-/* Ejemplo en un archivo CSS específico, como Header.css */
-.header {
-    font-family: 'Roboto', sans-serif;
-}
 
 :root {
     --deep-blue: #043353;
@@ -19,7 +16,7 @@
 
 .filters-container {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Ajustar columnas automáticamente */
     gap: 10px;
     margin-bottom: 20px;
 }
@@ -41,6 +38,7 @@
     border-radius: 5px;
     padding: 8px 12px;
     font-size: 16px;
+    width: 100%; /* Ancho completo para ocupar todo el espacio */
 }
 
 .apply-filters-button {
@@ -51,6 +49,8 @@
     padding: 8px 16px;
     font-size: 16px;
     cursor: pointer;
+    width: 100%; /* Ancho completo para ocupar todo el espacio */
+    margin-top: 10px; /* Espacio superior */
 }
 
 .data-table {
@@ -81,4 +81,19 @@
     background-color: var(--light-gray);
     padding: 10px;
     border-radius: 5px;
+    text-align: center; /* Centrar el texto del mensaje */
+    margin-top: 10px; /* Espacio superior */
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+    .filters-container {
+        grid-template-columns: 1fr; /* Una columna para dispositivos móviles */
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 6px;
+        font-size: 12px; /* Reduce el tamaño de fuente */
+    }
 }

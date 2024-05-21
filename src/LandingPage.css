@@ -12,7 +12,8 @@
 }
 
 .landing-logo {
-  width: 150px;
+  width: 100%;
+  max-width: 150px; /* Ajustar tamaño máximo del logo */
 }
 
 .landing-content {
@@ -26,29 +27,34 @@
 
 .image-container {
   display: flex;
+  flex-direction: column; /* Cambiar a columna para dispositivos móviles */
   align-items: center;
-  justify-content: space-between;
-  width: 70%; /* Para que las imágenes se alineen a los extremos */
-  padding: 0 10%; /* Ajustar el padding para alinear proporcionalmente */
-  margin-bottom: 80px; /* Agregar espacio entre las imágenes y el botón */
+  justify-content: center;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px; 
 }
 
 .new-logo {
-  width: 400px; /* Disminuir tamaño del logo en un 30% */
+  width: 100%;
+  max-width: 400px; /* Ajustar tamaño máximo del nuevo logo */
+  margin-bottom: 10px; /* Agregar espacio entre el nuevo logo y la imagen del producto */
 }
 
 .landing-product-image {
-  width: 300px;
+  width: 100%;
+  max-width: 300px; /* Ajustar tamaño máximo de la imagen del producto */
 }
 
 .enter-button {
-  padding: 10px 50px;
+  padding: 10px 20px; /* Reducir el padding para dispositivos móviles */
   font-size: 16px;
   cursor: pointer;
   background-color: #6b9fd4;
   color: white;
   border: none;
   border-radius: 5px;
+  margin-top: 20px; /* Agregar margen superior para mejor visualización */
 }
 
 .enter-button:hover {
@@ -69,4 +75,27 @@
 
 .clock {
   margin-right: 10px;
+}
+
+/* Estilos para pantallas pequeñas (móviles) */
+@media (max-width: 768px) {
+  .image-container {
+    flex-direction: column; /* Cambiar a columna para dispositivos móviles */
+    align-items: center;
+    justify-content: center;
+  }
+
+  .new-logo {
+    width: 100%;
+    max-width: 300px; /* Ajustar tamaño máximo del nuevo logo */
+  }
+
+  .landing-product-image {
+    width: 100%;
+    max-width: 200px; /* Ajustar tamaño máximo de la imagen del producto */
+  }
+
+  .enter-button {
+    padding: 10px 15px; /* Reducir el padding para dispositivos móviles */
+  }
 }
