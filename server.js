@@ -1,4 +1,3 @@
-// server.js
 'use strict';
 
 const express = require('express');
@@ -20,9 +19,14 @@ const pool = mysql.createPool({
 });
 
 // Middleware to allow CORS and parse the request body as JSON
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+    origin: 'http://201.189.67.111:3000', // Permitir solicitudes solo desde el dominio público
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 
+app.use(express.json());
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
     const gpsDatas = req.body;
@@ -271,6 +275,6 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
 });
 
 // Start the server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log(`Server running on port ${port}`);
 });
