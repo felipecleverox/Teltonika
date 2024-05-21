@@ -1,6 +1,3 @@
-// server.js
-'use strict';
-
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
@@ -271,6 +268,6 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
 });
 
 // Start the server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log(`Server running on port ${port}`);
 });

@@ -1,13 +1,21 @@
 {
   "files": {
-    "main.css": "/static/css/main.2e662a65.css",
-    "main.js": "/static/js/main.87d94ef7.js",
+    "main.css": "/static/css/main.21c14ed9.css",
+    "main.js": "/static/js/main.4247c38c.js",
+    "static/media/plano_sectores.jpg": "/static/media/plano_sectores.59ca1ae726d1870b21c9.jpg",
+    "static/media/plano_super.jpg": "/static/media/plano_super.d8e7d5680e312b0c765a.jpg",
+    "static/media/plano_super.webp": "/static/media/plano_super.d53a56168d6edeeb3776.webp",
+    "static/media/producto.webp": "/static/media/producto.8c31f13a105f0aae27c4.webp",
+    "static/media/historical_movements.webp": "/static/media/historical_movements.6f8c3f4e88e1a13c389d.webp",
+    "static/media/person_search.webp": "/static/media/person_search.8174aed2cfcf8b64b1bf.webp",
+    "static/media/last_known_position.webp": "/static/media/last_known_position.a05bde96331059335276.webp",
+    "static/media/spritesheet.svg": "/static/media/spritesheet.a4e0eb7ad904a4858361.svg",
     "index.html": "/index.html",
-    "main.2e662a65.css.map": "/static/css/main.2e662a65.css.map",
-    "main.87d94ef7.js.map": "/static/js/main.87d94ef7.js.map"
+    "main.21c14ed9.css.map": "/static/css/main.21c14ed9.css.map",
+    "main.4247c38c.js.map": "/static/js/main.4247c38c.js.map"
   },
   "entrypoints": [
-    "static/css/main.2e662a65.css",
-    "static/js/main.87d94ef7.js"
+    "static/css/main.21c14ed9.css",
+    "static/js/main.4247c38c.js"
   ]
 }

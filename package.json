@@ -11,10 +11,11 @@
   "eslintConfig": {},
   "scripts": {
     "start-server": "node server.js",
-    "start-react": "set NODE_OPTIONS=--openssl-legacy-provider && set PORT=3000 && react-scripts start",
+    "start-react": "react-scripts start",
     "start-all": "concurrently \"npm run start-server\" \"npm run start-react\"",
     "build": "react-scripts build"
-  },
+  }
+  ,
   "keywords": [],
   "license": "ISC",
   "dependencies": {
@@ -36,7 +37,7 @@
     "react-scripts": "^5.0.1",
     "webpack-dev-server": "^5.0.4"
   },
-  "proxy": "http://localhost:1337",
+  "proxy": "http://201.189.67.111:1337",
   "browserslist": {
     "production": [
       ">0.2%",

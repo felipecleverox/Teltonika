@@ -19,7 +19,7 @@ function MapWithQuadrants() {
     useEffect(() => {
         const fetchActiveBeacons = async () => {
             try {
-                const response = await axios.get('http://localhost:1337/api/active-beacons');
+                const response = await axios.get('http://201.189.67.111:1337/api/active-beacons');
                 const activeBeaconIds = response.data.activeBeaconIds || [];
                 setActiveBeacons(activeBeaconIds);
                 updateBeaconLogs(activeBeaconIds);

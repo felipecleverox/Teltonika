@@ -1,4 +1,3 @@
-// BeaconSearch.js
 import React, { useState } from 'react';
 import axios from 'axios';
 import './BeaconSearch.css'; // Crear este archivo CSS según sea necesario
@@ -11,7 +10,7 @@ function BeaconSearch() {
 
     const fetchSearchResults = async () => {
         try {
-            const response = await axios.get('http://localhost:1337/api/beacon-entries-exits', {
+            const response = await axios.get('http://201.189.67.111:1337/api/beacon-entries-exits', {
                 params: {
                     startDate,
                     endDate,
