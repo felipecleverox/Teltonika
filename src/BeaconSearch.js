@@ -10,7 +10,7 @@ function BeaconSearch() {
 
     const fetchSearchResults = async () => {
         try {
-            const response = await axios.get('http://201.189.67.111:1337/api/beacon-entries-exits', {
+            const response = await axios.get('http://thenext.ddns.net:1337/api/beacon-entries-exits', {
                 params: {
                     startDate,
                     endDate,

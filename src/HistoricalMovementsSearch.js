@@ -18,7 +18,7 @@ const HistoricalMovementsSearch = () => {
       const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
       const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
 
-      const response = await axios.get('http://201.189.67.111:1337/api/get-gps-data', {
+      const response = await axios.get('http://thenext.ddns.net:1337/api/get-gps-data', {
         params: {
           startDate: startTimestamp,
           endDate: endTimestamp

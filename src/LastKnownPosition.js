@@ -37,7 +37,7 @@ function LastKnownPosition({ showHeader = true }) {
         const fetchLastKnownPosition = async () => {
             setError(null); // Clear any previous errors
             try {
-                const response = await axios.get('http://201.189.67.111:1337/api/last-known-position');
+                const response = await axios.get('http://thenext.ddns.net:1337/api/last-known-position');
                 if (response.data && response.data.latitude && response.data.longitude) {
                     setPosition({ lat: response.data.latitude, lng: response.data.longitude });
                     setTimestamp(response.data.unixTimestamp); 
