@@ -19,6 +19,7 @@ body {
 .search-parameters input,
 .search-parameters button {
     width: 100%; /* Ajustar el ancho de los elementos al 100% del contenedor */
+    max-width: 300px; /* Limitar el ancho máximo de los elementos */
     margin: 10px 0; /* Añadir márgenes a los elementos */
     padding: 10px;
     font-size: 16px;
