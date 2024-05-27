@@ -17,15 +17,30 @@
 
 .search-parameters {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     margin-bottom: 20px;
 }
 
 .search-parameters input,
 .search-parameters button {
-    margin: 0 10px;
+    width: 100%;
+    max-width: 300px;
+    margin: 10px 0;
     padding: 10px;
     font-size: 16px;
+}
+
+.search-parameters button {
+    background-color: #6b9fd4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.search-parameters button:hover {
+    background-color: #5a9bd4;
 }
 
 .search-results-table {
