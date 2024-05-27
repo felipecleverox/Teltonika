@@ -1,37 +1,36 @@
-/* src/Header.css */
+/* Header.css */
+/* Ejemplo en un archivo CSS específico, como Header.css */
 .header {
   font-family: 'Roboto', sans-serif;
 }
 
 .header {
-  background-color: #6b9fd4;
-  padding: 10px 20px;
-}
-
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-left,
-.header-center,
-.header-right {
-  display: flex;
-  align-items: center;
-}
-
-.header-logo {
-  height: 40px;
-  margin-right: 20px;
-}
-
-.header-title {
-  font-size: 24px;
-  color: #fff;
-}
-
-.header-right {
-  font-size: 18px;
-  color: #fff;
-}
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #6b9fd4;
+    padding: 10px 20px;
+  }
+  
+  .header-left,
+  .header-center,
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+  
+  .header-logo {
+    height: 40px;
+    margin-right: 20px;
+  }
+  
+  .header-title {
+    font-size: 24px;
+    color: #fff;
+  }
+  
+  .header-right {
+    font-size: 18px;
+    color: #fff;
+  }
+  

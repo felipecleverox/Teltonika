@@ -31,6 +31,13 @@ app.post('/gps-data', async (req, res) => {
             const beacons = gpsData['ble.beacons'] || [];
             console.log('Beacons:', JSON.stringify(beacons, null, 2));  // Añadir log para ver los beacons
 
+            const beaconExists = beacons.some(beacon => beacon.id === "0C403019-61C7-55AA-B7EA-DAC30C720055");
+            if (beaconExists) {
+                console.log('Beacon 0C403019-61C7-55AA-B7EA-DAC30C720055 found!');
+            } else {
+                console.log('Beacon 0C403019-61C7-55AA-B7EA-DAC30C720055 not found!');
+            }
+
             const result = await pool.query(
                 'INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_enum, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
