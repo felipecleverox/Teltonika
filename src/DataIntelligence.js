@@ -43,8 +43,8 @@ const DataIntelligence = () => {
         results = response.data.map(record => ({
           beaconId: record.beaconId,
           sector: record.sector,
-          entrada: record.entrada * 1000, // Convertir a milisegundos
-          salida: record.salida ? record.salida * 1000 : null, // Convertir a milisegundos
+          entrada: record.entrada ,//* 1000, // Convertir a milisegundos
+          salida: record.salida ? record.salida : null, //* 1000 : null, // Convertir a milisegundos
           tiempoPermanencia: record.tiempoPermanencia,
         }));
       } else {
@@ -66,12 +66,16 @@ const DataIntelligence = () => {
   };
 
   const formatDate = (timestamp, format = 'full') => {
+   // if (!timestamp) return 'N/A';
+    //const date = new Date(timestamp);
+    //if (format === 'time') {
+      //return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    //}
+    //return date.toLocaleDateString([], { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    //return date.toGMTString();
     if (!timestamp) return 'N/A';
     const date = new Date(timestamp);
-    if (format === 'time') {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    return date.toLocaleDateString([], { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+     return date.toLocaleDateString([], { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   const formatDuration = (durationInMillis) => {
@@ -131,6 +135,7 @@ const DataIntelligence = () => {
     link.click();
     document.body.removeChild(link);
   };
+  
 
   return (
     <div className="data-intelligence">
@@ -213,6 +218,7 @@ const DataIntelligence = () => {
             <tbody>
               {searchResults.map((result, index) => (
                 <tr key={index}>
+                    
                   {selectedOption === 'interior' ? <td>{result.sector}</td> : <td>{formatDate(result.timestamp)}</td>}
                   {selectedOption === 'interior' ? <td>{formatDate(result.entrada)}</td> : null}
                   {selectedOption === 'interior' ? <td>{result.salida ? formatDate(result.salida, 'time') : 'N/A'}</td> : null}
