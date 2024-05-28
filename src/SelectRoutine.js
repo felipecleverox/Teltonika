@@ -5,6 +5,7 @@ import lastKnownPositionImage from './assets/images/last_known_position.webp';
 import interiorLocationsImage from './assets/images/plano_super.webp';
 import personSearchImage from './assets/images/person_search.webp';
 import historicalMovementsImage from './assets/images/historical_movements.webp';
+import dataIntelligenceImage from './assets/images/data_intelligence.png'; // Añadir imagen para "Inteligencia de Datos"
 import Header from './Header'; // Importar el componente Header
 
 const SelectRoutine = () => {
@@ -56,6 +57,18 @@ const SelectRoutine = () => {
               onClick={() => navigate('/consulta-historica-movimientos')} 
             />
             <button onClick={() => navigate('/consulta-historica-movimientos')} className="routine-button">Ir a la App</button>
+          </div>
+        </div>
+        <div className="routine-row second-row"> {/* Nueva fila para Inteligencia de Datos */}
+          <div className="routine-sector">
+            <div className="routine-title">Inteligencia de Datos</div>
+            <img 
+              src={dataIntelligenceImage} 
+              alt="Inteligencia de Datos" 
+              className="routine-image" 
+              onClick={() => navigate('/inteligencia-de-datos')} 
+            />
+            <button onClick={() => navigate('/inteligencia-de-datos')} className="routine-button">Ir a la App</button>
           </div>
         </div>
       </div>

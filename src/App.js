@@ -6,6 +6,7 @@ import PersonSearch from './PersonSearch';
 import LandingPage from './LandingPage';
 import SelectRoutine from './SelectRoutine'; 
 import HistoricalMovementsSearch from './HistoricalMovementsSearch';
+import DataIntelligence from './DataIntelligence'; // Importar el nuevo componente
 import Header from './Header'; // Importar el componente Header
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Route path="/ubicaciones-interior" element={<MapWithQuadrants />} />
         <Route path="/busqueda-entradas-persona" element={<PersonSearch />} />
         <Route path="/consulta-historica-movimientos" element={<HistoricalMovementsSearch />} />
+        <Route path="/inteligencia-de-datos" element={<DataIntelligence />} /> {/* Nueva ruta */}
       </Routes>
     </Router>
   );
