@@ -147,7 +147,7 @@ app.get('/api/active-beacons', async (req, res) => {
     }
 });
 
-// Nuevo endpoint para buscar entradas y salidas de beacons para "Personal 3"
+// Endpoint para buscar entradas y salidas de beacons para "Personal 3"
 app.get('/api/beacon-entries-exits', async (req, res) => {
     const { startDate, endDate, person } = req.query;
 
@@ -175,87 +175,32 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
         let entryTimestamp = null;
 
         results.forEach(record => {
-            const beacons = JSON.parse(record.ble_beacons);
-            beacons.forEach(beacon => {
-                if (beacon.id === '0C403019-61C7-55AA-B7EA-DAC30C720055') {
-                    if (currentBeacon !== 'Oficina Seguridad (NOC)') {
-                        if (currentBeacon !== null) {
-                            processedResults.push({
-                                beaconId: '0C403019-61C7-55AA-B7EA-DAC30C720055',
-                                sector: 'Oficina Seguridad (NOC)',
-                                entrada: entryTimestamp,
-                                salida: record.timestamp * 1000
-                            });
-                        }
-                        currentBeacon = 'Oficina Seguridad (NOC)';
-                        entryTimestamp = record.timestamp * 1000;
+            const beacons = JSON.parse(record.ble_beacons || '[]');
+            if (beacons.length > 0) {
+                const beacon = beacons[0]; // Asumimos un solo beacon por simplicidad
+                if (currentBeacon === null || beacon.id !== currentBeacon.id) {
+                    if (currentBeacon !== null) {
+                        processedResults.push({
+                            beaconId: currentBeacon.id,
+                            sector: getSector(currentBeacon.id),
+                            entrada: entryTimestamp,
+                            salida: record.timestamp * 1000,
+                            tiempoPermanencia: record.timestamp * 1000 - entryTimestamp,
+                        });
                     }
-                } else if (beacon.id === 'E9EB8F18-61C7-55AA-9496-3AC30C720055') {
-                    if (currentBeacon !== 'E/S Bodega') {
-                        if (currentBeacon !== null) {
-                            processedResults.push({
-                                beaconId: 'E9EB8F18-61C7-55AA-9496-3AC30C720055',
-                                sector: 'E/S Bodega',
-                                entrada: entryTimestamp,
-                                salida: record.timestamp * 1000
-                            });
-                        }
-                        currentBeacon = 'E/S Bodega';
-                        entryTimestamp = record.timestamp * 1000;
-                    }
-                } else if (beacon.id === 'F7826DA6-BC5B-71E0-893E-4B484D67696F') {
-                    if (currentBeacon !== 'Entrada') {
-                        if (currentBeacon !== null) {
-                            processedResults.push({
-                                beaconId: 'F7826DA6-BC5B-71E0-893E-4B484D67696F',
-                                sector: 'Entrada',
-                                entrada: entryTimestamp,
-                                salida: record.timestamp * 1000
-                            });
-                        }
-                        currentBeacon = 'Entrada';
-                        entryTimestamp = record.timestamp * 1000;
-                    }
-                } else if (beacon.id === 'F7826DA6-BC5B-71E0-893E-6D424369696F') {
-                    if (currentBeacon !== 'Pasillo Central') {
-                        if (currentBeacon !== null) {
-                            processedResults.push({
-                                beaconId: 'F7826DA6-BC5B-71E0-893E-6D424369696F',
-                                sector: 'Pasillo Central',
-                                entrada: entryTimestamp,
-                                salida: record.timestamp * 1000
-                            });
-                        }
-                        currentBeacon = 'Pasillo Central';
-                        entryTimestamp = record.timestamp * 1000;
-                    }
-                } else if (beacon.id === 'F7826DA6-BC5B-71E0-893E-54654370696F') {
-                    if (currentBeacon !== 'Electro') {
-                        if (currentBeacon !== null) {
-                            processedResults.push({
-                                beaconId: 'F7826DA6-BC5B-71E0-893E-54654370696F',
-                                sector: 'Electro',
-                                entrada: entryTimestamp,
-                                salida: record.timestamp * 1000
-                            });
-                        }
-                        currentBeacon = 'Electro';
-                        entryTimestamp = record.timestamp * 1000;
-                    }
+                    currentBeacon = beacon;
+                    entryTimestamp = record.timestamp * 1000;
                 }
-            });
+            }
         });
 
         if (currentBeacon !== null) {
             processedResults.push({
-                beaconId: currentBeacon === 'Oficina Seguridad (NOC)' ? '0C403019-61C7-55AA-B7EA-DAC30C720055' : 
-                          currentBeacon === 'E/S Bodega' ? 'E9EB8F18-61C7-55AA-9496-3AC30C720055' :
-                          currentBeacon === 'Entrada' ? 'F7826DA6-BC5B-71E0-893E-4B484D67696F' :
-                          currentBeacon === 'Pasillo Central' ? 'F7826DA6-BC5B-71E0-893E-6D424369696F' :
-                          'F7826DA6-BC5B-71E0-893E-54654370696F',
-                sector: currentBeacon,
+                beaconId: currentBeacon.id,
+                sector: getSector(currentBeacon.id),
                 entrada: entryTimestamp,
-                salida: null // Actualmente no hay salida
+                salida: null,
+                tiempoPermanencia: 'En progreso',
             });
         }
 
@@ -266,6 +211,24 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+// Helper function to get sector by beacon ID
+const getSector = (beaconId) => {
+    switch (beaconId) {
+        case '0C403019-61C7-55AA-B7EA-DAC30C720055':
+            return 'E/S Bodega';
+        case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
+            return 'Farmacia';
+        case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
+            return 'Entrada';
+        case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
+            return 'Pasillo Central';
+        case 'F7826DA6-BC5B-71E0-893E-54654370696F':
+            return 'Electro';
+        default:
+            return 'Unknown';
+    }
+};
 
 // Start the server
 app.listen(port, '0.0.0.0', () => {

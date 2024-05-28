@@ -25,8 +25,8 @@ const DataIntelligence = () => {
     setIsSearching(true);
     setError(null);
     try {
-      const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
-      const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
+      const startTimestamp = new Date(startDate).getTime();
+      const endTimestamp = new Date(endDate).getTime();
 
       const url = selectedOption === 'interior'
         ? 'http://thenext.ddns.net:1337/api/beacon-entries-exits'
@@ -34,20 +34,28 @@ const DataIntelligence = () => {
 
       const params = selectedOption === 'interior'
         ? { startDate, endDate, person: '352592573522828 (autocreated)' }
-        : { startDate: startTimestamp, endDate: endTimestamp };
+        : { startDate: startTimestamp / 1000, endDate: endTimestamp / 1000 };
 
       const response = await axios.get(url, { params });
 
-      const results = selectedOption === 'interior'
-        ? response.data.map(item => ({
-            ...item,
-            timestamp: item.entrada / 1000,
-          }))
-        : response.data.map(item => ({
-            latitude: parseFloat(item.latitude),
-            longitude: parseFloat(item.longitude),
-            timestamp: item.unixTimestamp,
-          }));
+      let results = [];
+      if (selectedOption === 'interior') {
+        results = response.data.map(record => ({
+          beaconId: record.beaconId,
+          sector: record.sector,
+          entrada: record.entrada * 1000, // Convertir a milisegundos
+          salida: record.salida ? record.salida * 1000 : null, // Convertir a milisegundos
+          tiempoPermanencia: record.tiempoPermanencia,
+        }));
+      } else {
+        results = response.data.map(item => ({
+          latitude: parseFloat(item.latitude),
+          longitude: parseFloat(item.longitude),
+          timestamp: item.unixTimestamp * 1000, // Convertir a milisegundos
+        }));
+      }
+
+      console.log("Search Results:", results); // Verificar los resultados recibidos
 
       setSearchResults(results);
     } catch (error) {
@@ -57,28 +65,55 @@ const DataIntelligence = () => {
     }
   };
 
-  const formatDate = (timestamp) => {
+  const formatDate = (timestamp, format = 'full') => {
     if (!timestamp) return 'N/A';
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    const date = new Date(timestamp);
+    if (format === 'time') {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return date.toLocaleDateString([], { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
+  const formatDuration = (durationInMillis) => {
+    if (durationInMillis === 'En progreso') return 'En progreso';
+    const totalMinutes = Math.floor(durationInMillis / 1000 / 60);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours}h ${minutes}m`;
+  };
+
+  const getSector = (beaconId) => {
+    switch (beaconId) {
+      case '0C403019-61C7-55AA-B7EA-DAC30C720055':
+        return 'E/S Bodega';
+      case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
+        return 'Farmacia';
+      case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
+        return 'Entrada';
+      case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
+        return 'Pasillo Central';
+      case 'F7826DA6-BC5B-71E0-893E-54654370696F':
+        return 'Electro';
+      default:
+        return 'Unknown';
+    }
   };
 
   const downloadCSV = () => {
     const headers = selectedOption === 'interior'
-      ? ['Fecha', 'Hora', 'Sector', 'Entrada']
-      : ['Fecha', 'Hora', 'Latitud', 'Longitud'];
+      ? ['Sector', 'Fecha y Hora de Entrada', 'Fecha y Hora de Salida', 'Tiempo de Permanencia']
+      : ['Fecha y Hora GPS', 'Latitud', 'Longitud'];
 
     const rows = searchResults.map(item => (
       selectedOption === 'interior'
         ? [
-            formatDate(item.timestamp).split(' ')[0],
-            formatDate(item.timestamp).split(' ')[1],
             item.sector,
-            formatDate(item.entrada / 1000),
+            formatDate(item.entrada),
+            item.salida ? formatDate(item.salida, 'time') : 'N/A',
+            formatDuration(item.tiempoPermanencia),
           ]
         : [
-            formatDate(item.timestamp).split(' ')[0],
-            formatDate(item.timestamp).split(' ')[1],
+            formatDate(item.timestamp),
             item.latitude,
             item.longitude,
           ]
@@ -168,20 +203,20 @@ const DataIntelligence = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
-                {selectedOption === 'interior' ? <th>Sector</th> : null}
-                {selectedOption === 'exterior' ? <th>Latitud</th> : null}
+                {selectedOption === 'interior' ? <th>Sector</th> : <th>Fecha y Hora GPS</th>}
+                {selectedOption === 'interior' ? <th>Fecha y Hora de Entrada</th> : null}
+                {selectedOption === 'interior' ? <th>Fecha y Hora de Salida</th> : null}
+                {selectedOption === 'interior' ? <th>Tiempo de Permanencia</th> : <th>Latitud</th>}
                 {selectedOption === 'exterior' ? <th>Longitud</th> : null}
               </tr>
             </thead>
             <tbody>
               {searchResults.map((result, index) => (
                 <tr key={index}>
-                  <td>{formatDate(result.timestamp).split(' ')[0]}</td>
-                  <td>{formatDate(result.timestamp).split(' ')[1]}</td>
-                  {selectedOption === 'interior' ? <td>{result.sector}</td> : null}
-                  {selectedOption === 'exterior' ? <td>{result.latitude}</td> : null}
+                  {selectedOption === 'interior' ? <td>{result.sector}</td> : <td>{formatDate(result.timestamp)}</td>}
+                  {selectedOption === 'interior' ? <td>{formatDate(result.entrada)}</td> : null}
+                  {selectedOption === 'interior' ? <td>{result.salida ? formatDate(result.salida, 'time') : 'N/A'}</td> : null}
+                  {selectedOption === 'interior' ? <td>{formatDuration(result.tiempoPermanencia)}</td> : <td>{result.latitude}</td>}
                   {selectedOption === 'exterior' ? <td>{result.longitude}</td> : null}
                 </tr>
               ))}
