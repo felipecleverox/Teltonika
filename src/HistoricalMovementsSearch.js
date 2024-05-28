@@ -43,6 +43,28 @@ const HistoricalMovementsSearch = () => {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
 
+  const downloadCSV = () => {
+    const headers = ['Fecha', 'Hora', 'Latitud', 'Longitud'];
+    const rows = pathCoordinates.map(item => [
+      formatDate(item.timestamp).split(' ')[0],
+      formatDate(item.timestamp).split(' ')[1],
+      item.latitude,
+      item.longitude
+    ]);
+
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `historical_movements_${startDate}_${endDate}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div>
       <Header title="Consulta Histórica de Movimientos en Exterior" />
@@ -60,7 +82,8 @@ const HistoricalMovementsSearch = () => {
           onChange={e => setEndDate(e.target.value)}
           placeholder="End Date and Time"
         />
-        <button onClick={handleSearch}>Search</button>
+        <button onClick={handleSearch}>Buscar</button>
+        <button onClick={downloadCSV}>Descargar Resultados</button>
         {historicalDataError && <div className="error-message">Error: {historicalDataError}</div>}
       </div>
       <div className="map-container">

@@ -49,6 +49,27 @@ function PersonSearch() {
         }
     };
 
+    const downloadCSV = () => {
+        const headers = ['Personal', 'Sector', 'Entrada'];
+        const rows = searchResults.map(result => [
+            'Personal 3', // Assuming the icon represents "Personal 3"
+            getSector(result.beaconId).props.children, // Extract the sector text
+            formatDate(result.entrada)
+        ]);
+
+        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `historical_movements_${startDate}_${endDate}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="person-search">
             <Header title="Busqueda Histórica Ubicación Interiores" />
@@ -69,6 +90,7 @@ function PersonSearch() {
                     placeholder="Fecha y hora de fin"
                 />
                 <button onClick={fetchSearchResults}>Buscar</button>
+                <button onClick={downloadCSV}>Descargar Resultados</button>
             </div>
             <table className="search-results-table">
                 <thead>
