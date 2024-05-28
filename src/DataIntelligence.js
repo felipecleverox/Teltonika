@@ -11,8 +11,18 @@ const DataIntelligence = () => {
   const [endDate, setEndDate] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [error, setError] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleOptionSelect = (option) => {
+    setSelectedOption(option);
+    setStartDate('');
+    setEndDate('');
+    setSearchResults([]);
+    setError(null);
+  };
 
   const handleSearch = async () => {
+    setIsSearching(true);
     setError(null);
     try {
       const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
@@ -42,6 +52,8 @@ const DataIntelligence = () => {
       setSearchResults(results);
     } catch (error) {
       setError(error.message);
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -96,9 +108,15 @@ const DataIntelligence = () => {
               src={interiorSearchImage}
               alt="Búsqueda de Datos de Interiores"
               className="routine-image"
-              onClick={() => setSelectedOption('interior')}
+              onClick={() => handleOptionSelect('interior')}
             />
-            <button onClick={() => setSelectedOption('interior')} className="routine-button">Seleccionar</button>
+            <button
+              onClick={() => handleOptionSelect('interior')}
+              className="routine-button"
+              disabled={isSearching && selectedOption !== 'interior'}
+            >
+              Seleccionar
+            </button>
           </div>
           <div className="routine-sector">
             <div className="routine-title">Búsqueda de Datos de Exteriores</div>
@@ -106,30 +124,43 @@ const DataIntelligence = () => {
               src={exteriorSearchImage}
               alt="Búsqueda de Datos de Exteriores"
               className="routine-image"
-              onClick={() => setSelectedOption('exterior')}
+              onClick={() => handleOptionSelect('exterior')}
             />
-            <button onClick={() => setSelectedOption('exterior')} className="routine-button">Seleccionar</button>
+            <button
+              onClick={() => handleOptionSelect('exterior')}
+              className="routine-button"
+              disabled={isSearching && selectedOption !== 'exterior'}
+            >
+              Seleccionar
+            </button>
           </div>
         </div>
       </div>
       {selectedOption && (
-        <div className="search-parameters">
-          <input
-            type="datetime-local"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-            placeholder="Fecha y hora de inicio"
-          />
-          <input
-            type="datetime-local"
-            value={endDate}
-            onChange={e => setEndDate(e.target.value)}
-            placeholder="Fecha y hora de fin"
-          />
-          <button onClick={handleSearch}>Buscar</button>
-          <button onClick={downloadCSV}>Descargar Resultados</button>
-          {error && <div className="error-message">Error: {error}</div>}
-        </div>
+        <>
+          <div className="selected-option-message">
+            Ha seleccionado {selectedOption === 'interior' ? 'Búsqueda de Datos de Interiores' : 'Búsqueda de Datos de Exteriores'}
+          </div>
+          <div className="search-parameters">
+            <input
+              type="datetime-local"
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
+              placeholder="Fecha y hora de inicio"
+            />
+            <input
+              type="datetime-local"
+              value={endDate}
+              onChange={e => setEndDate(e.target.value)}
+              placeholder="Fecha y hora de fin"
+            />
+            <button onClick={handleSearch} disabled={isSearching}>Buscar</button>
+            <button onClick={downloadCSV} disabled={isSearching || searchResults.length === 0} style={{ backgroundColor: isSearching || searchResults.length === 0 ? '#d3d3d3' : '#28a745' }}>
+              Descargar Resultados
+            </button>
+            {error && <div className="error-message">Error: {error}</div>}
+          </div>
+        </>
       )}
       {searchResults.length > 0 && (
         <div className="data-table-container">
@@ -142,7 +173,6 @@ const DataIntelligence = () => {
                 {selectedOption === 'interior' ? <th>Sector</th> : null}
                 {selectedOption === 'exterior' ? <th>Latitud</th> : null}
                 {selectedOption === 'exterior' ? <th>Longitud</th> : null}
-                <th>Entrada</th>
               </tr>
             </thead>
             <tbody>
@@ -153,7 +183,6 @@ const DataIntelligence = () => {
                   {selectedOption === 'interior' ? <td>{result.sector}</td> : null}
                   {selectedOption === 'exterior' ? <td>{result.latitude}</td> : null}
                   {selectedOption === 'exterior' ? <td>{result.longitude}</td> : null}
-                  <td>{selectedOption === 'interior' ? formatDate(result.entrada / 1000) : 'N/A'}</td>
                 </tr>
               ))}
             </tbody>

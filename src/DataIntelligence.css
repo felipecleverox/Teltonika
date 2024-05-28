@@ -50,8 +50,9 @@
     margin-top: 10px;
   }
   
-  .routine-button:hover {
-    background-color: #6b9fd4;
+  .routine-button:disabled {
+    background-color: #d3d3d3;
+    cursor: not-allowed;
   }
   
   .search-parameters {
@@ -74,8 +75,15 @@
     cursor: pointer;
   }
   
-  .search-parameters button:hover {
-    background-color: #218838;
+  .search-parameters button:disabled {
+    background-color: #d3d3d3;
+    cursor: not-allowed;
+  }
+  
+  .selected-option-message {
+    margin-top: 20px;
+    font-size: 1.2em;
+    font-weight: bold;
   }
   
   .error-message {
