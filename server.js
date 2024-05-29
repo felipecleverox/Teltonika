@@ -1,3 +1,5 @@
+// server.js
+
 // Import necessary libraries
 const express = require('express');
 const cors = require('cors');
@@ -322,6 +324,90 @@ app.get('/api/oldest-active-beacon-detections', async (req, res) => {
     } catch (error) {
         console.error('Error fetching oldest beacon detections:', error); // Log any error that occurred during the query execution
         res.status(500).send('Server Error'); // Send a 500 status code and an error message to the client
+    }
+});
+
+// Endpoint para obtener la lista de sectores
+app.get('/api/sectores', async (req, res) => {
+    try {
+        const [results] = await pool.query('SELECT * FROM sectores');
+        res.json(results);
+    } catch (error) {
+        console.error('Error fetching sectors:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Endpoint para obtener la configuración
+app.get('/api/configuracion', async (req, res) => {
+    try {
+        const [results] = await pool.query('SELECT * FROM configuracion');
+        res.json(results);
+    } catch (error) {
+        console.error('Error fetching configuration:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Endpoint para actualizar la configuración
+app.post('/api/configuracion', async (req, res) => {
+    const configuraciones = req.body; // Array de configuraciones
+
+    try {
+        // Eliminar configuraciones existentes
+        await pool.query('TRUNCATE TABLE configuracion');
+
+        // Insertar nuevas configuraciones
+        for (const config of configuraciones) {
+            await pool.query(
+                'INSERT INTO configuracion (beacon_id, min_tiempo_permanencia, max_tiempo_permanencia, umbral_verde, umbral_amarillo, umbral_rojo) VALUES (?, ?, ?, ?, ?, ?)',
+                [
+                    config.beacon_id,
+                    config.min_tiempo_permanencia,
+                    config.max_tiempo_permanencia,
+                    config.umbral_verde,
+                    config.umbral_amarillo,
+                    config.umbral_rojo
+                ]
+            );
+        }
+
+        res.sendStatus(200);
+    } catch (error) {
+        console.error('Error updating configuration:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Endpoint para obtener los umbrales
+app.get('/api/umbrales', async (req, res) => {
+    try {
+        const [results] = await pool.query('SELECT * FROM umbrales LIMIT 1');
+        res.json(results[0]);
+    } catch (error) {
+        console.error('Error fetching thresholds:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Endpoint para actualizar los umbrales
+app.post('/api/umbrales', async (req, res) => {
+    const { umbral_verde, umbral_amarillo, umbral_rojo } = req.body;
+
+    try {
+        // Eliminar umbrales existentes
+        await pool.query('TRUNCATE TABLE umbrales');
+
+        // Insertar nuevos umbrales
+        await pool.query(
+            'INSERT INTO umbrales (umbral_verde, umbral_amarillo, umbral_rojo) VALUES (?, ?, ?)',
+            [umbral_verde, umbral_amarillo, umbral_rojo]
+        );
+
+        res.sendStatus(200);
+    } catch (error) {
+        console.error('Error updating thresholds:', error);
+        res.status(500).send('Server Error');
     }
 });
 

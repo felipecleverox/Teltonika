@@ -1,3 +1,4 @@
+// SelectRoutine.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './SelectRoutine.css';
@@ -5,96 +6,94 @@ import lastKnownPositionImage from './assets/images/last_known_position.webp';
 import interiorLocationsImage from './assets/images/plano_super.webp';
 import personSearchImage from './assets/images/person_search.webp';
 import historicalMovementsImage from './assets/images/historical_movements.webp';
-import dataIntelligenceImage from './assets/images/data_intelligence.png'; // Add image for "Inteligencia de Datos"
-import Header from './Header'; // Import the Header component
+import dataIntelligenceImage from './assets/images/data_intelligence.png'; 
+import configurationImage from './assets/images/configuration.png'; // Add image for "Configuración"
+import Header from './Header'; 
 
 const SelectRoutine = () => {
-  // Use the useNavigate hook to navigate to different routes
   const navigate = useNavigate();
 
   return (
     <div className="select-routine">
-      {/* Display the Header component with the title "Dashboard TN Track" */}
       <Header title="Dashboard TN Track" /> 
 
-      {/* Display the different routine options */}
       <div className="routine-sectors">
         <div className="routine-row">
-          {/* First row of routine options */}
           <div className="routine-sector">
             <div className="routine-title">Ubicación Interiores Tiempo Real</div>
-            {/* Image for "Ubicación Interiores Tiempo Real" */}
             <img 
               src={interiorLocationsImage} 
               alt="Ubicación Interiores Tiempo Real" 
               className="routine-image" 
               onClick={() => navigate('/ubicaciones-interior')} 
             />
-            {/* Button to navigate to the corresponding route */}
             <button onClick={() => navigate('/ubicaciones-interior')} className="routine-button">Ir a la App</button>
           </div>
           <div className="routine-sector">
             <div className="routine-title">Busqueda  Ubicación Interiores</div>
-            {/* Image for "Busqueda Histórica Ubicación Interiores" */}
             <img 
               src={personSearchImage} 
               alt="Busqueda Histórica Ubicación Interiores" 
               className="routine-image" 
               onClick={() => navigate('/busqueda-entradas-persona')} 
             />
-            {/* Button to navigate to the corresponding route */}
             <button onClick={() => navigate('/busqueda-entradas-persona')} className="routine-button">Ir a la App</button>
           </div>
         </div>
         <div className="routine-row second-row">
-          {/* Second row of routine options */}
           <div className="routine-sector">
             <div className="routine-title">Ubicación Exteriores Tiempo Real</div>
-            {/* Image for "Ubicación Exteriores Tiempo Real" */}
             <img 
               src={lastKnownPositionImage} 
               alt="Ubicación Exteriores Tiempo Real" 
               className="routine-image" 
               onClick={() => navigate('/last-known-position')} 
             />
-            {/* Button to navigate to the corresponding route */}
             <button onClick={() => navigate('/last-known-position')} className="routine-button">Ir a la App</button>
           </div>
           <div className="routine-sector">
             <div className="routine-title">Busqueda  Ubicación Exteriores</div>
-            {/* Image for "Busqueda Histórica Ubicación Exteriores" */}
             <img 
               src={historicalMovementsImage} 
               alt="Busqueda Histórica Ubicación Exteriores" 
               className="routine-image" 
               onClick={() => navigate('/consulta-historica-movimientos')} 
             />
-            {/* Button to navigate to the corresponding route */}
             <button onClick={() => navigate('/consulta-historica-movimientos')} className="routine-button">Ir a la App</button>
           </div>
         </div>
-        <div className="routine-row second-row"> {/* New row for Data Intelligence */}
+        <div className="routine-row second-row"> 
           <div className="routine-sector">
             <div className="routine-title">Inteligencia de Datos</div>
-            {/* Image for "Inteligencia de Datos" */}
             <img 
               src={dataIntelligenceImage} 
               alt="Inteligencia de Datos" 
               className="routine-image" 
               onClick={() => navigate('/inteligencia-de-datos')} 
             />
-            {/* Button to navigate to the corresponding route */}
             <button onClick={() => navigate('/inteligencia-de-datos')} className="routine-button">Ir a la App</button>
           </div>
         </div>
+        <div className="routine-row second-row"> {/* New row for Configuration */}
+          <div className="routine-sector">
+            <div className="routine-title">Configuración</div>
+            <img 
+              src={configurationImage} 
+              alt="Configuración" 
+              className="routine-image" 
+              onClick={() => navigate('/configuracion')} 
+            />
+            <button onClick={() => navigate('/configuracion')} className="routine-button">Ir a la App</button>
+          </div>
+        </div>
       </div>
-      {/* Button to go back to the LandingPage */}
       <button className="back-button" onClick={() => navigate('/')}>Volver a la Página Principal</button> 
     </div>
   );
 };
 
 export default SelectRoutine;
+
 /*
 Explanation of Comments:
 useNavigate hook:
