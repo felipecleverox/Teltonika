@@ -40,3 +40,20 @@ function App() {
 }
 
 export default App;
+/*
+Explanation of Comments:
+Each Route component defines a path and the corresponding component that should be rendered when that path is visited.
+The comments provide a brief explanation of the purpose of each route and the corresponding component.
+The DataIntelligence component is imported and assigned a route to allow accessing the data intelligence features.
+The Header component is imported but not used directly within App.js. It's likely being used in other components to display a common header across the application.
+Summary:
+This App.js file sets up the basic routing structure for the application, defining paths for each of the main functionalities:
+Landing page: /
+Select routine: /select-routine
+Last known position: /last-known-position
+Interior locations: /ubicaciones-interior
+Person search: /busqueda-entradas-persona
+Historical movements: /consulta-historica-movimientos
+Data intelligence: /inteligencia-de-datos
+This file ensures that the correct components are rendered based on the URL path visited by the user.
+*/
