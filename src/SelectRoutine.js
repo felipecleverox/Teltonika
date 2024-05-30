@@ -15,7 +15,7 @@ import configurationImage from './assets/images/configuration.png';
 const routines = [
   { title: "Ubicación Interiores On-line", image: lastKnownPositionImage, route: "/ubicaciones-interior" },
   { title: "Búsqueda Ubicación Interiores", image: personSearchImage, route: "/busqueda-entradas-persona" },
-  { title: "Ubicación Exteriores O-line", image: interiorLocationsImage, route: "/last-known-position" },
+  { title: "Ubicación Exteriores On-line", image: interiorLocationsImage, route: "/last-known-position" },
   { title: "Búsqueda Ubicación Exteriores", image: historicalMovementsImage, route: "/consulta-historica-movimientos" },
   { title: "Inteligencia de Datos", image: dataIntelligenceImage, route: "/inteligencia-de-datos" },
   { title: "Configuración", image: configurationImage, route: "/configuracion" },
@@ -26,7 +26,7 @@ const SelectRoutine = () => {
 
   return (
     <div className="select-routine">
-      <Header title="Dashboard TN Track" /> {/* Título de la página */}
+      <Header title="Dashboard TN Track" />
       <div className="routine-cards">
         {routines.map((routine, index) => (
           <div className="routine-card" key={index} onClick={() => navigate(routine.route)}>

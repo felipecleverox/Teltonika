@@ -410,6 +410,113 @@ app.post('/api/umbrales', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+// server.js
+
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+
+// Endpoint for user registration
+app.post('/api/register', async (req, res) => {
+    const { username, password, email } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    try {
+        const [existingUser] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+        if (existingUser.length > 0) {
+            return res.status(400).send('Username already exists');
+        }
+
+        await pool.query('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', [username, hashedPassword, email]);
+        res.sendStatus(201);
+    } catch (error) {
+        console.error('Error registering user:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Endpoint for user login
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        const [user] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+        if (user.length === 0) {
+            return res.status(400).send('Invalid username or password');
+        }
+
+        const validPassword = await bcrypt.compare(password, user[0].password);
+        if (!validPassword) {
+            return res.status(400).send('Invalid username or password');
+        }
+
+        const token = jwt.sign({ userId: user[0].id }, 'your_jwt_secret', { expiresIn: '1h' });
+        res.json({ token });
+    } catch (error) {
+        console.error('Error logging in user:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Endpoint for password reset request
+app.post('/api/request-password-reset', async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const [user] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (user.length === 0) {
+            return res.status(400).send('User with this email does not exist');
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
+
+        await pool.query('UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE email = ?', [resetToken, resetTokenExpiry, email]);
+
+        const transporter = nodemailer.createTransport({
+            service: 'Gmail',
+            auth: {
+                user: 'your_email@gmail.com',
+                pass: 'your_email_password',
+            },
+        });
+
+        const mailOptions = {
+            from: 'your_email@gmail.com',
+            to: email,
+            subject: 'Password Reset',
+            text: `You requested for a password reset. Use this token to reset your password: ${resetToken}`,
+        };
+
+        transporter.sendMail(mailOptions);
+
+        res.send('Password reset email sent');
+    } catch (error) {
+        console.error('Error requesting password reset:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Endpoint for resetting the password
+app.post('/api/reset-password', async (req, res) => {
+    const { token, newPassword } = req.body;
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    try {
+        const [user] = await pool.query('SELECT * FROM users WHERE resetToken = ? AND resetTokenExpiry > ?', [token, Date.now()]);
+        if (user.length === 0) {
+            return res.status(400).send('Invalid or expired token');
+        }
+
+        await pool.query('UPDATE users SET password = ?, resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?', [hashedPassword, user[0].id]);
+
+        res.send('Password reset successful');
+    } catch (error) {
+        console.error('Error resetting password:', error);
+        res.status(500).send('Server Error');
+    }
+});
 
 // Start the Express server and listen on the specified port
 app.listen(port, '0.0.0.0', () => {
