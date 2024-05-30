@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './PersonSearch.css';
 import personal3Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png';
@@ -6,17 +6,25 @@ import planoSectores from './assets/images/plano_sectores.jpg'; // Ensure this p
 import Header from './Header'; // Import the new header component
 
 function PersonSearch() {
-    // State to store the start date and time
     const [startDate, setStartDate] = useState('');
-    // State to store the end date and time
     const [endDate, setEndDate] = useState('');
-    // State to store the search results
     const [searchResults, setSearchResults] = useState([]);
+    const [umbrales, setUmbrales] = useState({});
 
-    // Function to fetch the search results from the server
+    useEffect(() => {
+        const fetchThresholds = async () => {
+            try {
+                const response = await axios.get('/api/umbrales');
+                setUmbrales(response.data);
+            } catch (error) {
+                console.error('Error fetching thresholds:', error);
+            }
+        };
+        fetchThresholds();
+    }, []);
+
     const fetchSearchResults = async () => {
         try {
-            // Make a GET request to the API endpoint with the search parameters
             const response = await axios.get('http://thenext.ddns.net:1337/api/beacon-entries-exits', {
                 params: {
                     startDate,
@@ -31,14 +39,12 @@ function PersonSearch() {
         }
     };
 
-    // Function to format a timestamp into a human-readable date and time string
     const formatDate = (timestamp) => {
         if (!timestamp) return 'N/A';
         const date = new Date(timestamp);
         return date.toLocaleString();
     };
 
-    // Function to get the sector name based on the beacon ID
     const getSector = (beaconId) => {
         switch (beaconId) {
             case '0C403019-61C7-55AA-B7EA-DAC30C720055':
@@ -56,14 +62,42 @@ function PersonSearch() {
         }
     };
 
-    // Function to download the search results as a CSV file
+    const calculatePermanence = (entrada, salida) => {
+        const start = new Date(entrada);
+        const end = salida ? new Date(salida) : new Date(endDate); // Usa endDate si no hay salida
+        const duration = end - start;
+
+        const hours = Math.floor(duration / (1000 * 60 * 60));
+        const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+        return `${hours}h ${minutes}m`;
+    };
+
+    const getSemaphoreColor = (permanenceMinutes) => {
+        if (permanenceMinutes <= umbrales.umbral_verde) {
+            return { color: 'green', label: 'On Time' };
+        } else if (permanenceMinutes > umbrales.umbral_verde && permanenceMinutes <= umbrales.umbral_amarillo) {
+            return { color: 'yellow', label: 'Over Time' };
+        } else if (permanenceMinutes > umbrales.umbral_amarillo) {
+            return { color: 'red', label: 'Past Deadline' };
+        }
+
+        return { color: 'transparent', label: 'N/A' };
+    };
+
     const downloadCSV = () => {
-        const headers = ['Personal', 'Sector', 'Entrada'];
-        const rows = searchResults.map(result => [
-            'Personal 3', // Assuming the icon represents "Personal 3"
-            getSector(result.beaconId).props.children, // Extract the sector text
-            formatDate(result.entrada)
-        ]);
+        const headers = ['Personal', 'Sector', 'Desde Detección', 'Permanencia', 'Estado'];
+        const rows = searchResults.map(result => {
+            const permanence = calculatePermanence(result.entrada, result.salida);
+            const permanenceMinutes = (new Date(result.salida ? result.salida : endDate) - new Date(result.entrada)) / (1000 * 60);
+            const semaphore = getSemaphoreColor(permanenceMinutes);
+            return [
+                'Personal 3', // Assuming the icon represents "Personal 3"
+                getSector(result.beaconId).props.children, // Extract the sector text
+                formatDate(result.entrada),
+                permanence,
+                semaphore.label
+            ];
+        });
 
         const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
 
@@ -80,15 +114,10 @@ function PersonSearch() {
 
     return (
         <div className="person-search">
-            {/* Display the Header component */}
             <Header title="Busqueda Histórica Ubicación Interiores" />
-
-            {/* Display the image container with the floor plan image */}
             <div className="image-container">
                 <img src={planoSectores} alt="Plano Sectores" className="plano-sectores" />
             </div>
-
-            {/* Display the search parameters section */}
             <div className="search-parameters">
                 <input
                     type="datetime-local"
@@ -105,25 +134,33 @@ function PersonSearch() {
                 <button onClick={fetchSearchResults}>Buscar</button>
                 <button onClick={downloadCSV}>Descargar Resultados</button>
             </div>
-
-            {/* Display the table with the search results */}
             <table className="search-results-table">
                 <thead>
                     <tr>
                         <th>Personal</th>
                         <th>Sector</th>
-                        <th>Entrada</th>
+                        <th>Desde Detección</th>
+                        <th>Permanencia</th>
+                        <th>Estado</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {/* Iterate over the search results and render each entry */}
-                    {searchResults.map((result, index) => (
-                        <tr key={index}>
-                            <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
-                            <td>{getSector(result.beaconId)}</td>
-                            <td>{formatDate(result.entrada)}</td>
-                        </tr>
-                    ))}
+                    {searchResults.map((result, index) => {
+                        const permanence = calculatePermanence(result.entrada, result.salida);
+                        const permanenceMinutes = (new Date(result.salida ? result.salida : endDate) - new Date(result.entrada)) / (1000 * 60);
+                        const semaphore = getSemaphoreColor(permanenceMinutes);
+                        return (
+                            <tr key={index}>
+                                <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
+                                <td>{getSector(result.beaconId)}</td>
+                                <td>{formatDate(result.entrada)}</td>
+                                <td>{permanence}</td>
+                                <td style={{ backgroundColor: semaphore.color }}>
+                                    {semaphore.label}
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>
@@ -131,28 +168,3 @@ function PersonSearch() {
 }
 
 export default PersonSearch;
-/*
-Explanation of Comments:
-State variables:
-startDate: Holds the start date and time for the search.
-endDate: Holds the end date and time for the search.
-searchResults: Holds an array of the search results (beacon entries).
-Functions:
-fetchSearchResults:
-Makes a GET request to the API endpoint /api/beacon-entries-exits with the search parameters.
-Fetches the beacon entries within the specified date range and for the selected person.
-Updates the searchResults state with the fetched data.
-formatDate:
-Formats a timestamp into a user-friendly date and time string.
-getSector:
-Maps a beacon ID to a corresponding sector name using a switch statement.
-downloadCSV:
-Downloads the search results as a CSV file for the user.
-JSX rendering:
-Displays the Header component.
-Displays an image container with the floor plan.
-Displays a section for search parameters (start/end date) with buttons for searching and downloading results.
-Displays a table to present the search results (beacon entries), including the sector and entry time.
-Summary:
-This component allows the user to search for historical beacon entries for a specific person within the building. It fetches data from the server, presents it in a table, and allows the user to download the results in CSV format.
-*/
