@@ -1,10 +1,6 @@
 /* Header.css */
-/* Ejemplo en un archivo CSS específico, como Header.css */
 .header {
   font-family: 'Roboto', sans-serif;
-}
-
-.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -17,6 +13,12 @@
 .header-right {
   display: flex;
   align-items: center;
+}
+
+.header-icon {
+  height: 40px;
+  margin-right: 20px;
+  cursor: pointer;
 }
 
 .header-logo {

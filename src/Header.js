@@ -1,31 +1,27 @@
-// Header.js
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Importa Link y useNavigate
 import './Header.css';
-import logo from './assets/images/tns_logo_blanco.png';
-import Clock from './Clock'; // Suponiendo que el componente Clock.js ya está en la carpeta src
+import homeIcon from './assets/images/home_white.png';
+import tnsTrackLogo from './assets/images/TNS Track White.png';
+import { useNavigate } from 'react-router-dom';
 
-const Header = ({ title }) => {
+const Header = () => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/');
+  const handleHomeClick = () => {
+    navigate('/select-routine');
   };
 
   return (
     <header className="header">
       <div className="header-left">
-        <Link to="/select-routine">
-          <img src={logo} alt="Logo de la Empresa" className="header-logo" />
-        </Link>
+        <img src={homeIcon} alt="Home" className="header-icon" onClick={handleHomeClick} />
+        <img src={tnsTrackLogo} alt="TNS Track" className="header-logo" />
       </div>
       <div className="header-center">
-        <h1 className="header-title">{title}</h1>
+        <h1 className="header-title">TNS Track</h1>
       </div>
       <div className="header-right">
-        <Clock />
-        <button onClick={handleLogout} className="logout-button">Logout</button>
+        <button className="logout-button">Logout</button>
       </div>
     </header>
   );

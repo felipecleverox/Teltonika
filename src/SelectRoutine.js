@@ -13,10 +13,10 @@ import configurationImage from './assets/images/configuration.png';
 
 // Define las rutas y las propiedades de cada rutina
 const routines = [
-  { title: "Ubicación Interiores On-line", image: lastKnownPositionImage, route: "/ubicaciones-interior" },
-  { title: "Búsqueda Ubicación Interiores", image: personSearchImage, route: "/busqueda-entradas-persona" },
-  { title: "Ubicación Exteriores On-line", image: interiorLocationsImage, route: "/last-known-position" },
-  { title: "Búsqueda Ubicación Exteriores", image: historicalMovementsImage, route: "/consulta-historica-movimientos" },
+  { title: "Ubicación en Interiores Tiempo real", image: lastKnownPositionImage, route: "/ubicaciones-interior" },
+  { title: "Búsqueda Histórica Ubicación en Interiores", image: personSearchImage, route: "/busqueda-entradas-persona" },
+  { title: "Ubicación Exteriores Tiempo real", image: interiorLocationsImage, route: "/last-known-position" },
+  { title: "Búsqueda Histórica Ubicación en Exteriores", image: historicalMovementsImage, route: "/consulta-historica-movimientos" },
   { title: "Inteligencia de Datos", image: dataIntelligenceImage, route: "/inteligencia-de-datos" },
   { title: "Configuración", image: configurationImage, route: "/configuracion" },
 ];
