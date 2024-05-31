@@ -26,7 +26,7 @@ const SelectRoutine = () => {
 
   return (
     <div className="select-routine">
-      <Header title="Dashboard TN Track" />
+      <Header title="Dashboard TNS Track" />
       <div className="routine-cards">
         {routines.map((routine, index) => (
           <div className="routine-card" key={index} onClick={() => navigate(routine.route)}>

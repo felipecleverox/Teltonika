@@ -12,14 +12,25 @@
 
 .image-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
   width: 100%;
+  position: relative;
 }
 
 .map-image {
   width: 60%; /* Ajusta el tamaño de la imagen del mapa según sea necesario */
+  height: auto;
+  margin-bottom: 20px;
+}
+
+.center-image {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 15%; /* Ajustar tamaño según necesidad */
   height: auto;
 }
 
@@ -29,6 +40,8 @@
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   text-align: center;
+  position: relative;
+  margin-top: -30px; /* Ajustar el margen superior para que quede debajo de la imagen del mapa */
 }
 
 form {
@@ -46,7 +59,7 @@ input {
   margin: 5px 0;
   border: 1px solid #ccc;
   border-radius: 4px;
-  width: 100%;
+  width: 90%; /* Reduce el ancho en un 10% */
 }
 
 button {
@@ -78,10 +91,14 @@ p:hover {
   justify-content: space-between;
   width: 100%;
   padding: 10px 0;
+  position: relative;
 }
 
-.side-image {
-  width: 40%;
+.right-image {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 30%; /* Ajustar tamaño según necesidad */
   height: auto;
 }
 
