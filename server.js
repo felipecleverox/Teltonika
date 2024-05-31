@@ -4,6 +4,10 @@
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
+const bcrypt = require('bcrypt'); // Import bcrypt
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
 
 // Create an Express application
 const app = express();
@@ -122,27 +126,38 @@ app.get('/api/get-gps-data', async (req, res) => {
 // Endpoint to get the last known position of a Teltonika device
 app.get('/api/last-known-position', async (req, res) => {
     try {
-        // Construct the SQL query to select the most recent data entry
-        const [results] = await pool.query(`
+        // Query to get the most recent data entry
+        const [lastKnownPosition] = await pool.query(`
             SELECT device_id, latitude, longitude, timestamp * 1000 AS unixTimestamp
             FROM gps_data
             ORDER BY timestamp DESC
             LIMIT 1
         `);
 
-        console.log("Converted Timestamp to send:", results[0].unixTimestamp); // Log the converted timestamp
-
-        // Check if there are results
-        if (results.length > 0) {
-            // Send the last known position as JSON to the client
-            res.json(results[0]);
-        } else {
-            // Send a 404 status code and an error message to the client if no data is available
-            res.status(404).send('No data available');
+        if (lastKnownPosition.length === 0) {
+            return res.status(404).send('No data available');
         }
+
+        // Query to get the timestamp of the last change in coordinates
+        const [lastCoordinateChange] = await pool.query(`
+            SELECT timestamp * 1000 AS changeTimestamp
+            FROM gps_data
+            WHERE latitude != ? OR longitude != ?
+            ORDER BY timestamp DESC
+            LIMIT 1
+        `, [lastKnownPosition[0].latitude, lastKnownPosition[0].longitude]);
+
+        if (lastCoordinateChange.length === 0) {
+            return res.status(404).send('No coordinate change data available');
+        }
+
+        res.json({
+            ...lastKnownPosition[0],
+            changeTimestamp: lastCoordinateChange[0].changeTimestamp
+        });
     } catch (error) {
-        console.error('Error fetching last known position:', error); // Log any error that occurred during the query execution
-        res.status(500).send('Server Error'); // Send a 500 status code and an error message to the client
+        console.error('Error fetching last known position:', error);
+        res.status(500).send('Server Error');
     }
 });
 
@@ -410,12 +425,6 @@ app.post('/api/umbrales', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-// server.js
-
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-const jwt = require('jsonwebtoken');
 
 // Endpoint for user registration
 app.post('/api/register', async (req, res) => {
