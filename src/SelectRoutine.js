@@ -4,10 +4,10 @@ import './SelectRoutine.css';
 import Header from './Header';
 
 // Importación directa de las imágenes
-import lastKnownPositionImage from './assets/images/last_known_position.webp';
-import personSearchImage from './assets/images/person_search.webp';
-import interiorLocationsImage from './assets/images/plano_super.webp';
-import historicalMovementsImage from './assets/images/historical_movements1.jpg';
+import lastKnownPositionImage from './assets/images/last_known_position.png';
+import personSearchImage from './assets/images/person_search.png';
+import interiorLocationsImage from './assets/images/plano_super.png';
+import historicalMovementsImage from './assets/images/historical_movements1.png';
 import dataIntelligenceImage from './assets/images/data_intelligence.png';
 import configurationImage from './assets/images/configuration.png';
 
