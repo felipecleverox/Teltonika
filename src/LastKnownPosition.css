@@ -1,27 +1,27 @@
 .map-container {
-    height: 400px;
-    width: 100%;
-  }
-  
-  .info-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-  
-  .info-table th,
-  .info-table td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  .info-table th {
-    background-color: #f2f2f2;
-  }
-  
-  .error-message {
-    color: red;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
+  height: 800px;
+  width: 100%;
+}
+
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.info-table th,
+.info-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.info-table th {
+  background-color: #f2f2f2;
+}
+
+.error-message {
+  color: red;
+  font-weight: bold;
+  margin-bottom: 10px;
+}

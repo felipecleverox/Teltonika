@@ -6,8 +6,16 @@
   "author": "",
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "browserify-fs": "^1.0.0",
+    "buffer": "^6.0.3",
     "concurrently": "^8.2.2",
-    "react-app-rewired": "^2.2.1"
+    "eslint-loader": "^4.0.2",
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10",
+    "react-app-rewired": "^2.2.1",
+    "react-scripts": "^5.0.1",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4"
   },
   "eslintConfig": {},
   "scripts": {
@@ -24,6 +32,7 @@
   "dependencies": {
     "@craco/craco": "^5.9.0",
     "@types/leaflet": "^1.9.12",
+    "assert": "^2.1.0",
     "axios": "^1.6.8",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
@@ -34,6 +43,8 @@
     "leaflet-draw": "^1.0.4",
     "leaflet-markercluster": "^0.2.2",
     "leaflet.markercluster": "^1.5.3",
+    "mapbox-gl": "^3.4.0",
+    "mapbox-gl-draw": "^0.16.0",
     "mysql2": "^3.9.7",
     "nodemailer": "^6.9.13",
     "react": "^18.3.0",
@@ -42,6 +53,7 @@
     "react-leaflet-draw": "^0.20.4",
     "react-leaflet-markercluster": "^3.0.0-rc1",
     "react-router-dom": "^6.23.1",
+    "util": "^0.12.5",
     "webpack-dev-server": "^5.0.4"
   },
   "proxy": "http://thenext.ddns.net:1337",
