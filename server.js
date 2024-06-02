@@ -116,48 +116,63 @@ app.get('/api/get-gps-data', async (req, res) => {
 });
 
 // Endpoint to get the last known position
-// Endpoint to get the last known position
 app.get('/api/last-known-position', async (req, res) => {
-    try {
-      // Obtener la última posición conocida
-      const [lastKnownPosition] = await pool.query(`
-        SELECT device_id, latitude, longitude, timestamp * 1000 AS unixTimestamp
-        FROM gps_data
-        ORDER BY timestamp DESC
-        LIMIT 1
-      `);
-  
-      // Verificar si se encontró alguna posición
-      if (lastKnownPosition.length === 0) {
-        return res.status(404).send('No data available');
-      }
-  
-      // Obtener el último cambio de coordenadas
-      const [lastCoordinateChange] = await pool.query(`
-        SELECT timestamp * 1000 AS changeTimestamp
-        FROM gps_data
-        WHERE latitude != ? OR longitude != ?
-        ORDER BY timestamp DESC
-        LIMIT 1
-      `, [lastKnownPosition[0].latitude || defaultPosition.lat, lastKnownPosition[0].longitude || defaultPosition.lng]);
-  
-      // Construir la respuesta
-      const response = {
-        ...lastKnownPosition[0],
-        changeTimestamp: lastCoordinateChange.length > 0 ? lastCoordinateChange[0].changeTimestamp : null
-      };
-  
-      // Asignar valores predeterminados si es necesario
-      response.latitude = response.latitude !== null ? response.latitude : defaultPosition.lat;
-      response.longitude = response.longitude !== null ? response.longitude : defaultPosition.lng;
-  
-      res.json(response);
-    } catch (error) {
-      console.error('Error fetching last known position:', error);
-      res.status(500).send('Server Error');
+  const { device_id } = req.query;
+  try {
+    // Validar que el parámetro device_id esté presente
+    if (!device_id) {
+      console.log('Error: device_id is required');
+      return res.status(400).send('device_id is required');
     }
-  });
-  
+
+    console.log('Received device_id:', device_id);
+
+    // Consulta para obtener la última posición conocida del dispositivo
+    const [lastKnownPosition] = await pool.query(`
+      SELECT device_id, latitude, longitude, timestamp * 1000 AS unixTimestamp
+      FROM gps_data
+      WHERE device_name = ?
+      ORDER BY timestamp DESC
+      LIMIT 1
+    `, [device_id]);
+
+    // Verificar si se encontró alguna posición
+    if (lastKnownPosition.length === 0) {
+      console.log('Error: No data available for device_name:', device_id);
+      return res.status(404).send('No data available');
+    }
+
+    console.log('Last known position:', lastKnownPosition);
+
+    // Consulta para obtener el último cambio de coordenadas del dispositivo
+    const [lastCoordinateChange] = await pool.query(`
+      SELECT timestamp * 1000 AS changeTimestamp
+      FROM gps_data
+      WHERE (latitude != ? OR longitude != ?) AND device_name = ?
+      ORDER BY timestamp DESC
+      LIMIT 1
+    `, [lastKnownPosition[0].latitude || defaultPosition.lat, lastKnownPosition[0].longitude || defaultPosition.lng, device_id]);
+
+    console.log('Last coordinate change:', lastCoordinateChange);
+
+    // Construir la respuesta
+    const response = {
+      ...lastKnownPosition[0],
+      changeTimestamp: lastCoordinateChange.length > 0 ? lastCoordinateChange[0].changeTimestamp : null
+    };
+
+    response.latitude = response.latitude !== null ? response.latitude : defaultPosition.lat;
+    response.longitude = response.longitude !== null ? response.longitude : defaultPosition.lng;
+
+    console.log('Response:', response);
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching last known position:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
 
 // Endpoint to get active beacons
 app.get('/api/active-beacons', async (req, res) => {
@@ -491,6 +506,17 @@ app.post('/api/reset-password', async (req, res) => {
     res.send('Password reset successful');
   } catch (error) {
     console.error('Error resetting password:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Endpoint to get the list of assigned devices
+app.get('/api/devices', async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT * FROM devices');
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching devices:', error);
     res.status(500).send('Server Error');
   }
 });

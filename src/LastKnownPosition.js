@@ -10,74 +10,105 @@ MapboxGL.accessToken = 'pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZ
 const defaultPosition = { lat: -33.4489, lng: -70.6693 };
 
 function LastKnownPosition({ showHeader = true }) {
-  const [position, setPosition] = useState(null);
-  const [timestamp, setTimestamp] = useState(null);
-  const [changeTimestamp, setChangeTimestamp] = useState(null);
+  const [devices, setDevices] = useState([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState('');
+  const [positions, setPositions] = useState([]);
+  const [selectedPosition, setSelectedPosition] = useState(null); // Estado para almacenar la posición seleccionada
   const [error, setError] = useState(null);
-  const [timeElapsed, setTimeElapsed] = useState('');
   const mapRef = useRef(null);
-  const markerRef = useRef(null);
 
   useEffect(() => {
-    const fetchLastKnownPosition = async () => {
-      setError(null); 
+    const fetchDevices = async () => {
       try {
-        const response = await axios.get('http://thenext.ddns.net:1337/api/last-known-position');
-        if (response.data) {
-          const { latitude, longitude, unixTimestamp, changeTimestamp } = response.data;
-          setPosition({
-            lat: latitude !== null ? parseFloat(latitude) : defaultPosition.lat,
-            lng: longitude !== null ? parseFloat(longitude) : defaultPosition.lng,
-          });
-          setTimestamp(unixTimestamp);
-          setChangeTimestamp(changeTimestamp);
-        } else {
-          setPosition(defaultPosition); 
-          setTimestamp(null);
-          setChangeTimestamp(null);
-        }
+        const response = await axios.get('http://thenext.ddns.net:1337/api/devices');
+        console.log('Fetched devices:', response.data);
+        setDevices(response.data);
       } catch (error) {
-        console.error('Failed to fetch last known position:', error);
-        setError(error.message);
-        setPosition(defaultPosition); 
-        setTimestamp(null);
-        setChangeTimestamp(null);
+        console.error('Error fetching devices:', error);
       }
     };
 
-    fetchLastKnownPosition();
-
-    const intervalId = setInterval(fetchLastKnownPosition, 10000);
-    return () => clearInterval(intervalId); 
+    fetchDevices();
   }, []);
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      if (changeTimestamp) {
-        const now = Date.now();
-        const elapsed = now - changeTimestamp;
-        const hours = Math.floor(elapsed / (1000 * 60 * 60))
-          .toString()
-          .padStart(2, '0');
-        const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60))
-          .toString()
-          .padStart(2, '0');
-        const seconds = Math.floor((elapsed % (1000 * 60)) / 1000)
-          .toString()
-          .padStart(2, '0');
-        setTimeElapsed(`${hours}h ${minutes}m ${seconds}s`);
-      }
-    }, 1000);
+    if (selectedDeviceId) {
+      const fetchLastKnownPosition = async () => {
+        setError(null); 
+        try {
+          console.log('Selected device_id:', selectedDeviceId); // Registro del device_id seleccionado
+          const response = await axios.get('http://thenext.ddns.net:1337/api/last-known-position', {
+            params: { device_id: selectedDeviceId }
+          });
 
-    return () => clearInterval(intervalId); 
-  }, [changeTimestamp]);
+          if (response.data) {
+            console.log('Response data:', response.data); // Registro de la respuesta del servidor
+            setPositions(Array.isArray(response.data) ? response.data : [response.data]);
+          } else {
+            setPositions([]);
+          }
+        } catch (error) {
+          if (error.response && error.response.status === 404) {
+            console.log('Error: No data available');
+            setError('No data available');
+          } else {
+            console.error('Failed to fetch last known position:', error);
+            setError('Server Error');
+          }
+          setPositions([]);
+        }
+      };
 
-  const formattedTime = timestamp
-    ? new Date(timestamp).toLocaleString('es-CL', { hour12: false })
-    : 'N/A';
+      fetchLastKnownPosition();
+      const intervalId = setInterval(fetchLastKnownPosition, 10000);
+      return () => clearInterval(intervalId); 
+    }
+  }, [selectedDeviceId]);
 
   useEffect(() => {
-    if (!mapRef.current) {
+    if (positions.length > 0 && mapRef.current) {
+      positions.forEach(position => {
+        const lat = parseFloat(position.latitude);
+        const lng = parseFloat(position.longitude);
+
+        if (isNaN(lat) || isNaN(lng)) {
+          console.error('Invalid coordinates:', { lat, lng });
+          return;
+        }
+
+        const marker = new MapboxGL.Marker({ draggable: false })
+          .setLngLat([lng, lat])
+          .addTo(mapRef.current);
+
+        const formattedTime = new Date(position.unixTimestamp).toLocaleString('es-CL', { hour12: false });
+
+        marker.setPopup(new MapboxGL.Popup().setHTML(
+          `<strong>Time:</strong> ${formattedTime}<br/><strong>Lat:</strong> ${lat}<br/><strong>Lng:</strong> ${lng}`
+        )).addTo(mapRef.current);
+
+        marker.getElement().addEventListener('click', () => {
+          setSelectedPosition({
+            time: formattedTime,
+            lat,
+            lng
+          });
+        });
+      });
+
+      const firstPosition = positions[0];
+      if (firstPosition) {
+        const centerLat = parseFloat(firstPosition.latitude);
+        const centerLng = parseFloat(firstPosition.longitude);
+
+        if (!isNaN(centerLat) && !isNaN(centerLng)) {
+          mapRef.current.setCenter([centerLng, centerLat]);
+        }
+      }
+    }
+  }, [positions]);
+
+  useEffect(() => {
+    if (!mapRef.current && positions.length > 0) {
       mapRef.current = new MapboxGL.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/streets-v11', 
@@ -85,72 +116,59 @@ function LastKnownPosition({ showHeader = true }) {
         zoom: 15,
       });
     }
-
-    if (position && mapRef.current) {
-      if (!markerRef.current) {
-        markerRef.current = new MapboxGL.Marker({ draggable: false })
-          .setLngLat([position.lng, position.lat])
-          .addTo(mapRef.current);
-      } else {
-        markerRef.current.setLngLat([position.lng, position.lat]);
-      }
-
-      if (markerRef.current.getPopup()) {
-        markerRef.current.getPopup().setHTML(
-          `<strong>Time:</strong> ${formattedTime}<br/><strong>Lat:</strong> ${position.lat}<br/><strong>Lng:</strong> ${position.lng}`
-        );
-      } else {
-        markerRef.current
-          .setPopup(
-            new MapboxGL.Popup().setHTML(
-              `<strong>Time:</strong> ${formattedTime}<br/><strong>Lat:</strong> ${position.lat}<br/><strong>Lng:</strong> ${position.lng}`
-            )
-          )
-          .addTo(mapRef.current);
-      }
-
-      mapRef.current.setCenter([position.lng, position.lat]);
-    }
-  }, [position, formattedTime]); 
+  }, [positions]);
 
   return (
     <div>
       {showHeader && <Header title="Ubicación Exteriores Tiempo Real" />} 
       {error && <div className="error-message">Error: {error}</div>}
 
-      <div id="map" className="map-container"></div> {/* Ensure the map container has an ID */}
-      <div className="last-known-info">
-        <table className="info-table">
-          <thead>
-            <tr>
-              <th>Información</th>
-              <th>Valor</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Última Actualización</td>
-              <td>{formattedTime}</td>
-            </tr>
-            <tr>
-              <td>Tiempo Transcurrido Desde el Último Cambio</td>
-              <td>{timeElapsed}</td>
-            </tr>
-            {position && (
-              <>
-                <tr>
-                  <td>Latitud</td>
-                  <td>{position.lat.toFixed(6)}</td>
-                </tr>
-                <tr>
-                  <td>Longitud</td>
-                  <td>{position.lng.toFixed(6)}</td>
-                </tr>
-              </>
-            )}
-          </tbody>
-        </table>
+      <div className="device-selection-popup">
+        <h3>Seleccionar Dispositivo</h3>
+        <select onChange={(e) => {
+          setSelectedDeviceId(e.target.value);
+          setError(null); // Resetear mensaje de error al seleccionar un nuevo dispositivo
+        }}>
+          <option value="">Seleccionar...</option>
+          {devices.map(device => (
+            <option key={device.id} value={device.id}>{device.device_asignado}</option>
+          ))}
+          <option value="all">Mostrar Todos</option>
+        </select>
       </div>
+
+      <div id="map" className="map-container" style={{ marginTop: showHeader ? '150px' : '0px' }}></div>
+
+      {selectedDeviceId && positions.length === 0 && !error && (
+        <div className="no-data-message">Sin datos disponibles para el dispositivo seleccionado.</div>
+      )}
+
+      {selectedPosition && (
+        <div className="last-known-info">
+          <table className="info-table">
+            <thead>
+              <tr>
+                <th>Información</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Última Actualización</td>
+                <td>{selectedPosition.time}</td>
+              </tr>
+              <tr>
+                <td>Latitud</td>
+                <td>{selectedPosition.lat.toFixed(6)}</td>
+              </tr>
+              <tr>
+                <td>Longitud</td>
+                <td>{selectedPosition.lng.toFixed(6)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
