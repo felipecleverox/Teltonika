@@ -148,7 +148,6 @@ const HistoricalMovementsSearch = () => {
                         {devices.map(device => (
                             <option key={device.id} value={device.id}>{device.device_asignado}</option>
                         ))}
-                        <option value="all">Mostrar Todos</option>
                     </select>
                 </div>
                 <div className="date-selection">
