@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MapboxGL from 'mapbox-gl';
 import axios from 'axios';
-import LastKnownPosition from './LastKnownPosition'; // Import the LastKnownPosition component
 import Header from './Header'; // Import the Header component
 import './HistoricalMovementsSearch.css'; // Import the CSS styles
 
@@ -12,9 +11,26 @@ const HistoricalMovementsSearch = () => {
     const [endDate, setEndDate] = useState('');
     const [pathCoordinates, setPathCoordinates] = useState([]);
     const [historicalDataError, setHistoricalDataError] = useState(null);
+    const [devices, setDevices] = useState([]);
+    const [selectedDeviceId, setSelectedDeviceId] = useState('');
+    const [isDataAvailable, setIsDataAvailable] = useState(false); // New state to track data availability
+
+    useEffect(() => {
+        const fetchDevices = async () => {
+            try {
+                const response = await axios.get('http://thenext.ddns.net:1337/api/devices');
+                setDevices(response.data);
+            } catch (error) {
+                console.error('Error fetching devices:', error);
+            }
+        };
+
+        fetchDevices();
+    }, []);
 
     const handleSearch = async () => {
         setHistoricalDataError(null);
+        setIsDataAvailable(false); // Reset data availability status
         try {
             const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
             const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
@@ -22,7 +38,8 @@ const HistoricalMovementsSearch = () => {
             const response = await axios.get('http://thenext.ddns.net:1337/api/get-gps-data', {
                 params: {
                     startDate: startTimestamp,
-                    endDate: endTimestamp
+                    endDate: endTimestamp,
+                    device_id: selectedDeviceId
                 }
             });
 
@@ -33,6 +50,7 @@ const HistoricalMovementsSearch = () => {
             });
 
             setPathCoordinates(newCoordinates);
+            setIsDataAvailable(newCoordinates.length > 0); // Set data availability status based on results
         } catch (error) {
             setHistoricalDataError(error.message);
         }
@@ -118,25 +136,40 @@ const HistoricalMovementsSearch = () => {
     return (
         <div>
             <Header title="Consulta Histórica de Movimientos en Exterior" />
-            <LastKnownPosition showHeader={false} />
-
-            <div className="search-parameters">
-                <input
-                    type="datetime-local"
-                    value={startDate}
-                    onChange={e => setStartDate(e.target.value)}
-                    placeholder="Start Date and Time"
-                />
-                <input
-                    type="datetime-local"
-                    value={endDate}
-                    onChange={e => setEndDate(e.target.value)}
-                    placeholder="End Date and Time"
-                />
-                <button onClick={handleSearch}>Buscar</button>
-                <button onClick={downloadCSV}>Descargar Resultados</button>
-                {historicalDataError && <div className="error-message">Error: {historicalDataError}</div>}
+            
+            <div className="search-container">
+                <div className="device-selection">
+                    <h3>Seleccionar Dispositivo</h3>
+                    <select onChange={(e) => {
+                        setSelectedDeviceId(e.target.value);
+                        setHistoricalDataError(null);
+                    }}>
+                        <option value="">Seleccionar...</option>
+                        {devices.map(device => (
+                            <option key={device.id} value={device.id}>{device.device_asignado}</option>
+                        ))}
+                        <option value="all">Mostrar Todos</option>
+                    </select>
+                </div>
+                <div className="date-selection">
+                    <input
+                        type="datetime-local"
+                        value={startDate}
+                        onChange={e => setStartDate(e.target.value)}
+                        placeholder="Start Date and Time"
+                    />
+                    <input
+                        type="datetime-local"
+                        value={endDate}
+                        onChange={e => setEndDate(e.target.value)}
+                        placeholder="End Date and Time"
+                    />
+                    <button onClick={handleSearch}>Buscar</button>
+                    <button onClick={downloadCSV} disabled={!isDataAvailable}>Descargar Resultados</button>
+                </div>
             </div>
+
+            {historicalDataError && <div className="error-message">Error: {historicalDataError}</div>}
 
             <div id="map" className="map-container"></div>
 

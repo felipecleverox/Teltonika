@@ -8,16 +8,23 @@ body {
     padding: 0;
 }
 
-.search-parameters {
+.search-container {
     display: flex;
-    flex-direction: column; /* Establecer dirección de flexbox a columna */
-    justify-content: center;
-    align-items: center;
-    margin: 20px 0; /* Ajusta el margen según sea necesario */
+    justify-content: space-around; /* Espaciar los elementos a ambos lados */
+    align-items: center; /* Alinear verticalmente al centro */
+    margin: 20px 0; /* Ajustar el margen según sea necesario */
 }
 
-.search-parameters input,
-.search-parameters button {
+.device-selection,
+.date-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.search-container select,
+.search-container input,
+.search-container button {
     width: 100%; /* Ajustar el ancho de los elementos al 100% del contenedor */
     margin: 10px 0; /* Añadir márgenes a los elementos */
     padding: 10px;
@@ -26,8 +33,15 @@ body {
 
 .map-container {
     width: 100%; /* Ajustar el ancho del mapa al 100% del contenedor */
-    height: 400px; /* Establecer una altura mínima para el mapa */
+    height: 600px; /* Establecer una altura mínima para el mapa */
     margin-top: 20px;
+    position: relative; /* Agregar posición relativa */
+    z-index: 0; /* Asegurar que el mapa esté detrás de otros elementos */
+}
+
+.data-table-container {
+    position: relative; /* Agregar posición relativa */
+    z-index: 1; /* Asegurar que la tabla esté delante del mapa */
 }
 
 .data-table {
@@ -56,8 +70,12 @@ body {
 
 /* Estilos para dispositivos móviles */
 @media (max-width: 768px) {
-    .search-parameters input,
-    .search-parameters button {
+    .search-container {
+        flex-direction: column; /* Cambiar a columna para pantallas pequeñas */
+    }
+    .search-container select,
+    .search-container input,
+    .search-container button {
         font-size: 14px; /* Reducir el tamaño de fuente */
     }
     .map-container {
@@ -70,8 +88,9 @@ body {
 
 /* Estilos para tablets */
 @media (min-width: 768px) and (max-width: 1024px) {
-    .search-parameters input,
-    .search-parameters button {
+    .search-container select,
+    .search-container input,
+    .search-container button {
         font-size: 15px; /* Ajustar el tamaño de fuente */
     }
     .map-container {
