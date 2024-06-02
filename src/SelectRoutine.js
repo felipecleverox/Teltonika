@@ -24,12 +24,16 @@ const routines = [
 const SelectRoutine = () => {
   const navigate = useNavigate();
 
+  const handleCardClick = (routine) => {
+    navigate(routine.route, { state: { title: routine.title, image: routine.image } });
+  };
+
   return (
     <div className="select-routine">
       <Header title="Dashboard TNS Track" />
       <div className="routine-cards">
         {routines.map((routine, index) => (
-          <div className="routine-card" key={index} onClick={() => navigate(routine.route)}>
+          <div className="routine-card" key={index} onClick={() => handleCardClick(routine)}>
             <img src={routine.image} alt={routine.title} className="routine-image" />
             <div className="routine-content">
               <h3 className="routine-title">{routine.title}</h3>

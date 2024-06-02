@@ -2,10 +2,14 @@ import React from 'react';
 import './Header.css';
 import homeIcon from './assets/images/home_white.png';
 import tnsTrackLogo from './assets/images/TNS Track White.png';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const Header = () => {
+const Header = ({ title }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { state } = location;
+  const routineTitle = state?.title || title;
+  const routineImage = state?.image;
 
   const handleHomeClick = () => {
     navigate('/select-routine');
@@ -25,7 +29,8 @@ const Header = () => {
         <img src={tnsTrackLogo} alt="TNS Track" className="header-logo" />
       </div>
       <div className="header-center">
-        <h1 className="header-title">TNS Track</h1>
+        {routineImage && <img src={routineImage} alt="Routine" className="header-icon" />}
+        <h1 className="header-title">{routineTitle}</h1>
       </div>
       <div className="header-right">
         <button className="logout-button" onClick={handleLogoutClick}>Logout</button>
