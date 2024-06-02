@@ -11,6 +11,13 @@ const Header = () => {
     navigate('/select-routine');
   };
 
+  const handleLogoutClick = () => {
+    // Clear the token or any other user session data
+    localStorage.removeItem('token');
+    // Navigate to the landing page
+    navigate('/');
+  };
+
   return (
     <header className="header">
       <div className="header-left">
@@ -21,7 +28,7 @@ const Header = () => {
         <h1 className="header-title">TNS Track</h1>
       </div>
       <div className="header-right">
-        <button className="logout-button">Logout</button>
+        <button className="logout-button" onClick={handleLogoutClick}>Logout</button>
       </div>
     </header>
   );
