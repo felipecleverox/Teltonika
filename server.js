@@ -173,7 +173,6 @@ app.get('/api/last-known-position', async (req, res) => {
   }
 });
 
-
 // Endpoint to get active beacons
 app.get('/api/active-beacons', async (req, res) => {
   try {
