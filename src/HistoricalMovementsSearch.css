@@ -4,15 +4,15 @@
 
 body {
     font-family: 'Roboto', sans-serif;
-    margin: 0; /* Eliminar márgenes predeterminados */
+    margin: 0;
     padding: 0;
 }
 
 .search-container {
     display: flex;
-    justify-content: space-around; /* Espaciar los elementos a ambos lados */
-    align-items: center; /* Alinear verticalmente al centro */
-    margin: 20px 0; /* Ajustar el margen según sea necesario */
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
 }
 
 .device-selection,
@@ -20,32 +20,52 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-bottom: 20px;
+}
+
+.time-selection {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.time-selection label {
+    margin-right: 10px;
+}
+
+.time-selection input {
+    width: 60px;
+    margin: 0 5px;
+    padding: 10px;
+    font-size: 16px;
 }
 
 .search-container select,
-.search-container input,
+.search-container input[type="date"],
 .search-container button {
-    width: 100%; /* Ajustar el ancho de los elementos al 100% del contenedor */
-    margin: 10px 0; /* Añadir márgenes a los elementos */
+    width: 100%;
+    margin: 10px 0;
     padding: 10px;
     font-size: 16px;
 }
 
 .map-container {
-    width: 100%; /* Ajustar el ancho del mapa al 100% del contenedor */
-    height: 600px; /* Establecer una altura mínima para el mapa */
+    width: 100%;
+    height: 600px;
     margin-top: 20px;
-    position: relative; /* Agregar posición relativa */
-    z-index: 0; /* Asegurar que el mapa esté detrás de otros elementos */
+    position: relative;
+    z-index: 0;
 }
 
 .data-table-container {
-    position: relative; /* Agregar posición relativa */
-    z-index: 1; /* Asegurar que la tabla esté delante del mapa */
+    position: relative;
+    z-index: 1;
 }
 
 .data-table {
-    width: 100%; /* Ajustar el ancho de la tabla al 100% del contenedor */
+    width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
 }
@@ -71,18 +91,18 @@ body {
 /* Estilos para dispositivos móviles */
 @media (max-width: 768px) {
     .search-container {
-        flex-direction: column; /* Cambiar a columna para pantallas pequeñas */
+        flex-direction: column;
     }
     .search-container select,
     .search-container input,
     .search-container button {
-        font-size: 14px; /* Reducir el tamaño de fuente */
+        font-size: 14px;
     }
     .map-container {
-        height: 300px; /* Reducir la altura del mapa */
+        height: 300px;
     }
     .data-table td {
-        font-size: 12px; /* Reducir el tamaño de fuente en las celdas de la tabla */
+        font-size: 12px;
     }
 }
 
@@ -91,9 +111,9 @@ body {
     .search-container select,
     .search-container input,
     .search-container button {
-        font-size: 15px; /* Ajustar el tamaño de fuente */
+        font-size: 15px;
     }
     .map-container {
-        height: 350px; /* Ajustar la altura del mapa */
+        height: 350px;
     }
 }

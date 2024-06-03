@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import MapboxGL from 'mapbox-gl';
 import axios from 'axios';
-import Header from './Header'; // Import the Header component
-import './HistoricalMovementsSearch.css'; // Import the CSS styles
+import Header from './Header';
+import './HistoricalMovementsSearch.css';
 
 MapboxGL.accessToken = 'pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZDgybHB2OTh4dmo3Z2EifQ.bpZlTBTa56pF4cPhE3aSzg';
 
 const HistoricalMovementsSearch = () => {
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+    const [selectedDay, setSelectedDay] = useState('');
+    const [startHour, setStartHour] = useState('');
+    const [startMinute, setStartMinute] = useState('');
+    const [endHour, setEndHour] = useState('');
+    const [endMinute, setEndMinute] = useState('');
     const [pathCoordinates, setPathCoordinates] = useState([]);
     const [historicalDataError, setHistoricalDataError] = useState(null);
     const [devices, setDevices] = useState([]);
     const [selectedDeviceId, setSelectedDeviceId] = useState('');
-    const [isDataAvailable, setIsDataAvailable] = useState(false); // New state to track data availability
+    const [isDataAvailable, setIsDataAvailable] = useState(false);
 
     useEffect(() => {
         const fetchDevices = async () => {
@@ -30,10 +33,10 @@ const HistoricalMovementsSearch = () => {
 
     const handleSearch = async () => {
         setHistoricalDataError(null);
-        setIsDataAvailable(false); // Reset data availability status
+        setIsDataAvailable(false);
         try {
-            const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
-            const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
+            const startTimestamp = Math.floor(new Date(`${selectedDay}T${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}:00`).getTime() / 1000);
+            const endTimestamp = Math.floor(new Date(`${selectedDay}T${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}:00`).getTime() / 1000);
 
             const response = await axios.get('http://thenext.ddns.net:1337/api/get-gps-data', {
                 params: {
@@ -46,11 +49,14 @@ const HistoricalMovementsSearch = () => {
             const newCoordinates = response.data.map(item => {
                 const latitude = parseFloat(item.latitude);
                 const longitude = parseFloat(item.longitude);
-                return { latitude, longitude, timestamp: item.unixTimestamp };
-            });
+                if (!isNaN(latitude) && !isNaN(longitude)) {
+                    return { latitude, longitude, timestamp: item.unixTimestamp };
+                }
+                return null;
+            }).filter(coord => coord !== null);
 
             setPathCoordinates(newCoordinates);
-            setIsDataAvailable(newCoordinates.length > 0); // Set data availability status based on results
+            setIsDataAvailable(newCoordinates.length > 0);
         } catch (error) {
             setHistoricalDataError(error.message);
         }
@@ -77,7 +83,7 @@ const HistoricalMovementsSearch = () => {
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", `historical_movements_${startDate}_${endDate}.csv`);
+        link.setAttribute("download", `historical_movements_${selectedDay}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
@@ -151,18 +157,49 @@ const HistoricalMovementsSearch = () => {
                     </select>
                 </div>
                 <div className="date-selection">
+                    <h3>Seleccionar Día</h3>
                     <input
-                        type="datetime-local"
-                        value={startDate}
-                        onChange={e => setStartDate(e.target.value)}
-                        placeholder="Start Date and Time"
+                        type="date"
+                        value={selectedDay}
+                        onChange={e => setSelectedDay(e.target.value)}
                     />
-                    <input
-                        type="datetime-local"
-                        value={endDate}
-                        onChange={e => setEndDate(e.target.value)}
-                        placeholder="End Date and Time"
-                    />
+                    <h3>Seleccionar Rango de Horas y Minutos</h3>
+                    <div className="time-selection">
+                        <label>Hora Inicio:</label>
+                        <input
+                            type="number"
+                            value={startHour}
+                            onChange={e => setStartHour(e.target.value)}
+                            placeholder="HH"
+                            min="0"
+                            max="23"
+                        />
+                        <input
+                            type="number"
+                            value={startMinute}
+                            onChange={e => setStartMinute(e.target.value)}
+                            placeholder="MM"
+                            min="0"
+                            max="59"
+                        />
+                        <label>Hora Fin:</label>
+                        <input
+                            type="number"
+                            value={endHour}
+                            onChange={e => setEndHour(e.target.value)}
+                            placeholder="HH"
+                            min="0"
+                            max="23"
+                        />
+                        <input
+                            type="number"
+                            value={endMinute}
+                            onChange={e => setEndMinute(e.target.value)}
+                            placeholder="MM"
+                            min="0"
+                            max="59"
+                        />
+                    </div>
                     <button onClick={handleSearch}>Buscar</button>
                     <button onClick={downloadCSV} disabled={!isDataAvailable}>Descargar Resultados</button>
                 </div>
