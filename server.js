@@ -33,6 +33,24 @@ const defaultPosition = { lat: -33.4489, lng: -70.6693 };
 app.use(cors());
 app.use(express.json());
 
+// Helper function to get sector name based on beacon ID
+const getSector = (beaconId) => {
+  switch (beaconId) {
+    case '0C403019-61C7-55AA-B7EA-DAC30C720055':
+      return 'E/S Bodega';
+    case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
+      return 'Farmacia';
+    case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
+      return 'Entrada';
+    case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
+      return 'Pasillo Central';
+    case 'F7826DA6-BC5B-71E0-893E-54654370696F':
+      return 'Electro';
+    default:
+      return 'Unknown';
+  }
+};
+
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
   const gpsDatas = req.body;
@@ -200,11 +218,11 @@ app.get('/api/active-beacons', async (req, res) => {
   }
 });
 
-// Endpoint to search for beacon entries and exits for a specific person
+// Endpoint to search for beacon entries and exits for a specific device
 app.get('/api/beacon-entries-exits', async (req, res) => {
-  const { startDate, endDate, person } = req.query;
+  const { startDate, endDate, device_id } = req.query;
 
-  console.log("Received search request:", { startDate, endDate, person });
+  console.log("Received search request:", { startDate, endDate, device_id });
 
   const startTimestamp = new Date(startDate).getTime() / 1000;
   const endTimestamp = new Date(endDate).getTime() / 1000;
@@ -214,12 +232,12 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
   const query = `
         SELECT timestamp, ble_beacons
         FROM gps_data
-        WHERE device_name = ? AND timestamp BETWEEN ? AND ? AND ble_beacons != "[]"
+        WHERE ident = ? AND timestamp BETWEEN ? AND ? AND ble_beacons != "[]"
         ORDER BY timestamp ASC
     `;
 
   try {
-    const [results] = await pool.query(query, [person, startTimestamp, endTimestamp]);
+    const [results] = await pool.query(query, [device_id, startTimestamp, endTimestamp]);
     console.log("Query results:", results);
 
     const processedResults = [];
@@ -264,24 +282,6 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
-// Helper function to get sector name based on beacon ID
-const getSector = (beaconId) => {
-  switch (beaconId) {
-    case '0C403019-61C7-55AA-B7EA-DAC30C720055':
-      return 'E/S Bodega';
-    case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
-      return 'Farmacia';
-    case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
-      return 'Entrada';
-    case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
-      return 'Pasillo Central';
-    case 'F7826DA6-BC5B-71E0-893E-54654370696F':
-      return 'Electro';
-    default:
-      return 'Unknown';
-  }
-};
 
 // Endpoint to get the oldest timestamp for a specific active beacon
 app.get('/api/oldest-active-beacon-detections', async (req, res) => {

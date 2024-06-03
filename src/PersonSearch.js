@@ -10,6 +10,8 @@ function PersonSearch() {
     const [endDate, setEndDate] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [umbrales, setUmbrales] = useState({});
+    const [devices, setDevices] = useState([]);
+    const [selectedDeviceId, setSelectedDeviceId] = useState('');
 
     useEffect(() => {
         const fetchThresholds = async () => {
@@ -21,6 +23,16 @@ function PersonSearch() {
             }
         };
         fetchThresholds();
+        
+        const fetchDevices = async () => {
+            try {
+                const response = await axios.get('http://thenext.ddns.net:1337/api/devices');
+                setDevices(response.data);
+            } catch (error) {
+                console.error('Error fetching devices:', error);
+            }
+        };
+        fetchDevices();
     }, []);
 
     const fetchSearchResults = async () => {
@@ -29,7 +41,7 @@ function PersonSearch() {
                 params: {
                     startDate,
                     endDate,
-                    person: '352592573522828 (autocreated)' // Name of the device
+                    device_id: selectedDeviceId // Use device ID
                 }
             });
             console.log('Data received:', response.data);
@@ -119,6 +131,12 @@ function PersonSearch() {
                 <img src={planoSectores} alt="Plano Sectores" className="plano-sectores" />
             </div>
             <div className="search-parameters">
+                <select onChange={(e) => setSelectedDeviceId(e.target.value)}>
+                    <option value="">Seleccionar Dispositivo...</option>
+                    {devices.map(device => (
+                        <option key={device.id} value={device.id}>{device.device_asignado}</option>
+                    ))}
+                </select>
                 <input
                     type="datetime-local"
                     value={startDate}
