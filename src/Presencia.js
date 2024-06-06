@@ -10,7 +10,7 @@ const Presencia = () => {
     // Obtener datos de beacons
     axios.get('http://localhost:3000/api/beacons')
       .then(response => {
-        console.log('Beacons data:', response.data);  // Agregar log para ver datos de beacons
+        console.log('Beacons data:', response.data);
         setBeacons(response.data);
       })
       .catch(error => {
@@ -20,7 +20,7 @@ const Presencia = () => {
     // Obtener estados de beacons
     axios.get('http://localhost:3000/api/beacons-detection-status')
       .then(response => {
-        console.log('Detection status data:', response.data);  // Agregar log para ver datos de estados
+        console.log('Detection status data:', response.data);
         setData(response.data);
       })
       .catch(error => {
@@ -34,6 +34,22 @@ const Presencia = () => {
     return beacon ? beacon.ubicacion : 'Unknown';
   };
 
+  // Función para obtener el color basado en el estado
+  const getColor = (status) => {
+    switch (status) {
+      case 'Verde':
+        return 'green';
+      case 'Rojo':
+        return 'red';
+      case 'Amarillo':
+        return 'yellow';
+      case 'Negro':
+        return 'black';
+      default:
+        return 'transparent';
+    }
+  };
+
   return (
     <div className="presencia">
       <h1>Status de Presencia</h1>
@@ -43,7 +59,7 @@ const Presencia = () => {
             <tr>
               <th>Sector</th>
               {data.length > 0 && data.map((entry, index) => (
-                <th key={index}>{new Date(entry.status_timestamp).toLocaleTimeString()}</th>
+                <th key={index}>{new Date(entry.status_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</th>
               ))}
             </tr>
           </thead>
@@ -52,10 +68,15 @@ const Presencia = () => {
               <tr key={beacon.id}>
                 <td>{getUbicacionById(beacon.id)}</td>
                 {data.map((entry, index) => (
-                  <td key={index} className={entry[`Sector_${beacon.lugar.split(' ')[1]}`]}>
-                    <div className="tooltip">
-                      {entry[`Sector_${beacon.lugar.split(' ')[1]}`]}
-                      <span className="tooltiptext">{entry.status_timestamp}</span>
+                  <td key={index}>
+                    <div className="status-bar-wrapper">
+                      <div
+                        className="status-bar"
+                        style={{ backgroundColor: getColor(entry[`Sector_${beacon.lugar.split(' ')[1]}`]) }}
+                      ></div>
+                      <div className="tooltip">
+                        <span className="tooltiptext">{entry.status_timestamp}</span>
+                      </div>
                     </div>
                   </td>
                 ))}
