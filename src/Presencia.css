@@ -15,37 +15,72 @@ table {
 
 th, td {
   border: 1px solid #ddd;
-  padding: 0;  /* Eliminar padding para asegurar que las barras ocupen todo el espacio */
+  padding: 0;
   text-align: center;
-  height: 40px;  /* Ajustar altura según el diseño */
+  height: 40px;
 }
 
 th {
   background-color: #6b9fd4;
   color: white;
+  font-weight: normal;
+  font-size: 12px;  /* Ajustar el tamaño de la fuente */
+}
+
+th .rotate {
+  transform: rotate(-90deg);
+  white-space: nowrap;
+  display: inline-block;
+  font-size: 12px;  /* Ajustar el tamaño de la fuente */
+  font-weight: normal;  /* Asegurar que no esté en negrita */
+}
+
+td {
+  font-weight: bold;
+  color: #6c757d;
+  position: relative;  /* Para el centrado absoluto */
 }
 
 tbody tr {
-  border-bottom: 2px solid #6b9fd4;  /* Separación entre sectores */
+  border-bottom: 1px solid #6b9fd4;  /* Separación entre sectores */
 }
 
 .status-bar-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  width: 80%;  /* Asegurarse de que la barra ocupe el 100% del ancho */
+  height: 120%;  /* Asegurarse de que la barra ocupe el 100% de la altura */
 }
 
 .status-bar {
-  width: 80%;  /* Ajustar el ancho de la barra */
-  height: 80%;  /* Ajustar la altura de la barra */
+  width: 50%;  /* Ajustar el ancho de la barra */
+  height: 50%;  /* Ajustar la altura de la barra */
+}
+
+.status-bar.green {
+  background-color: #4CAF50;  /* Cambiar el color verde */
+}
+
+.status-bar.red {
+  background-color: red;  /* Asegurarse de que el color rojo esté definido */
+}
+
+.status-bar.yellow {
+  background-color: yellow;  /* Asegurarse de que el color amarillo esté definido */
+}
+
+.status-bar.black {
+  background-color: black;  /* Asegurarse de que el color negro esté definido */
 }
 
 .tooltip {
-  position: relative;
-  display: inline-block;
+  position: absolute;  /* Para el centrado absoluto */
   width: 100%;  /* Asegurarse de que la tooltip ocupa toda la celda */
   height: 100%;
+  display: flex;  /* Usar flexbox para centrar */
+  align-items: center;
+  justify-content: center;
 }
 
 .tooltiptext {
@@ -68,4 +103,41 @@ tbody tr {
 .tooltip:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
+}
+
+/* Nueva clase para ajustar el ancho de las columnas */
+.col-width {
+  width: 50px; /* Ajusta este valor según sea necesario */
+}
+
+/* Clase para ajustar el ancho de la columna Sector */
+.col-sector {
+  width: 150px; /* Ajusta este valor según sea necesario */
+}
+/* Estilos para la leyenda de colores */
+.color-legend {
+  margin-top: 20px;
+  text-align: left;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.color-box {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.color-box.green {
+  background-color: #4CAF50;
+}
+
+.color-box.red {
+  background-color: red;
+}
+
+.color-box.black {
+  background-color: black;
 }

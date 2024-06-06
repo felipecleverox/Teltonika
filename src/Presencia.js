@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Presencia.css';
+import Header from './Header';  // Asegúrate de que la ruta sea correcta
 
 const Presencia = () => {
   const [data, setData] = useState([]);
@@ -34,8 +35,8 @@ const Presencia = () => {
     return beacon ? beacon.ubicacion : 'Unknown';
   };
 
-  // Función para obtener el color basado en el estado
-  const getColor = (status) => {
+  // Función para obtener la clase de color basado en el estado
+  const getColorClass = (status) => {
     switch (status) {
       case 'Verde':
         return 'green';
@@ -52,14 +53,17 @@ const Presencia = () => {
 
   return (
     <div className="presencia">
+      <Header />  {/* Integración del Header */}
       <h1>Status de Presencia</h1>
       <div className="table-container">
         <table>
           <thead>
             <tr>
-              <th>Sector</th>
+              <th className="col-sector">Sector</th>
               {data.length > 0 && data.map((entry, index) => (
-                <th key={index}>{new Date(entry.status_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</th>
+                <th key={index} className="col-width">
+                  <span className="rotate">{new Date(entry.status_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </th>
               ))}
             </tr>
           </thead>
@@ -71,8 +75,7 @@ const Presencia = () => {
                   <td key={index}>
                     <div className="status-bar-wrapper">
                       <div
-                        className="status-bar"
-                        style={{ backgroundColor: getColor(entry[`Sector_${beacon.lugar.split(' ')[1]}`]) }}
+                        className={`status-bar ${getColorClass(entry[`Sector_${beacon.lugar.split(' ')[1]}`])}`}
                       ></div>
                       <div className="tooltip">
                         <span className="tooltiptext">{entry.status_timestamp}</span>
@@ -84,6 +87,12 @@ const Presencia = () => {
             ))}
           </tbody>
         </table>
+      </div>
+      {/* Leyenda de Colores */}
+      <div className="color-legend">
+        <div><span className="color-box black"></span> No hubo presencia</div>
+        <div><span className="color-box red"></span> Presencia menor al esperado</div>
+        <div><span className="color-box green"></span> Presencia OK</div>
       </div>
     </div>
   );
