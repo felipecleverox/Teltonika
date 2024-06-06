@@ -10,6 +10,7 @@ import HistoricalMovementsSearch from './HistoricalMovementsSearch';
 import DataIntelligence from './DataIntelligence'; 
 import Header from './Header'; 
 import Configuration from './Configuration';
+import Presencia from './Presencia';
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -27,6 +28,7 @@ function App() {
         <Route path="/busqueda-entradas-persona" element={<PrivateRoute><PersonSearch /></PrivateRoute>} />
         <Route path="/consulta-historica-movimientos" element={<PrivateRoute><HistoricalMovementsSearch /></PrivateRoute>} />
         <Route path="/inteligencia-de-datos" element={<PrivateRoute><DataIntelligence /></PrivateRoute>} />
+        <Route path="/presencia" element={<PrivateRoute><Presencia/></PrivateRoute>} />
         <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
       </Routes>
     </Router>

@@ -520,6 +520,28 @@ app.get('/api/devices', async (req, res) => {
   }
 });
 
+// Endpoint para obtener los datos de beacons
+app.get('/api/beacons', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM beacons');
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching beacons:', error);
+    res.status(500).json({ error: 'Error fetching beacons' });
+  }
+});
+
+// Endpoint para obtener los estados de detección de beacons
+app.get('/api/beacons-detection-status', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM beacons_detection_status');
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching beacons detection status:', error);
+    res.status(500).json({ error: 'Error fetching beacons detection status' });
+  }
+});
+
 // Start the server
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);

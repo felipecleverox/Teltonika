@@ -10,6 +10,7 @@ import interiorLocationsImage from './assets/images/plano_super.png';
 import historicalMovementsImage from './assets/images/historical_movements1.png';
 import dataIntelligenceImage from './assets/images/data_intelligence.png';
 import configurationImage from './assets/images/configuration.png';
+import presenciaImage from './assets/images/presencia.png'; // Nueva imagen para la rutina Presencia
 
 // Define las rutas y las propiedades de cada rutina
 const routines = [
@@ -19,6 +20,7 @@ const routines = [
   { title: "Búsqueda Histórica Ubicación en Exteriores", image: historicalMovementsImage, route: "/consulta-historica-movimientos" },
   { title: "Inteligencia de Datos", image: dataIntelligenceImage, route: "/inteligencia-de-datos" },
   { title: "Configuración", image: configurationImage, route: "/configuracion" },
+  { title: "Presencia", image: presenciaImage, route: "/Presencia" }, // Nueva rutina agregada
 ];
 
 const SelectRoutine = () => {
