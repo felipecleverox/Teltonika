@@ -1,7 +1,8 @@
+// Presencia.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Presencia.css';
-import Header from './Header';  // Asegúrate de que la ruta sea correcta
+import Header from './Header';
 
 const Presencia = () => {
   const [data, setData] = useState([]);
@@ -53,9 +54,9 @@ const Presencia = () => {
 
   return (
     <div className="presencia">
-      <Header />  {/* Integración del Header */}
+      <Header />
       <h1>Status de Presencia</h1>
-      <div className="table-container">
+      <div className="table-wrapper">
         <table>
           <thead>
             <tr>
@@ -88,10 +89,10 @@ const Presencia = () => {
           </tbody>
         </table>
       </div>
-      {/* Leyenda de Colores */}
       <div className="color-legend">
         <div><span className="color-box black"></span> No hubo presencia</div>
         <div><span className="color-box red"></span> Presencia menor al esperado</div>
+        <div><span className="color-box yellow"></span> Presencia baja</div>
         <div><span className="color-box green"></span> Presencia OK</div>
       </div>
     </div>

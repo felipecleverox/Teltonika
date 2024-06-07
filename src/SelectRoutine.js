@@ -16,11 +16,12 @@ import presenciaImage from './assets/images/presencia.png'; // Nueva imagen para
 const routines = [
   { title: "Ubicación en Interiores Tiempo real", image: lastKnownPositionImage, route: "/ubicaciones-interior" },
   { title: "Búsqueda Histórica Ubicación en Interiores", image: personSearchImage, route: "/busqueda-entradas-persona" },
+  { title: "Presencia Personal por Sectores", image: presenciaImage, route: "/Presencia" },
   { title: "Ubicación Exteriores Tiempo real", image: interiorLocationsImage, route: "/last-known-position" },
   { title: "Búsqueda Histórica Ubicación en Exteriores", image: historicalMovementsImage, route: "/consulta-historica-movimientos" },
   { title: "Inteligencia de Datos", image: dataIntelligenceImage, route: "/inteligencia-de-datos" },
   { title: "Configuración", image: configurationImage, route: "/configuracion" },
-  { title: "Presencia", image: presenciaImage, route: "/Presencia" }, // Nueva rutina agregada
+  
 ];
 
 const SelectRoutine = () => {

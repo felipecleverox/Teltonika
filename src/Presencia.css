@@ -24,61 +24,61 @@ th {
   background-color: #6b9fd4;
   color: white;
   font-weight: normal;
-  font-size: 12px;  /* Ajustar el tamaño de la fuente */
+  font-size: 12px;
 }
 
 th .rotate {
   transform: rotate(-90deg);
   white-space: nowrap;
   display: inline-block;
-  font-size: 12px;  /* Ajustar el tamaño de la fuente */
-  font-weight: normal;  /* Asegurar que no esté en negrita */
+  font-size: 12px;
+  font-weight: normal;
 }
 
 td {
   font-weight: bold;
   color: #6c757d;
-  position: relative;  /* Para el centrado absoluto */
+  position: relative;
 }
 
 tbody tr {
-  border-bottom: 1px solid #6b9fd4;  /* Separación entre sectores */
+  border-bottom: 0px solid #6b9fd4;
 }
 
 .status-bar-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 80%;  /* Asegurarse de que la barra ocupe el 100% del ancho */
-  height: 120%;  /* Asegurarse de que la barra ocupe el 100% de la altura */
+  width: 100%;
+  height: 100%;
 }
 
 .status-bar {
-  width: 50%;  /* Ajustar el ancho de la barra */
-  height: 50%;  /* Ajustar la altura de la barra */
+  width: 30%;
+  height: 70%;
 }
 
 .status-bar.green {
-  background-color: #4CAF50;  /* Cambiar el color verde */
+  background-color: #4CAF50;
 }
 
 .status-bar.red {
-  background-color: red;  /* Asegurarse de que el color rojo esté definido */
+  background-color: rgb(222, 53, 53);
 }
 
 .status-bar.yellow {
-  background-color: yellow;  /* Asegurarse de que el color amarillo esté definido */
+  background-color: rgb(218, 218, 45);
 }
 
 .status-bar.black {
-  background-color: black;  /* Asegurarse de que el color negro esté definido */
+  background-color: rgb(39, 38, 38);
 }
 
 .tooltip {
-  position: absolute;  /* Para el centrado absoluto */
-  width: 100%;  /* Asegurarse de que la tooltip ocupa toda la celda */
+  position: absolute;
+  width: 100%;
   height: 100%;
-  display: flex;  /* Usar flexbox para centrar */
+  display: flex;
   align-items: center;
   justify-content: center;
 }
@@ -105,16 +105,14 @@ tbody tr {
   opacity: 1;
 }
 
-/* Nueva clase para ajustar el ancho de las columnas */
 .col-width {
-  width: 50px; /* Ajusta este valor según sea necesario */
+  width: 50px;
 }
 
-/* Clase para ajustar el ancho de la columna Sector */
 .col-sector {
-  width: 150px; /* Ajusta este valor según sea necesario */
+  width: 150px;
 }
-/* Estilos para la leyenda de colores */
+
 .color-legend {
   margin-top: 20px;
   text-align: left;
@@ -135,9 +133,78 @@ tbody tr {
 }
 
 .color-box.red {
-  background-color: red;
+  background-color: rgb(190, 74, 74);
+}
+
+.color-box.yellow {
+  background-color: rgb(218, 218, 45);
 }
 
 .color-box.black {
-  background-color: black;
+  background-color: rgb(39, 38, 38);
+}
+
+/* Media Queries para hacer la tabla y la leyenda responsivas */
+@media (max-width: 768px) {
+  .presencia {
+    padding: 10px;
+  }
+
+  th, td {
+    font-size: 10px;
+    height: 30px;
+  }
+
+  th .rotate {
+    font-size: 10px;
+  }
+
+  .col-width {
+    width: 40px;
+  }
+
+  .col-sector {
+    width: 100px;
+  }
+
+  .color-legend {
+    font-size: 12px;
+  }
+
+  .color-box {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .presencia {
+    padding: 5px;
+  }
+
+  th, td {
+    font-size: 8px;
+    height: 25px;
+  }
+
+  th .rotate {
+    font-size: 8px;
+  }
+
+  .col-width {
+    width: 30px;
+  }
+
+  .col-sector {
+    width: 80px;
+  }
+
+  .color-legend {
+    font-size: 10px;
+  }
+
+  .color-box {
+    width: 10px;
+    height: 10px;
+  }
 }
