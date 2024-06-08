@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser'); // Importar body-parser
 
 // Create an Express application
 const app = express();
@@ -32,6 +33,9 @@ const defaultPosition = { lat: -33.4489, lng: -70.6693 };
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false })); // Twilio envía datos en formato URL-encoded
+app.use(bodyParser.json()); // También puedes necesitar esto para manejar JSON
+
 
 // Helper function to get sector name based on beacon ID
 const getSector = (beaconId) => {
@@ -539,6 +543,60 @@ app.get('/api/beacons-detection-status', async (req, res) => {
   } catch (error) {
     console.error('Error fetching beacons detection status:', error);
     res.status(500).json({ error: 'Error fetching beacons detection status' });
+  }
+});
+// ZAPIER
+function formatTimestamp(timestamp) {
+  const date = new Date(timestamp);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+}
+
+app.post('/sms', async (req, res) => {
+  console.log('Request Headers:', req.headers);
+  console.log('Request Body:', req.body);
+
+  if (typeof req.body !== 'object' || !req.body.From || !req.body.Body) {
+    console.log('Received incorrect data format:', req.body);
+    return res.status(400).json({ error: 'Invalid data format', received: req.body });
+  }
+
+  try {
+    const deviceId = req.body.From;
+    const message = req.body.Body;
+    const timestamp = req.body.Timestamp || new Date().toISOString();
+
+    console.log('Parsed SMS:', { deviceId, message, timestamp });
+
+    if (!deviceId || !message) {
+      console.log('Invalid data format', req.body);
+      return res.status(400).json({ error: 'Invalid data format', received: req.body });
+    }
+
+    const formattedTimestamp = formatTimestamp(timestamp);
+
+    const connection = await pool.getConnection();
+    try {
+      const [result] = await connection.query(
+        'INSERT INTO sms_data (device_id, message, timestamp) VALUES (?, ?, ?)',
+        [deviceId, message, formattedTimestamp]
+      );
+      console.log('SMS inserted successfully:', { id: result.insertId });
+      res.status(201).json({ id: result.insertId });
+    } catch (queryError) {
+      console.error('Error executing query:', queryError);
+      res.status(500).json({ error: 'Database Error' });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error storing SMS:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

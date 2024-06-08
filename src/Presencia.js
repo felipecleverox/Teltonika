@@ -1,34 +1,52 @@
 // Presencia.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 import './Presencia.css';
 import Header from './Header';
+import moment from 'moment';
 
 const Presencia = () => {
   const [data, setData] = useState([]);
   const [beacons, setBeacons] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
     // Obtener datos de beacons
     axios.get('http://localhost:3000/api/beacons')
       .then(response => {
-        console.log('Beacons data:', response.data);
         setBeacons(response.data);
       })
       .catch(error => {
         console.error('Error fetching beacons:', error);
       });
 
-    // Obtener estados de beacons
-    axios.get('http://localhost:3000/api/beacons-detection-status')
-      .then(response => {
-        console.log('Detection status data:', response.data);
-        setData(response.data);
-      })
-      .catch(error => {
-        console.error('Error fetching beacons detection status:', error);
-      });
-  }, []);
+    // Obtener estados de beacons para el día seleccionado
+    fetchDataForSelectedDate(selectedDate);
+  }, [selectedDate]);
+
+  const fetchDataForSelectedDate = (date) => {
+    const startDate = moment(date).set({hour: 8, minute: 0, second: 0}).unix();
+    const endDate = moment(date).set({hour: 22, minute: 0, second: 0}).unix();
+    
+    axios.get('http://localhost:3000/api/beacons-detection-status', {
+      params: {
+        startDate: startDate * 1000, // convertir a milisegundos
+        endDate: endDate * 1000
+      }
+    })
+    .then(response => {
+      setData(response.data);
+    })
+    .catch(error => {
+      console.error('Error fetching beacons detection status:', error);
+    });
+  };
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+  };
 
   // Función para obtener la ubicación por el beacon ID
   const getUbicacionById = (id) => {
@@ -56,6 +74,12 @@ const Presencia = () => {
     <div className="presencia">
       <Header />
       <h1>Status de Presencia</h1>
+      <DatePicker 
+        selected={selectedDate} 
+        onChange={handleDateChange} 
+        dateFormat="yyyy-MM-dd"
+        className="date-picker"
+      />
       <div className="table-wrapper">
         <table>
           <thead>
