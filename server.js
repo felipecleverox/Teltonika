@@ -13,6 +13,23 @@ const bodyParser = require('body-parser'); // Importar body-parser
 // Create an Express application
 const app = express();
 
+// Agregar Socket.IO
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require('socket.io');
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Ajustar esto según tu configuración de CORS
+  }
+});
+
+// Configurar Socket.IO
+io.on('connection', (socket) => {
+  console.log('A user connected');
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
+});
 // Define the port to listen on
 const port = process.env.PORT || 1337;
 
@@ -32,7 +49,6 @@ const defaultPosition = { lat: -33.4489, lng: -70.6693 };
 
 // Middleware
 app.use(cors());
-
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false })); // Twilio envía datos en formato URL-encoded
 app.use(bodyParser.json()); // También puedes necesitar esto para manejar JSON
@@ -141,7 +157,6 @@ app.get('/api/get-gps-data', async (req, res) => {
 app.get('/api/last-known-position', async (req, res) => {
   const { device_id } = req.query;
   try {
-    // Validar que el parámetro device_id esté presente
     if (!device_id) {
       console.log('Error: device_id is required');
       return res.status(400).send('device_id is required');
@@ -149,7 +164,6 @@ app.get('/api/last-known-position', async (req, res) => {
 
     console.log('Received device_id:', device_id);
 
-    // Consulta para obtener la última posición conocida del dispositivo
     const [lastKnownPosition] = await pool.query(`
       SELECT device_id, latitude, longitude, timestamp * 1000 AS unixTimestamp
       FROM gps_data
@@ -158,7 +172,6 @@ app.get('/api/last-known-position', async (req, res) => {
       LIMIT 1
     `, [device_id]);
 
-    // Verificar si se encontró alguna posición
     if (lastKnownPosition.length === 0) {
       console.log('Error: No data available for device_name:', device_id);
       return res.status(404).send('No data available');
@@ -166,7 +179,6 @@ app.get('/api/last-known-position', async (req, res) => {
 
     console.log('Last known position:', lastKnownPosition);
 
-    // Consulta para obtener el último cambio de coordenadas del dispositivo
     const [lastCoordinateChange] = await pool.query(`
       SELECT timestamp * 1000 AS changeTimestamp
       FROM gps_data
@@ -177,7 +189,6 @@ app.get('/api/last-known-position', async (req, res) => {
 
     console.log('Last coordinate change:', lastCoordinateChange);
 
-    // Construir la respuesta
     const response = {
       ...lastKnownPosition[0],
       changeTimestamp: lastCoordinateChange.length > 0 ? lastCoordinateChange[0].changeTimestamp : null
@@ -556,7 +567,8 @@ app.post('/api/reset-password', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-//Zapier
+
+// Zapier function to format timestamp
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
   const yyyy = date.getFullYear();
@@ -567,6 +579,8 @@ function formatTimestamp(timestamp) {
   const ss = String(date.getSeconds()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
 }
+
+// Endpoint to receive SMS data
 app.post('/sms', async (req, res) => {
   console.log('Request Headers:', req.headers);
   console.log('Request Body:', req.body);
@@ -597,6 +611,10 @@ app.post('/sms', async (req, res) => {
         [deviceId, message, formattedTimestamp]
       );
       console.log('SMS inserted successfully:', { id: result.insertId });
+
+      // Emitir evento de nuevo SMS
+      io.emit('new_sms', { id: result.insertId, deviceId, message, timestamp: formattedTimestamp });
+
       res.status(201).json({ id: result.insertId });
     } catch (queryError) {
       console.error('Error executing query:', queryError);
@@ -610,7 +628,28 @@ app.post('/sms', async (req, res) => {
   }
 });
 
+// Endpoint to fetch SMS data
+app.get('/api/sms-data', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM sms_data');
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching SMS data:', error);
+    res.status(500).json({ error: 'Error fetching SMS data' });
+  }
+});
+// Helper function to format timestamp
+function formatTimestamp(timestamp) {
+  const date = new Date(timestamp);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+}
 // Start the server
-app.listen(port, '0.0.0.0', () => {
+server.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
 });

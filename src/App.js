@@ -3,14 +3,15 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import LastKnownPosition from './LastKnownPosition';
 import MapWithQuadrants from './MapWithQuadrants';
-import PersonSearch from './PersonSearch'; 
+import PersonSearch from './PersonSearch';
 import LandingPage from './LandingPage';
-import SelectRoutine from './SelectRoutine'; 
+import SelectRoutine from './SelectRoutine';
 import HistoricalMovementsSearch from './HistoricalMovementsSearch';
-import DataIntelligence from './DataIntelligence'; 
-import Header from './Header'; 
+import DataIntelligence from './DataIntelligence';
+import Header from './Header';
 import Configuration from './Configuration';
 import Presencia from './Presencia';
+import SmsData from './SmsData';
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -28,8 +29,9 @@ function App() {
         <Route path="/busqueda-entradas-persona" element={<PrivateRoute><PersonSearch /></PrivateRoute>} />
         <Route path="/consulta-historica-movimientos" element={<PrivateRoute><HistoricalMovementsSearch /></PrivateRoute>} />
         <Route path="/inteligencia-de-datos" element={<PrivateRoute><DataIntelligence /></PrivateRoute>} />
-        <Route path="/presencia" element={<PrivateRoute><Presencia/></PrivateRoute>} />
+        <Route path="/presencia" element={<PrivateRoute><Presencia /></PrivateRoute>} />
         <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
+        <Route path="/sms-data" element={<PrivateRoute><SmsData /></PrivateRoute>} />
       </Routes>
     </Router>
   );
