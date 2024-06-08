@@ -32,10 +32,10 @@ const defaultPosition = { lat: -33.4489, lng: -70.6693 };
 
 // Middleware
 app.use(cors());
+
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false })); // Twilio envía datos en formato URL-encoded
 app.use(bodyParser.json()); // También puedes necesitar esto para manejar JSON
-
 
 // Helper function to get sector name based on beacon ID
 const getSector = (beaconId) => {
@@ -332,6 +332,50 @@ app.get('/api/oldest-active-beacon-detections', async (req, res) => {
   }
 });
 
+// Endpoint para obtener los datos de beacons
+app.get('/api/beacons', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM beacons');
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching beacons:', error);
+    res.status(500).json({ error: 'Error fetching beacons' });
+  }
+});
+
+// Endpoint para obtener los estados de detección de beacons
+app.get('/api/beacons-detection-status', async (req, res) => {
+  const { startDate, endDate } = req.query;
+  
+  if (!startDate || !endDate) {
+    return res.status(400).send('startDate and endDate are required');
+  }
+
+  try {
+    const query = `
+      SELECT *
+      FROM beacons_detection_status
+      WHERE status_timestamp BETWEEN ? AND ?
+    `;
+    const [rows] = await pool.query(query, [startDate, endDate]);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching beacons detection status:', error);
+    res.status(500).json({ error: 'Error fetching beacons detection status' });
+  }
+});
+
+// Endpoint to get the list of assigned devices
+app.get('/api/devices', async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT * FROM devices');
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching devices:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
 // Endpoint para obtener la lista de sectores
 app.get('/api/sectores', async (req, res) => {
   try {
@@ -512,40 +556,7 @@ app.post('/api/reset-password', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
-// Endpoint to get the list of assigned devices
-app.get('/api/devices', async (req, res) => {
-  try {
-    const [results] = await pool.query('SELECT * FROM devices');
-    res.json(results);
-  } catch (error) {
-    console.error('Error fetching devices:', error);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Endpoint para obtener los datos de beacons
-app.get('/api/beacons', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM beacons');
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching beacons:', error);
-    res.status(500).json({ error: 'Error fetching beacons' });
-  }
-});
-
-// Endpoint para obtener los estados de detección de beacons
-app.get('/api/beacons-detection-status', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM beacons_detection_status');
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching beacons detection status:', error);
-    res.status(500).json({ error: 'Error fetching beacons detection status' });
-  }
-});
-// ZAPIER
+//Zapier
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
   const yyyy = date.getFullYear();
@@ -556,7 +567,6 @@ function formatTimestamp(timestamp) {
   const ss = String(date.getSeconds()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
 }
-
 app.post('/sms', async (req, res) => {
   console.log('Request Headers:', req.headers);
   console.log('Request Body:', req.body);

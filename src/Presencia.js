@@ -5,7 +5,7 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import './Presencia.css';
 import Header from './Header';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 const Presencia = () => {
   const [data, setData] = useState([]);
@@ -13,9 +13,11 @@ const Presencia = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
+    console.log('Fetching beacon data...');
     // Obtener datos de beacons
     axios.get('http://localhost:3000/api/beacons')
       .then(response => {
+        console.log('Beacons data:', response.data);
         setBeacons(response.data);
       })
       .catch(error => {
@@ -27,16 +29,19 @@ const Presencia = () => {
   }, [selectedDate]);
 
   const fetchDataForSelectedDate = (date) => {
-    const startDate = moment(date).set({hour: 8, minute: 0, second: 0}).unix();
-    const endDate = moment(date).set({hour: 22, minute: 0, second: 0}).unix();
-    
+    const startDate = dayjs(date).set('hour', 8).set('minute', 0).set('second', 0).format('YYYY-MM-DD HH:mm:ss');
+    const endDate = dayjs(date).set('hour', 23).set('minute', 0).set('second', 0).format('YYYY-MM-DD HH:mm:ss');
+
+    console.log(`Fetching data for date range: ${startDate} - ${endDate}`);
+
     axios.get('http://localhost:3000/api/beacons-detection-status', {
       params: {
-        startDate: startDate * 1000, // convertir a milisegundos
-        endDate: endDate * 1000
+        startDate: startDate,
+        endDate: endDate
       }
     })
     .then(response => {
+      console.log('Beacon detection status data:', response.data);
       setData(response.data);
     })
     .catch(error => {
@@ -45,6 +50,7 @@ const Presencia = () => {
   };
 
   const handleDateChange = (date) => {
+    console.log('Date selected:', date);
     setSelectedDate(date);
   };
 
