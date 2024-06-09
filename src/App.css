@@ -1,4 +1,5 @@
 /* App.css */
+
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 body {
@@ -97,6 +98,7 @@ th {
 
 tr:nth-child(odd) {
   background-color: #f2f2f2; /* Filas zebra para tablas */
+}
 
 /* Agrega esto a tu archivo App.css */
 
@@ -162,6 +164,11 @@ tr:nth-child(odd) {
   .icon-item {
     margin-bottom: 10px; /* Add space between stacked icons */
   }
+}
+
+.content {
+  padding: 20px;
+  margin-top: 20px; /* Para asegurar que el contenido no esté cubierto por el header */
 }
 
 /* Media query for mobile-sized screens */

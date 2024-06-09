@@ -29,9 +29,9 @@ function App() {
         <Route path="/busqueda-entradas-persona" element={<PrivateRoute><PersonSearch /></PrivateRoute>} />
         <Route path="/consulta-historica-movimientos" element={<PrivateRoute><HistoricalMovementsSearch /></PrivateRoute>} />
         <Route path="/inteligencia-de-datos" element={<PrivateRoute><DataIntelligence /></PrivateRoute>} />
+        <Route path="/sms-data" element={<PrivateRoute><SmsData /></PrivateRoute>} />
         <Route path="/presencia" element={<PrivateRoute><Presencia /></PrivateRoute>} />
         <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
-        <Route path="/sms-data" element={<PrivateRoute><SmsData /></PrivateRoute>} />
       </Routes>
     </Router>
   );

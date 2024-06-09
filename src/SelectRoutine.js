@@ -1,3 +1,4 @@
+// SelectRoutine.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './SelectRoutine.css';
@@ -11,6 +12,7 @@ import historicalMovementsImage from './assets/images/historical_movements1.png'
 import dataIntelligenceImage from './assets/images/data_intelligence.png';
 import configurationImage from './assets/images/configuration.png';
 import presenciaImage from './assets/images/presencia.png'; // Nueva imagen para la rutina Presencia
+import smsDataImage from './assets/images/sms_data.png'; // Nueva imagen para SMS Data
 
 // Define las rutas y las propiedades de cada rutina
 const routines = [
@@ -19,9 +21,10 @@ const routines = [
   { title: "Presencia Personal por Sectores", image: presenciaImage, route: "/Presencia" },
   { title: "Ubicación Exteriores Tiempo real", image: interiorLocationsImage, route: "/last-known-position" },
   { title: "Búsqueda Histórica Ubicación en Exteriores", image: historicalMovementsImage, route: "/consulta-historica-movimientos" },
+  { title: "Visualización Mensajes SMS", image: smsDataImage, route: "/sms-data" },
   { title: "Inteligencia de Datos", image: dataIntelligenceImage, route: "/inteligencia-de-datos" },
   { title: "Configuración", image: configurationImage, route: "/configuracion" },
-  
+ 
 ];
 
 const SelectRoutine = () => {
