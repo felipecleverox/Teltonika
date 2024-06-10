@@ -592,8 +592,11 @@ app.post('/sms', async (req, res) => {
 
   try {
     const deviceId = req.body.From;
+    const deviceID_name=await getDeviceAsignado(deviceId);
     const message = req.body.Body;
     const timestamp = req.body.Timestamp || new Date().toISOString();
+    const lon = getLongitudeFromMessage(message);
+    const lat = getLatitudeFromMessage(message);
 
     console.log('Parsed SMS:', { deviceId, message, timestamp });
 
@@ -607,8 +610,9 @@ app.post('/sms', async (req, res) => {
     const connection = await pool.getConnection();
     try {
       const [result] = await connection.query(
-        'INSERT INTO sms_data (device_id, message, timestamp) VALUES (?, ?, ?)',
-        [deviceId, message, formattedTimestamp]
+        'INSERT INTO sms_data (device_id, message, timestamp,latitud,longitud) VALUES (?, ?, ?,?,?)',
+
+        [deviceID_name, message, formattedTimestamp,lon,lat]
       );
       console.log('SMS inserted successfully:', { id: result.insertId });
 
@@ -648,6 +652,52 @@ function formatTimestamp(timestamp) {
   const min = String(date.getMinutes()).padStart(2, '0');
   const ss = String(date.getSeconds()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+}
+async function getDeviceAsignado(deviceId) {
+  try {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query('SELECT device_asignado FROM devices WHERE telefono = ?', [deviceId]);
+      
+      if (rows.length > 0) {
+        const deviceID_name = rows[0].device_asignado;
+        console.log('Device Asignado:', deviceID_name);
+        return deviceID_name;
+      } else {
+        console.log('No se encontró ningún dispositivo asignado para el teléfono:', deviceId);
+        return null;
+      }
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error al obtener el dispositivo asignado:', error);
+    throw error;
+  }
+}
+function getLatitudeFromMessage(message) {
+  // Expresión regular para encontrar la latitud en el mensaje
+  const latRegex = /Lat:-?(\d+\.\d+)/;
+  const match = message.match(latRegex);
+  
+  if (match && match[1]) {
+    return parseFloat(match[1]);
+  } else {
+    console.error('Latitud no encontrada en el mensaje:', message);
+    return null;
+  }
+}
+function getLongitudeFromMessage(message) {
+  // Expresión regular para encontrar la latitud en el mensaje
+  const latRegex = /Lon:-?(\d+\.\d+)/;
+  const match = message.match(latRegex);
+  
+  if (match && match[1]) {
+    return parseFloat(match[1]);
+  } else {
+    console.error('Longitud no encontrada en el mensaje:', message);
+    return null;
+  }
 }
 // Start the server
 server.listen(port, '0.0.0.0', () => {
