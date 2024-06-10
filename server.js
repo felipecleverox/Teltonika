@@ -592,11 +592,13 @@ app.post('/sms', async (req, res) => {
 
   try {
     const deviceId = req.body.From;
-    const deviceID_name=await getDeviceAsignado(deviceId);
+    const deviceID_name = await getDeviceAsignado(deviceId);
     const message = req.body.Body;
     const timestamp = req.body.Timestamp || new Date().toISOString();
     const lon = getLongitudeFromMessage(message);
     const lat = getLatitudeFromMessage(message);
+    const ident = await getIdentFromDeviceID(deviceId);
+    const ubicacion = await getUbicacionFromIdent(ident, timestamp);
 
     console.log('Parsed SMS:', { deviceId, message, timestamp });
 
@@ -610,9 +612,8 @@ app.post('/sms', async (req, res) => {
     const connection = await pool.getConnection();
     try {
       const [result] = await connection.query(
-        'INSERT INTO sms_data (device_id, message, timestamp,latitud,longitud) VALUES (?, ?, ?,?,?)',
-
-        [deviceID_name, message, formattedTimestamp,lon,lat]
+        'INSERT INTO sms_data (device_id, message, timestamp, latitud, longitud, sector) VALUES (?, ?, ?, ?, ?, ?)',
+        [deviceID_name, message, formattedTimestamp, lat, lon, ubicacion]
       );
       console.log('SMS inserted successfully:', { id: result.insertId });
 
@@ -631,6 +632,8 @@ app.post('/sms', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 
 // Endpoint to fetch SMS data
 app.get('/api/sms-data', async (req, res) => {
@@ -699,6 +702,66 @@ function getLongitudeFromMessage(message) {
     return null;
   }
 }
+
+async function getIdentFromDeviceID(deviceId){
+  try {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query('SELECT id FROM devices WHERE telefono = ?', [deviceId]);
+      
+      if (rows.length > 0) {
+        const deviceID = rows[0].id; // Correcto
+        console.log('Device id obtenido:', deviceID);
+        return deviceID;
+      } else {
+        console.log('No se encontró ningún ID para el teléfono:', deviceId);
+        return null;
+      }
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error al obtener el ID:', error);
+    throw error;
+  }
+}
+
+
+async function getUbicacionFromIdent(ident, timestamp) {
+  const connection = await pool.getConnection();
+  try {
+    const [latestRecord] = await connection.query(`
+            SELECT ble_beacons FROM gps_data
+            WHERE ident = ? AND timestamp <= ?
+            ORDER BY timestamp DESC
+            LIMIT 1
+        `, [ident, timestamp]);
+
+    console.log('Ultimo Registro obtenido:', latestRecord);
+
+    if (latestRecord.length > 0 && latestRecord[0].ble_beacons && latestRecord[0].ble_beacons !== '[]') {
+      const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
+      const activeBeaconIds = beaconsData.map(beacon => beacon.id);
+      console.log('Active Beacon IDs:', activeBeaconIds);
+
+      const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE id = ?`, [activeBeaconIds[0]]);
+      console.log('Ubicación:', location);
+
+      return location.length > 0 ? location[0].ubicacion : null;
+    } else {
+      console.log('No active beacons found.');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching active beacons:', error);
+    throw new Error('Error fetching active beacons');
+  } finally {
+    connection.release();
+  }
+}
+
+
+
 // Start the server
 server.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
