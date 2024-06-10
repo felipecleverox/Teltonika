@@ -649,6 +649,44 @@ function formatTimestamp(timestamp) {
   const ss = String(date.getSeconds()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
 }
+// Endpoint to handle Flespi webhook
+app.post('/flespi-webhook', async (req, res) => {
+  const { "ble.sensor.magnet.status.1": magnetStatus, "device.id": deviceId } = req.body;
+
+  console.log('Webhook Data Received:', req.body);
+
+  if (magnetStatus !== undefined && deviceId) {
+    try {
+      let result;
+      const timestamp = new Date().toISOString();
+
+      if (magnetStatus) {
+        // Puerta abierta
+        result = await pool.query(
+          'INSERT INTO puertas (Puerta_Sector, Timestamp_Apertura) VALUES (?, ?)',
+          [deviceId, timestamp]
+        );
+        console.log('Puerta abierta registrada:', result);
+      } else {
+        // Puerta cerrada
+        result = await pool.query(
+          'UPDATE puertas SET Timestamp_Cierre = ? WHERE Puerta_Sector = ? AND Timestamp_Cierre IS NULL',
+          [timestamp, deviceId]
+        );
+        console.log('Puerta cerrada registrada:', result);
+      }
+
+      res.sendStatus(200);
+    } catch (error) {
+      console.error('Error processing webhook data:', error);
+      res.status(500).send('Server Error');
+    }
+  } else {
+    res.status(400).send('Invalid data format');
+  }
+});
+
+
 // Start the server
 server.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);

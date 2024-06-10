@@ -22,9 +22,22 @@ const SmsData = () => {
     fetchData();
   }, []);
 
+  // Función para formatear el timestamp a la hora local
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    const yyyy = localDate.getFullYear();
+    const mm = String(localDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(localDate.getDate()).padStart(2, '0');
+    const hh = String(localDate.getHours()).padStart(2, '0');
+    const min = String(localDate.getMinutes()).padStart(2, '0');
+    const ss = String(localDate.getSeconds()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+  };
+
   return (
     <div>
-      <Header title="Base de Mesanjes Recibidos" /> {/* Incluir el header aquí */}
+      <Header title="Base de Mensajes Recibidos" /> {/* Incluir el header aquí */}
       <div className="content">
         <h1>SMS Data</h1>
         <table>
@@ -32,7 +45,9 @@ const SmsData = () => {
             <tr>
               <th>ID</th>
               <th>Device ID</th>
-              <th>Message</th>
+              <th>Sector</th>
+              <th>Latitud</th>
+              <th>Longitud</th>
               <th>Timestamp</th>
             </tr>
           </thead>
@@ -41,8 +56,10 @@ const SmsData = () => {
               <tr key={sms.id}>
                 <td>{sms.id}</td>
                 <td>{sms.device_id}</td>
-                <td>{sms.message}</td>
-                <td>{sms.timestamp}</td>
+                <td>{sms.sector}</td>
+                <td>{sms.latitud}</td>
+                <td>{sms.longitud}</td>
+                <td>{formatTimestamp(sms.timestamp)}</td>
               </tr>
             ))}
           </tbody>
