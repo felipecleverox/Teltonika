@@ -827,11 +827,6 @@ async function getIdentFromDeviceID(deviceId){
   }
 }
 
-
-
-
-
-// Función para obtener la ubicación desde el ident y el timestamp
 // Función para obtener la ubicación desde el ident y el timestamp
 async function getUbicacionFromIdent(ident, timestamp) {
   if (timestamp === null) {
