@@ -1,105 +1,114 @@
 // server.js
 
 // Import necessary libraries
-const express = require('express');
-const cors = require('cors');
-const mysql = require('mysql2/promise');
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-const jwt = require('jsonwebtoken');
-const bodyParser = require('body-parser'); // Importar body-parser
+const express = require('express'); // Web framework for Node.js
+const cors = require('cors'); // Middleware to enable Cross-Origin Resource Sharing
+const mysql = require('mysql2/promise'); // MySQL client for Node.js with Promise support
+const bcrypt = require('bcrypt'); // Library to hash passwords
+const crypto = require('crypto'); // Library for cryptographic functions
+const nodemailer = require('nodemailer'); // Library to send emails
+const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
+const bodyParser = require('body-parser'); // Middleware to parse incoming request bodies
 
 // Create an Express application
 const app = express();
 
-// Agregar Socket.IO
-const http = require('http');
-const server = http.createServer(app);
-const { Server } = require('socket.io');
+// Import and configure Socket.IO for real-time communication
+const http = require('http'); // HTTP server
+const server = http.createServer(app); // Create HTTP server with Express app
+const { Server } = require('socket.io'); // Import Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: "*", // Ajustar esto según tu configuración de CORS
+    origin: "*", // Allow all origins, adjust as needed for security
   }
 });
 
-// Configurar Socket.IO
+// Configure Socket.IO connection and disconnection events
 io.on('connection', (socket) => {
-  console.log('A user connected');
+  console.log('A user connected'); // Log when a user connects
   socket.on('disconnect', () => {
-    console.log('User disconnected');
+    console.log('User disconnected'); // Log when a user disconnects
   });
 });
-// Define the port to listen on
+
+// Define the port to listen on, default to 1337 if not specified in environment variables
 const port = process.env.PORT || 1337;
 
-// Create a MySQL connection pool
+// Create a MySQL connection pool for efficient database access
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: 'admin',
-  database: 'teltonika',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  host: 'localhost', // Database host
+  user: 'root', // Database user
+  password: 'admin', // Database password
+  database: 'teltonika', // Database name
+  waitForConnections: true, // Wait for connections if none are available
+  connectionLimit: 10, // Maximum number of connections in the pool
+  queueLimit: 0 // No limit on the number of queued connection requests
 });
 
-// Define default position
-const defaultPosition = { lat: -33.4489, lng: -70.6693 };
+// Define default position coordinates
+const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Coordinates for Santiago, Chile
 
 // Middleware
-app.use(cors());
-app.use(express.json());
-app.use(bodyParser.urlencoded({ extended: false })); // Twilio envía datos en formato URL-encoded
-app.use(bodyParser.json()); // También puedes necesitar esto para manejar JSON
+app.use(cors()); // Enable CORS for all routes
+app.use(express.json()); // Parse JSON request bodies
+app.use(bodyParser.urlencoded({ extended: false })); // Parse URL-encoded request bodies
+app.use(bodyParser.json()); // Parse JSON request bodies
 
 // Helper function to get sector name based on beacon ID
 const getSector = (beaconId) => {
   switch (beaconId) {
     case '0C403019-61C7-55AA-B7EA-DAC30C720055':
-      return 'E/S Bodega';
+      return 'E/S Bodega'; // Return sector name for specific beacon ID
     case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
-      return 'Farmacia';
+      return 'Farmacia'; // Return sector name for specific beacon ID
     case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
-      return 'Entrada';
+      return 'Entrada'; // Return sector name for specific beacon ID
     case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
-      return 'Pasillo Central';
+      return 'Pasillo Central'; // Return sector name for specific beacon ID
     case 'F7826DA6-BC5B-71E0-893E-54654370696F':
-      return 'Electro';
+      return 'Electro'; // Return sector name for specific beacon ID
     default:
-      return 'Unknown';
+      return 'Unknown'; // Return 'Unknown' if beacon ID does not match any case
   }
 };
 
+
+// Endpoint to receive GPS data
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
+  // Extract GPS data from the request body
   const gpsDatas = req.body;
 
+  // Log the received GPS data
   console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
 
   try {
+    // Iterate over each GPS data entry
     for (const gpsData of gpsDatas) {
+      // Log the current GPS data being processed
       console.log('Processing GPS Data:', JSON.stringify(gpsData, null, 2));
 
+      // Extract beacons from the GPS data
       const beacons = gpsData['ble.beacons'] || [];
       console.log('Beacons:', JSON.stringify(beacons, null, 2));
 
+      // Check if a specific beacon exists in the beacons array
       const beaconExists = beacons.some(beacon => beacon.id === "0C403019-61C7-55AA-B7EA-DAC30C720055");
-      
 
-      // Identificar el tipo de registro
+      // Identify the type of record (sensor data or position data)
       const isSensorData = gpsData.hasOwnProperty('battery.level');
 
-      // Construir la consulta de inserción
+      // Initialize query and parameters for the database insertion
       let query = '';
       let params = [];
 
       if (isSensorData) {
-        // Si es un registro con datos de sensores
+        // If the record contains sensor data, construct the query for sensor data
         query = `
           INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp, battery_level, battery_voltage, ble_sensor_humidity_1, ble_sensor_humidity_2, ble_sensor_humidity_3, ble_sensor_humidity_4, ble_sensor_low_battery_status_1, ble_sensor_magnet_status_1, ble_sensor_temperature_1, ble_sensor_temperature_2, ble_sensor_temperature_3, ble_sensor_temperature_4, bluetooth_state_enum, gnss_state_enum, gnss_status, gsm_mcc, gsm_mnc, gsm_operator_code, gsm_signal_level, movement_status, position_hdop, position_pdop, position_valid, sleep_mode_enum, custom_param_116)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
+        // Populate parameters for sensor data
         params = [
           JSON.stringify(beacons),
           gpsData['channel.id'],
@@ -146,11 +155,12 @@ app.post('/gps-data', async (req, res) => {
           gpsData['custom.param.116']
         ];
       } else {
-        // Si es un registro de posición
+        // If the record contains position data, construct the query for position data
         query = `
           INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_enum, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
+        // Populate parameters for position data
         params = [
           JSON.stringify(beacons),
           gpsData['channel.id'],
@@ -174,56 +184,74 @@ app.post('/gps-data', async (req, res) => {
         ];
       }
 
-      const result = await pool.query(query, params);
-      console.log('Data inserted successfully:', JSON.stringify(result, null, 2));
+      // Execute the query with the constructed parameters
+      await pool.query(query, params);
     }
 
-    res.sendStatus(200);
+    // Send a success response if all GPS data entries are processed
+    res.status(200).send('GPS Data processed successfully');
   } catch (error) {
-    console.error('Error inserting data:', error);
+    // Log any errors that occur during the processing
+    console.error('Error processing GPS data:', error);
+    // Send a 500 Internal Server Error response if an error occurs
     res.status(500).send('Server Error');
   }
 });
 
-
 // Endpoint for querying GPS data with filters
 app.get('/api/get-gps-data', async (req, res) => {
+  // Extract startDate and endDate from query parameters
   const { startDate, endDate } = req.query;
 
+  // SQL query to select device_id, latitude, longitude, and timestamp from gps_data table
+  // The query filters records where the timestamp is between startDate and endDate
   const query = `
         SELECT device_id, latitude, longitude, timestamp AS unixTimestamp
         FROM gps_data
         WHERE timestamp BETWEEN ? AND ?
     `;
 
+  // Convert startDate and endDate to integers and store them in params array
   const params = [parseInt(startDate), parseInt(endDate)];
 
+  // Log the query parameters, SQL query, and SQL parameters for debugging purposes
   console.log('Query Params:', { startDate, endDate });
   console.log('SQL Query:', query);
   console.log('SQL Params:', params);
 
   try {
+    // Execute the SQL query with the provided parameters
     const [results] = await pool.query(query, params);
+    // Log the query results for debugging purposes
     console.log('Query Results:', results);
 
+    // Send the query results as a JSON response
     res.json(results);
   } catch (error) {
+    // Log any errors that occur during the query execution
     console.error('Error fetching GPS data:', error);
+    // Send a 500 Internal Server Error response if an error occurs
     res.status(500).send('Server Error');
   }
 });
 
+
 // Endpoint to get the last known position
 app.get('/api/last-known-position', async (req, res) => {
+  // Extract device_id from query parameters
   const { device_id } = req.query;
+  
   try {
+    // Check if device_id is provided
     if (!device_id) {
       console.log('Error: device_id is required');
       return res.status(400).send('device_id is required');
     }
 
+    // Log the received device_id for debugging purposes
     console.log('Received device_id:', device_id);
 
+    // Query to get the last known position of the device
     const [lastKnownPosition] = await pool.query(`
       SELECT device_id, latitude, longitude, timestamp * 1000 AS unixTimestamp
       FROM gps_data
@@ -232,78 +260,111 @@ app.get('/api/last-known-position', async (req, res) => {
       LIMIT 1
     `, [device_id]);
 
+    // Check if any data is available for the given device_id
     if (lastKnownPosition.length === 0) {
       console.log('Error: No data available for device_name:', device_id);
       return res.status(404).send('No data available');
     }
 
+    // Log the last known position for debugging purposes
     console.log('Last known position:', lastKnownPosition);
 
+    // Query to get the last coordinate change of the device
     const [lastCoordinateChange] = await pool.query(`
       SELECT timestamp * 1000 AS changeTimestamp
       FROM gps_data
       WHERE (latitude != ? OR longitude != ?) AND device_name = ?
       ORDER BY timestamp DESC
       LIMIT 1
-    `, [lastKnownPosition[0].latitude || defaultPosition.lat, lastKnownPosition[0].longitude || defaultPosition.lng, device_id]);
+    `, [
+      lastKnownPosition[0].latitude || defaultPosition.lat, 
+      lastKnownPosition[0].longitude || defaultPosition.lng, 
+      device_id
+    ]);
 
+    // Log the last coordinate change for debugging purposes
     console.log('Last coordinate change:', lastCoordinateChange);
 
+    // Construct the response object
     const response = {
       ...lastKnownPosition[0],
       changeTimestamp: lastCoordinateChange.length > 0 ? lastCoordinateChange[0].changeTimestamp : null
     };
 
+    // Set default coordinates if latitude or longitude is null
     response.latitude = response.latitude !== null ? response.latitude : defaultPosition.lat;
     response.longitude = response.longitude !== null ? response.longitude : defaultPosition.lng;
 
+    // Log the response object for debugging purposes
     console.log('Response:', response);
 
+    // Send the response as JSON
     res.json(response);
   } catch (error) {
+    // Log any errors that occur during the query execution
     console.error('Error fetching last known position:', error);
+    // Send a 500 Internal Server Error response if an error occurs
     res.status(500).send('Server Error');
   }
 });
+
 
 // Endpoint to get active beacons
 app.get('/api/active-beacons', async (req, res) => {
   try {
+    // Query to get the latest record with non-empty ble_beacons from gps_data table
     const [latestRecord] = await pool.query(`
             SELECT ble_beacons FROM gps_data
-            where ble_beacons != '[]'
+            WHERE ble_beacons != '[]'
             ORDER BY timestamp DESC
             LIMIT 1
         `);
 
+    // Log the latest record for debugging purposes
     console.log('Latest Record:', latestRecord);
 
+    // Check if the latest record exists and contains non-empty ble_beacons
     if (latestRecord.length && latestRecord[0].ble_beacons && latestRecord[0].ble_beacons !== '[]') {
+      // Parse the ble_beacons JSON string to an array
       const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
+      // Extract the IDs of active beacons
       const activeBeaconIds = beaconsData.map(beacon => beacon.id);
+      // Log the active beacon IDs for debugging purposes
       console.log('Active Beacon IDs:', activeBeaconIds);
+      // Send the active beacon IDs as a JSON response
       res.json({ activeBeaconIds });
     } else {
+      // Log a message if no active beacons are found
       console.log('No active beacons found.');
+      // Send an empty array as the response
       res.json({ activeBeaconIds: [] });
     }
   } catch (error) {
+    // Log any errors that occur during the query execution
     console.error('Error fetching active beacons:', error);
+    // Send a 500 Internal Server Error response if an error occurs
     res.status(500).send('Server Error');
   }
 });
 
+
 // Endpoint to search for beacon entries and exits for a specific device
 app.get('/api/beacon-entries-exits', async (req, res) => {
+  // Extract startDate, endDate, and device_id from query parameters
   const { startDate, endDate, device_id } = req.query;
 
+  // Log the received search request for debugging purposes
   console.log("Received search request:", { startDate, endDate, device_id });
 
+  // Convert startDate and endDate to Unix timestamps (seconds since epoch)
   const startTimestamp = new Date(startDate).getTime() / 1000;
   const endTimestamp = new Date(endDate).getTime() / 1000;
 
+  // Log the converted timestamps for debugging purposes
   console.log("Converted timestamps:", { startTimestamp, endTimestamp });
 
+  // SQL query to select timestamp and ble_beacons from gps_data table
+  // The query filters records by device_id and timestamp range, and ensures ble_beacons is not empty
   const query = `
         SELECT timestamp, ble_beacons
         FROM gps_data
@@ -312,18 +373,25 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
     `;
 
   try {
+    // Execute the SQL query with the provided parameters
     const [results] = await pool.query(query, [device_id, startTimestamp, endTimestamp]);
+    // Log the query results for debugging purposes
     console.log("Query results:", results);
 
+    // Initialize variables to process the results
     const processedResults = [];
     let currentBeacon = null;
     let entryTimestamp = null;
 
+    // Iterate over each record in the query results
     results.forEach(record => {
+      // Parse the ble_beacons JSON string to an array
       const beacons = JSON.parse(record.ble_beacons || '[]');
       if (beacons.length > 0) {
         const beacon = beacons[0];
+        // Check if the current beacon has changed
         if (currentBeacon === null || beacon.id !== currentBeacon.id) {
+          // If there was a previous beacon, add an exit record for it
           if (currentBeacon !== null) {
             processedResults.push({
               beaconId: currentBeacon.id,
@@ -333,12 +401,14 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
               tiempoPermanencia: record.timestamp * 1000 - entryTimestamp,
             });
           }
+          // Update the current beacon and entry timestamp
           currentBeacon = beacon;
           entryTimestamp = record.timestamp * 1000;
         }
       }
     });
 
+    // If there is a current beacon, add an entry record for it
     if (currentBeacon !== null) {
       processedResults.push({
         beaconId: currentBeacon.id,
@@ -349,11 +419,15 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
       });
     }
 
+    // Log the processed results for debugging purposes
     console.log("Processed results:", processedResults);
 
+    // Send the processed results as a JSON response
     res.json(processedResults);
   } catch (error) {
+    // Log any errors that occur during the query execution
     console.error('Error fetching beacon entries and exits:', error);
+    // Send a 500 Internal Server Error response if an error occurs
     res.status(500).send('Server Error');
   }
 });
@@ -361,11 +435,16 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
 // Endpoint to get the oldest timestamp for a specific active beacon
 app.get('/api/oldest-active-beacon-detections', async (req, res) => {
   try {
+    // Extract activeBeaconId from query parameters
     const activeBeaconId = req.query.activeBeaconId;
     if (!activeBeaconId) {
+      // If activeBeaconId is not provided, send a 400 Bad Request response
       return res.status(400).send('activeBeaconId is required');
     }
 
+    // SQL query to select timestamp and ble_beacons from gps_data table
+    // The query filters records where ble_beacons is not an empty array
+    // The results are ordered by timestamp in descending order
     const query = `
             SELECT timestamp, ble_beacons
             FROM gps_data
@@ -373,32 +452,44 @@ app.get('/api/oldest-active-beacon-detections', async (req, res) => {
             ORDER BY timestamp DESC
         `;
 
+    // Execute the SQL query
     const [results] = await pool.query(query);
 
+    // Initialize variables to track the beacon detection
     let foundBeacon = false;
     let timestamp = null;
 
+    // Iterate over each record in the query results
     for (let i = 0; i < results.length; i++) {
       const record = results[i];
+      // Parse the ble_beacons JSON string to an array
       const beacons = JSON.parse(record.ble_beacons || '[]');
 
+      // Check if the activeBeaconId is present in the current record's beacons
       if (beacons.some(beacon => beacon.id === activeBeaconId)) {
         if (!foundBeacon) {
+          // If the beacon is found for the first time, set foundBeacon to true
           foundBeacon = true;
         }
       } else if (foundBeacon) {
+        // If the beacon was previously found but is not in the current record
+        // Set the timestamp to the current record's timestamp and break the loop
         timestamp = record.timestamp * 1000;
         break;
       }
     }
 
+    // If a timestamp was found, send it as a JSON response
     if (timestamp) {
       res.json({ [activeBeaconId]: { timestamp } });
     } else {
+      // If no matching records were found, send a 404 Not Found response
       res.status(404).send('No matching records found');
     }
   } catch (error) {
+    // Log any errors that occur during the query execution
     console.error('Error fetching oldest beacon detections:', error);
+    // Send a 500 Internal Server Error response if an error occurs
     res.status(500).send('Server Error');
   }
 });
@@ -406,76 +497,118 @@ app.get('/api/oldest-active-beacon-detections', async (req, res) => {
 // Endpoint para obtener los datos de beacons
 app.get('/api/beacons', async (req, res) => {
   try {
+    // Ejecutar una consulta SQL para seleccionar todos los registros de la tabla 'beacons'
     const [rows] = await pool.query('SELECT * FROM beacons');
+    
+    // Enviar los resultados de la consulta como una respuesta JSON
     res.json(rows);
   } catch (error) {
+    // Registrar cualquier error que ocurra durante la ejecución de la consulta
     console.error('Error fetching beacons:', error);
+    
+    // Enviar una respuesta de error 500 (Internal Server Error) con un mensaje de error en formato JSON
     res.status(500).json({ error: 'Error fetching beacons' });
   }
 });
 
+
 // Endpoint para obtener los estados de detección de beacons
 app.get('/api/beacons-detection-status', async (req, res) => {
+  // Extraer startDate y endDate de los parámetros de la solicitud
   const { startDate, endDate } = req.query;
   
+  // Validar que startDate y endDate estén presentes
   if (!startDate || !endDate) {
     return res.status(400).send('startDate and endDate are required');
   }
 
   try {
+    // Definir la consulta SQL para seleccionar registros de la tabla beacons_detection_status
+    // La consulta filtra los registros cuyo status_timestamp esté entre startDate y endDate
     const query = `
       SELECT *
       FROM beacons_detection_status
       WHERE status_timestamp BETWEEN ? AND ?
     `;
+    
+    // Ejecutar la consulta SQL con los parámetros startDate y endDate
     const [rows] = await pool.query(query, [startDate, endDate]);
+    
+    // Enviar los resultados de la consulta como una respuesta JSON
     res.json(rows);
   } catch (error) {
+    // Registrar cualquier error que ocurra durante la ejecución de la consulta
     console.error('Error fetching beacons detection status:', error);
+    
+    // Enviar una respuesta de error 500 (Internal Server Error) con un mensaje de error en formato JSON
     res.status(500).json({ error: 'Error fetching beacons detection status' });
   }
 });
 
+
 // Endpoint to get the list of assigned devices
 app.get('/api/devices', async (req, res) => {
   try {
+    // Execute a SQL query to select all records from the 'devices' table
     const [results] = await pool.query('SELECT * FROM devices');
+    
+    // Send the query results as a JSON response
     res.json(results);
   } catch (error) {
+    // Log any errors that occur during the query execution
     console.error('Error fetching devices:', error);
+    
+    // Send a 500 Internal Server Error response with a message
     res.status(500).send('Server Error');
   }
 });
+
 
 // Endpoint para obtener la lista de sectores
 app.get('/api/sectores', async (req, res) => {
   try {
+    // Ejecutar una consulta SQL para seleccionar todos los registros de la tabla 'sectores'
     const [results] = await pool.query('SELECT * FROM sectores');
+    
+    // Enviar los resultados de la consulta como una respuesta JSON
     res.json(results);
   } catch (error) {
+    // Registrar cualquier error que ocurra durante la ejecución de la consulta
     console.error('Error fetching sectors:', error);
+    
+    // Enviar una respuesta de error 500 (Internal Server Error) con un mensaje de error
     res.status(500).send('Server Error');
   }
 });
 
+
 // Endpoint para obtener la configuración
 app.get('/api/configuracion', async (req, res) => {
   try {
+    // Ejecutar una consulta SQL para seleccionar todos los registros de la tabla 'configuracion'
     const [results] = await pool.query('SELECT * FROM configuracion');
+    
+    // Enviar los resultados de la consulta como una respuesta JSON
     res.json(results);
   } catch (error) {
+    // Registrar cualquier error que ocurra durante la ejecución de la consulta
     console.error('Error fetching configuration:', error);
+    
+    // Enviar una respuesta de error 500 (Internal Server Error) con un mensaje de error
     res.status(500).send('Server Error');
   }
 });
 
 // Endpoint para actualizar la configuración
 app.post('/api/configuracion', async (req, res) => {
+  // Obtener las configuraciones del cuerpo de la solicitud
   const configuraciones = req.body;
 
   try {
+    // Vaciar la tabla 'configuracion' antes de insertar nuevas configuraciones
     await pool.query('TRUNCATE TABLE configuracion');
 
+    // Insertar cada configuración en la tabla 'configuracion'
     for (const config of configuraciones) {
       await pool.query(
         'INSERT INTO configuracion (beacon_id, min_tiempo_permanencia, max_tiempo_permanencia, umbral_verde, umbral_amarillo, umbral_rojo) VALUES (?, ?, ?, ?, ?, ?)',
@@ -490,39 +623,57 @@ app.post('/api/configuracion', async (req, res) => {
       );
     }
 
+    // Enviar una respuesta de éxito
     res.sendStatus(200);
   } catch (error) {
+    // Registrar cualquier error que ocurra durante la actualización de la configuración
     console.error('Error updating configuration:', error);
+    
+    // Enviar una respuesta de error 500 (Internal Server Error) con un mensaje de error
     res.status(500).send('Server Error');
   }
 });
 
+
 // Endpoint para obtener los umbrales
 app.get('/api/umbrales', async (req, res) => {
   try {
+    // Ejecutar una consulta SQL para seleccionar el primer registro de la tabla 'umbrales'
     const [results] = await pool.query('SELECT * FROM umbrales LIMIT 1');
+    
+    // Enviar el primer resultado de la consulta como una respuesta JSON
     res.json(results[0]);
   } catch (error) {
+    // Registrar cualquier error que ocurra durante la ejecución de la consulta
     console.error('Error fetching thresholds:', error);
+    
+    // Enviar una respuesta de error 500 (Internal Server Error) con un mensaje de error
     res.status(500).send('Server Error');
   }
 });
 
 // Endpoint para actualizar los umbrales
 app.post('/api/umbrales', async (req, res) => {
+  // Extraer los umbrales del cuerpo de la solicitud
   const { umbral_verde, umbral_amarillo, umbral_rojo } = req.body;
 
   try {
+    // Vaciar la tabla 'umbrales' antes de insertar nuevos umbrales
     await pool.query('TRUNCATE TABLE umbrales');
 
+    // Insertar los nuevos umbrales en la tabla 'umbrales'
     await pool.query(
       'INSERT INTO umbrales (umbral_verde, umbral_amarillo, umbral_rojo) VALUES (?, ?, ?)',
       [umbral_verde, umbral_amarillo, umbral_rojo]
     );
 
+    // Enviar una respuesta de éxito
     res.sendStatus(200);
   } catch (error) {
+    // Registrar cualquier error que ocurra durante la actualización de los umbrales
     console.error('Error updating thresholds:', error);
+    
+    // Enviar una respuesta de error 500 (Internal Server Error) con un mensaje de error
     res.status(500).send('Server Error');
   }
 });
@@ -533,13 +684,15 @@ app.post('/api/register', async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
+    // Check if the username already exists
     const [existingUser] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
     if (existingUser.length > 0) {
       return res.status(400).send('Username already exists');
     }
 
+    // Insert the new user into the database
     await pool.query('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', [username, hashedPassword, email]);
-    res.sendStatus(201);
+    res.sendStatus(201); // User created successfully
   } catch (error) {
     console.error('Error registering user:', error);
     res.status(500).send('Server Error');
@@ -551,16 +704,19 @@ app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
+    // Fetch the user by username
     const [user] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
     if (user.length === 0) {
       return res.status(400).send('Invalid username or password');
     }
 
+    // Compare the provided password with the stored hashed password
     const validPassword = await bcrypt.compare(password, user[0].password);
     if (!validPassword) {
       return res.status(400).send('Invalid username or password');
     }
 
+    // Generate a JWT token
     const token = jwt.sign({ userId: user[0].id }, 'your_jwt_secret', { expiresIn: '1h' });
     res.json({ token });
   } catch (error) {
@@ -574,16 +730,20 @@ app.post('/api/request-password-reset', async (req, res) => {
   const { email } = req.body;
 
   try {
+    // Fetch the user by email
     const [user] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     if (user.length === 0) {
       return res.status(400).send('User with this email does not exist');
     }
 
+    // Generate a reset token and expiry time
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
 
+    // Update the user with the reset token and expiry time
     await pool.query('UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE email = ?', [resetToken, resetTokenExpiry, email]);
 
+    // Send the reset token via email
     const transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
@@ -614,11 +774,13 @@ app.post('/api/reset-password', async (req, res) => {
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
   try {
+    // Fetch the user by reset token and ensure the token is not expired
     const [user] = await pool.query('SELECT * FROM users WHERE resetToken = ? AND resetTokenExpiry > ?', [token, Date.now()]);
     if (user.length === 0) {
       return res.status(400).send('Invalid or expired token');
     }
 
+    // Update the user's password and clear the reset token and expiry time
     await pool.query('UPDATE users SET password = ?, resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?', [hashedPassword, user[0].id]);
 
     res.send('Password reset successful');
@@ -629,6 +791,7 @@ app.post('/api/reset-password', async (req, res) => {
 });
 
 // Zapier function to format timestamp
+// Helper function to format timestamp
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
   const yyyy = date.getFullYear();
@@ -641,12 +804,11 @@ function formatTimestamp(timestamp) {
 }
 
 // Endpoint to receive SMS data
-
-// Endpoint to receive SMS data
 app.post('/sms', async (req, res) => {
   console.log('Request Headers:', req.headers);
   console.log('Request Body:', req.body);
 
+  // Validate the request body
   if (typeof req.body !== 'object' || !req.body.From || !req.body.Body) {
     console.log('Received incorrect data format:', req.body);
     return res.status(400).json({ error: 'Invalid data format', received: req.body });
@@ -654,7 +816,7 @@ app.post('/sms', async (req, res) => {
 
   try {
     const currentEpoch = Math.floor(Date.now() / 1000);
-    console.log('current Epoch '+ currentEpoch);
+    console.log('current Epoch ' + currentEpoch);
     const deviceId = req.body.From;
     const deviceID_name = await getDeviceAsignado(deviceId);
     const message = req.body.Body;
@@ -662,29 +824,29 @@ app.post('/sms', async (req, res) => {
     const lon = getLongitudeFromMessage(message);
     const lat = getLatitudeFromMessage(message);
     const ident = await getIdentFromDeviceID(deviceId);
-    
     const ubicacion = await getUbicacionFromIdent(ident, currentEpoch);
 
     console.log('Parsed SMS:', { deviceId, message, currentEpoch });
 
+    // Validate the parsed data
     if (!deviceId || !message) {
       console.log('Invalid data format', req.body);
       return res.status(400).json({ error: 'Invalid data format', received: req.body });
     }
 
-    // Formatear el timestamp
+    // Format the timestamp
     const formattedTimestamp = formatTimestamp(new Date(currentEpoch * 1000));
-
 
     const connection = await pool.getConnection();
     try {
+      // Insert the SMS data into the database
       const [result] = await connection.query(
         'INSERT INTO sms_data (device_id, message, timestamp, latitud, longitud, sector) VALUES (?, ?, ?, ?, ?, ?)',
         [deviceID_name, message, formattedTimestamp, lat, lon, ubicacion]
       );
       console.log('SMS inserted successfully:', { id: result.insertId });
 
-      // Emitir evento de nuevo SMS
+      // Emit an event for the new SMS
       io.emit('new_sms', { id: result.insertId, deviceId, message, timestamp: formattedTimestamp });
 
       res.status(201).json({ id: result.insertId });
@@ -710,6 +872,7 @@ app.get('/api/sms-data', async (req, res) => {
     res.status(500).json({ error: 'Error fetching SMS data' });
   }
 });
+
 // Helper function to format timestamp
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
@@ -720,148 +883,6 @@ function formatTimestamp(timestamp) {
   const min = String(date.getMinutes()).padStart(2, '0');
   const ss = String(date.getSeconds()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
-}
-// Endpoint to handle Flespi webhook
-app.post('/flespi-webhook', async (req, res) => {
-  const { "ble.sensor.magnet.status.1": magnetStatus, "device.id": deviceId } = req.body;
-
-  console.log('Webhook Data Received:', req.body);
-
-  if (magnetStatus !== undefined && deviceId) {
-    try {
-      let result;
-      const timestamp = new Date().toISOString();
-
-      if (magnetStatus) {
-        // Puerta abierta
-        result = await pool.query(
-          'INSERT INTO puertas (Puerta_Sector, Timestamp_Apertura) VALUES (?, ?)',
-          [deviceId, timestamp]
-        );
-        console.log('Puerta abierta registrada:', result);
-      } else {
-        // Puerta cerrada
-        result = await pool.query(
-          'UPDATE puertas SET Timestamp_Cierre = ? WHERE Puerta_Sector = ? AND Timestamp_Cierre IS NULL',
-          [timestamp, deviceId]
-        );
-        console.log('Puerta cerrada registrada:', result);
-      }
-
-      res.sendStatus(200);
-    } catch (error) {
-      console.error('Error processing webhook data:', error);
-      res.status(500).send('Server Error');
-    }
-  } else {
-    res.status(400).send('Invalid data format');
-  }
-});
-async function getDeviceAsignado(deviceId) {
-  try {
-    const connection = await pool.getConnection();
-    try {
-      const [rows] = await connection.query('SELECT device_asignado FROM devices WHERE telefono = ?', [deviceId]);
-      
-      if (rows.length > 0) {
-        const deviceID_name = rows[0].device_asignado;
-        console.log('Device Asignado:', deviceID_name);
-        return deviceID_name;
-      } else {
-        console.log('No se encontró ningún dispositivo asignado para el teléfono:', deviceId);
-        return null;
-      }
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
-    console.error('Error al obtener el dispositivo asignado:', error);
-    throw error;
-  }
-}
-function getLatitudeFromMessage(message) {
-  // Expresión regular para encontrar la latitud en el mensaje
-  const latRegex = /Lat:-?(\d+\.\d+)/;
-  const match = message.match(latRegex);
-  
-  if (match && match[1]) {
-    return parseFloat(match[1]);
-  } else {
-    console.error('Latitud no encontrada en el mensaje:', message);
-    return null;
-  }
-}
-function getLongitudeFromMessage(message) {
-  // Expresión regular para encontrar la latitud en el mensaje
-  const latRegex = /Lon:-?(\d+\.\d+)/;
-  const match = message.match(latRegex);
-  
-  if (match && match[1]) {
-    return parseFloat(match[1]);
-  } else {
-    console.error('Longitud no encontrada en el mensaje:', message);
-    return null;
-  }
-}
-
-async function getIdentFromDeviceID(deviceId){
-  try {
-    const connection = await pool.getConnection();
-    try {
-      const [rows] = await connection.query('SELECT id FROM devices WHERE telefono = ?', [deviceId]);
-      
-      if (rows.length > 0) {
-        const deviceID = rows[0].id; // Correcto
-        console.log('Device id obtenido:', deviceID);
-        return deviceID;
-      } else {
-        console.log('No se encontró ningún ID para el teléfono:', deviceId);
-        return null;
-      }
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
-    console.error('Error al obtener el ID:', error);
-    throw error;
-  }
-}
-
-// Función para obtener la ubicación desde el ident y el timestamp
-async function getUbicacionFromIdent(ident, timestamp) {
-  if (timestamp === null) {
-    throw new Error('Invalid timestamp');
-  }
-  
-  const connection = await pool.getConnection();
-  try {
-    const [latestRecord] = await connection.query(`
-      SELECT ble_beacons FROM gps_data
-      WHERE ident = ? AND timestamp <= ? and ble_beacons != "[]"
-      ORDER BY timestamp DESC limit 1
-    `, [ident, timestamp]);
-
-    console.log('Ultimo Registro obtenido:', latestRecord);
-
-    if (latestRecord.length > 0 && latestRecord[0].ble_beacons && latestRecord[0].ble_beacons !== '[]') {
-      const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
-      const activeBeaconIds = beaconsData.map(beacon => beacon.id);
-      console.log('Active Beacon IDs:', activeBeaconIds);
-
-      const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE id = ?`, [activeBeaconIds[0]]);
-      console.log('Ubicación:', location);
-
-      return location.length > 0 ? location[0].ubicacion : null;
-    } else {
-      console.log('No active beacons found.');
-      return null;
-    }
-  } catch (error) {
-    console.error('Error fetching active beacons:', error);
-    throw new Error('Error fetching active beacons');
-  } finally {
-    connection.release();
-  }
 }
 
 // Start the server
