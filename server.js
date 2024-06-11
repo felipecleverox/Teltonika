@@ -85,15 +85,73 @@ app.post('/gps-data', async (req, res) => {
       console.log('Beacons:', JSON.stringify(beacons, null, 2));
 
       const beaconExists = beacons.some(beacon => beacon.id === "0C403019-61C7-55AA-B7EA-DAC30C720055");
-      if (beaconExists) {
-        console.log('Beacon 0C403019-61C7-55AA-B7EA-DAC30C720055 found!');
-      } else {
-        console.log('Beacon 0C403019-61C7-55AA-B7EA-DAC30C720055 not found!');
-      }
+      
 
-      const result = await pool.query(
-        'INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_enum, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [
+      // Identificar el tipo de registro
+      const isSensorData = gpsData.hasOwnProperty('battery.level');
+
+      // Construir la consulta de inserción
+      let query = '';
+      let params = [];
+
+      if (isSensorData) {
+        // Si es un registro con datos de sensores
+        query = `
+          INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp, battery_level, battery_voltage, ble_sensor_humidity_1, ble_sensor_humidity_2, ble_sensor_humidity_3, ble_sensor_humidity_4, ble_sensor_low_battery_status_1, ble_sensor_magnet_status_1, ble_sensor_temperature_1, ble_sensor_temperature_2, ble_sensor_temperature_3, ble_sensor_temperature_4, bluetooth_state_enum, gnss_state_enum, gnss_status, gsm_mcc, gsm_mnc, gsm_operator_code, gsm_signal_level, movement_status, position_hdop, position_pdop, position_valid, sleep_mode_enum, custom_param_116)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        params = [
+          JSON.stringify(beacons),
+          gpsData['channel.id'],
+          gpsData['codec.id'],
+          gpsData['device.id'],
+          gpsData['device.name'],
+          gpsData['device.type.id'],
+          gpsData['event.priority.enum'],
+          gpsData.ident,
+          gpsData.peer,
+          gpsData['position.altitude'],
+          gpsData['position.direction'],
+          gpsData['position.latitude'],
+          gpsData['position.longitude'],
+          gpsData['position.satellites'],
+          gpsData['position.speed'],
+          gpsData['protocol.id'],
+          gpsData['server.timestamp'],
+          gpsData.timestamp,
+          gpsData['battery.level'],
+          gpsData['battery.voltage'],
+          gpsData['ble.sensor.humidity.1'],
+          gpsData['ble.sensor.humidity.2'],
+          gpsData['ble.sensor.humidity.3'],
+          gpsData['ble.sensor.humidity.4'],
+          gpsData['ble.sensor.low.battery.status.1'],
+          gpsData['ble.sensor.magnet.status.1'],
+          gpsData['ble.sensor.temperature.1'],
+          gpsData['ble.sensor.temperature.2'],
+          gpsData['ble.sensor.temperature.3'],
+          gpsData['ble.sensor.temperature.4'],
+          gpsData['bluetooth.state.enum'],
+          gpsData['gnss.state.enum'],
+          gpsData['gnss.status'],
+          gpsData['gsm.mcc'],
+          gpsData['gsm.mnc'],
+          gpsData['gsm.operator.code'],
+          gpsData['gsm.signal.level'],
+          gpsData['movement.status'],
+          gpsData['position.hdop'],
+          gpsData['position.pdop'],
+          gpsData['position.valid'],
+          gpsData['sleep.mode.enum'],
+          gpsData['custom.param.116']
+        ];
+      } else {
+        // Si es un registro de posición
+        query = `
+          INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_enum, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        params = [
           JSON.stringify(beacons),
           gpsData['channel.id'],
           gpsData['codec.id'],
@@ -113,9 +171,10 @@ app.post('/gps-data', async (req, res) => {
           gpsData['protocol.id'],
           gpsData['server.timestamp'],
           gpsData.timestamp
-        ]
-      );
+        ];
+      }
 
+      const result = await pool.query(query, params);
       console.log('Data inserted successfully:', JSON.stringify(result, null, 2));
     }
 
@@ -125,6 +184,7 @@ app.post('/gps-data', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 // Endpoint for querying GPS data with filters
 app.get('/api/get-gps-data', async (req, res) => {
