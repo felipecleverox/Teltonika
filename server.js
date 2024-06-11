@@ -641,6 +641,8 @@ function formatTimestamp(timestamp) {
 }
 
 // Endpoint to receive SMS data
+
+// Endpoint to receive SMS data
 app.post('/sms', async (req, res) => {
   console.log('Request Headers:', req.headers);
   console.log('Request Body:', req.body);
@@ -651,24 +653,34 @@ app.post('/sms', async (req, res) => {
   }
 
   try {
+    const currentEpoch = Math.floor(Date.now() / 1000);
+    console.log('current Epoch '+ currentEpoch);
     const deviceId = req.body.From;
+    const deviceID_name = await getDeviceAsignado(deviceId);
     const message = req.body.Body;
-    const timestamp = req.body.Timestamp || new Date().toISOString();
+    const timestamp = req.body.Timestamp;
+    const lon = getLongitudeFromMessage(message);
+    const lat = getLatitudeFromMessage(message);
+    const ident = await getIdentFromDeviceID(deviceId);
+    
+    const ubicacion = await getUbicacionFromIdent(ident, currentEpoch);
 
-    console.log('Parsed SMS:', { deviceId, message, timestamp });
+    console.log('Parsed SMS:', { deviceId, message, currentEpoch });
 
     if (!deviceId || !message) {
       console.log('Invalid data format', req.body);
       return res.status(400).json({ error: 'Invalid data format', received: req.body });
     }
 
-    const formattedTimestamp = formatTimestamp(timestamp);
+    // Formatear el timestamp
+    const formattedTimestamp = formatTimestamp(new Date(currentEpoch * 1000));
+
 
     const connection = await pool.getConnection();
     try {
       const [result] = await connection.query(
-        'INSERT INTO sms_data (device_id, message, timestamp) VALUES (?, ?, ?)',
-        [deviceId, message, formattedTimestamp]
+        'INSERT INTO sms_data (device_id, message, timestamp, latitud, longitud, sector) VALUES (?, ?, ?, ?, ?, ?)',
+        [deviceID_name, message, formattedTimestamp, lat, lon, ubicacion]
       );
       console.log('SMS inserted successfully:', { id: result.insertId });
 
@@ -745,7 +757,117 @@ app.post('/flespi-webhook', async (req, res) => {
     res.status(400).send('Invalid data format');
   }
 });
+async function getDeviceAsignado(deviceId) {
+  try {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query('SELECT device_asignado FROM devices WHERE telefono = ?', [deviceId]);
+      
+      if (rows.length > 0) {
+        const deviceID_name = rows[0].device_asignado;
+        console.log('Device Asignado:', deviceID_name);
+        return deviceID_name;
+      } else {
+        console.log('No se encontró ningún dispositivo asignado para el teléfono:', deviceId);
+        return null;
+      }
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error al obtener el dispositivo asignado:', error);
+    throw error;
+  }
+}
+function getLatitudeFromMessage(message) {
+  // Expresión regular para encontrar la latitud en el mensaje
+  const latRegex = /Lat:-?(\d+\.\d+)/;
+  const match = message.match(latRegex);
+  
+  if (match && match[1]) {
+    return parseFloat(match[1]);
+  } else {
+    console.error('Latitud no encontrada en el mensaje:', message);
+    return null;
+  }
+}
+function getLongitudeFromMessage(message) {
+  // Expresión regular para encontrar la latitud en el mensaje
+  const latRegex = /Lon:-?(\d+\.\d+)/;
+  const match = message.match(latRegex);
+  
+  if (match && match[1]) {
+    return parseFloat(match[1]);
+  } else {
+    console.error('Longitud no encontrada en el mensaje:', message);
+    return null;
+  }
+}
 
+async function getIdentFromDeviceID(deviceId){
+  try {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query('SELECT id FROM devices WHERE telefono = ?', [deviceId]);
+      
+      if (rows.length > 0) {
+        const deviceID = rows[0].id; // Correcto
+        console.log('Device id obtenido:', deviceID);
+        return deviceID;
+      } else {
+        console.log('No se encontró ningún ID para el teléfono:', deviceId);
+        return null;
+      }
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error al obtener el ID:', error);
+    throw error;
+  }
+}
+
+
+
+
+
+// Función para obtener la ubicación desde el ident y el timestamp
+// Función para obtener la ubicación desde el ident y el timestamp
+async function getUbicacionFromIdent(ident, timestamp) {
+  if (timestamp === null) {
+    throw new Error('Invalid timestamp');
+  }
+  
+  const connection = await pool.getConnection();
+  try {
+    const [latestRecord] = await connection.query(`
+      SELECT ble_beacons FROM gps_data
+      WHERE ident = ? AND timestamp <= ? and ble_beacons != "[]"
+      ORDER BY timestamp DESC limit 1
+    `, [ident, timestamp]);
+
+    console.log('Ultimo Registro obtenido:', latestRecord);
+
+    if (latestRecord.length > 0 && latestRecord[0].ble_beacons && latestRecord[0].ble_beacons !== '[]') {
+      const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
+      const activeBeaconIds = beaconsData.map(beacon => beacon.id);
+      console.log('Active Beacon IDs:', activeBeaconIds);
+
+      const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE id = ?`, [activeBeaconIds[0]]);
+      console.log('Ubicación:', location);
+
+      return location.length > 0 ? location[0].ubicacion : null;
+    } else {
+      console.log('No active beacons found.');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching active beacons:', error);
+    throw new Error('Error fetching active beacons');
+  } finally {
+    connection.release();
+  }
+}
 
 // Start the server
 server.listen(port, '0.0.0.0', () => {
