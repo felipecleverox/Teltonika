@@ -658,6 +658,7 @@ app.post('/sms', async (req, res) => {
     const deviceId = req.body.From;
     const deviceID_name = await getDeviceAsignado(deviceId);
     const message = req.body.Body;
+
     const timestamp = req.body.Timestamp;
     const lon = getLongitudeFromMessage(message);
     const lat = getLatitudeFromMessage(message);
@@ -700,6 +701,8 @@ app.post('/sms', async (req, res) => {
   }
 });
 
+
+
 // Endpoint to fetch SMS data
 app.get('/api/sms-data', async (req, res) => {
   try {
@@ -721,42 +724,7 @@ function formatTimestamp(timestamp) {
   const ss = String(date.getSeconds()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
 }
-// Endpoint to handle Flespi webhook
-app.post('/flespi-webhook', async (req, res) => {
-  const { "ble.sensor.magnet.status.1": magnetStatus, "device.id": deviceId } = req.body;
 
-  console.log('Webhook Data Received:', req.body);
-
-  if (magnetStatus !== undefined && deviceId) {
-    try {
-      let result;
-      const timestamp = new Date().toISOString();
-
-      if (magnetStatus) {
-        // Puerta abierta
-        result = await pool.query(
-          'INSERT INTO puertas (Puerta_Sector, Timestamp_Apertura) VALUES (?, ?)',
-          [deviceId, timestamp]
-        );
-        console.log('Puerta abierta registrada:', result);
-      } else {
-        // Puerta cerrada
-        result = await pool.query(
-          'UPDATE puertas SET Timestamp_Cierre = ? WHERE Puerta_Sector = ? AND Timestamp_Cierre IS NULL',
-          [timestamp, deviceId]
-        );
-        console.log('Puerta cerrada registrada:', result);
-      }
-
-      res.sendStatus(200);
-    } catch (error) {
-      console.error('Error processing webhook data:', error);
-      res.status(500).send('Server Error');
-    }
-  } else {
-    res.status(400).send('Invalid data format');
-  }
-});
 async function getDeviceAsignado(deviceId) {
   try {
     const connection = await pool.getConnection();
@@ -827,10 +795,6 @@ async function getIdentFromDeviceID(deviceId){
   }
 }
 
-
-
-
-
 // Función para obtener la ubicación desde el ident y el timestamp
 // Función para obtener la ubicación desde el ident y el timestamp
 async function getUbicacionFromIdent(ident, timestamp) {
@@ -845,6 +809,8 @@ async function getUbicacionFromIdent(ident, timestamp) {
       WHERE ident = ? AND timestamp <= ? and ble_beacons != "[]"
       ORDER BY timestamp DESC limit 1
     `, [ident, timestamp]);
+stamp]);
+
 
     console.log('Ultimo Registro obtenido:', latestRecord);
 
