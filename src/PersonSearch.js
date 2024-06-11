@@ -6,8 +6,11 @@ import planoSectores from './assets/images/plano_sectores.jpg'; // Ensure this p
 import Header from './Header'; // Import the new header component
 
 function PersonSearch() {
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+    const [selectedDay, setSelectedDay] = useState('');
+    const [startHour, setStartHour] = useState('');
+    const [startMinute, setStartMinute] = useState('');
+    const [endHour, setEndHour] = useState('');
+    const [endMinute, setEndMinute] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [umbrales, setUmbrales] = useState({});
     const [devices, setDevices] = useState([]);
@@ -36,6 +39,9 @@ function PersonSearch() {
     }, []);
 
     const fetchSearchResults = async () => {
+        const startDate = `${selectedDay}T${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}:00`;
+        const endDate = `${selectedDay}T${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}:00`;
+
         try {
             const response = await axios.get('http://thenext.ddns.net:1337/api/beacon-entries-exits', {
                 params: {
@@ -60,23 +66,23 @@ function PersonSearch() {
     const getSector = (beaconId) => {
         switch (beaconId) {
             case '0C403019-61C7-55AA-B7EA-DAC30C720055':
-                return <span style={{ color: '#c1ff72' }}>E/S Bodega</span>;
+                return { text: 'E/S Bodega', className: 'sector-bodega' };
             case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
-                return <span style={{ color: '#8c52ff' }}>Farmacia</span>;
+                return { text: 'Farmacia', className: 'sector-farmacia' };
             case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
-                return <span style={{ color: '#ffbd59' }}>Entrada</span>;
+                return { text: 'Entrada', className: 'sector-entrada' };
             case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
-                return <span style={{ color: '#5ce16e' }}>Pasillo Central</span>;
+                return { text: 'Pasillo Central', className: 'sector-pasillo' };
             case 'F7826DA6-BC5B-71E0-893E-54654370696F':
-                return <span style={{ color: '#ffde59' }}>Electro</span>;
+                return { text: 'Electro', className: 'sector-electro' };
             default:
-                return 'Unknown';
+                return { text: 'Unknown', className: '' };
         }
     };
 
     const calculatePermanence = (entrada, salida) => {
         const start = new Date(entrada);
-        const end = salida ? new Date(salida) : new Date(endDate); // Usa endDate si no hay salida
+        const end = salida ? new Date(salida) : new Date(); // Usa la fecha actual si no hay salida
         const duration = end - start;
 
         const hours = Math.floor(duration / (1000 * 60 * 60));
@@ -84,30 +90,31 @@ function PersonSearch() {
         return `${hours}h ${minutes}m`;
     };
 
-    const getSemaphoreColor = (permanenceMinutes) => {
+    const getSemaphoreClass = (permanenceMinutes) => {
         if (permanenceMinutes <= umbrales.umbral_verde) {
-            return { color: 'green', label: 'On Time' };
+            return 'green';
         } else if (permanenceMinutes > umbrales.umbral_verde && permanenceMinutes <= umbrales.umbral_amarillo) {
-            return { color: 'yellow', label: 'Over Time' };
+            return 'yellow';
         } else if (permanenceMinutes > umbrales.umbral_amarillo) {
-            return { color: 'red', label: 'Past Deadline' };
+            return 'red';
         }
 
-        return { color: 'transparent', label: 'N/A' };
+        return '';
     };
 
     const downloadCSV = () => {
         const headers = ['Personal', 'Sector', 'Desde Detección', 'Permanencia', 'Estado'];
         const rows = searchResults.map(result => {
+            const sector = getSector(result.beaconId);
             const permanence = calculatePermanence(result.entrada, result.salida);
-            const permanenceMinutes = (new Date(result.salida ? result.salida : endDate) - new Date(result.entrada)) / (1000 * 60);
-            const semaphore = getSemaphoreColor(permanenceMinutes);
+            const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
+            const semaphoreClass = getSemaphoreClass(permanenceMinutes);
             return [
                 'Personal 3', // Assuming the icon represents "Personal 3"
-                getSector(result.beaconId).props.children, // Extract the sector text
+                sector.text,
                 formatDate(result.entrada),
                 permanence,
-                semaphore.label
+                semaphoreClass
             ];
         });
 
@@ -117,7 +124,7 @@ function PersonSearch() {
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", `historical_movements_${startDate}_${endDate}.csv`);
+        link.setAttribute("download", `historical_movements_${selectedDay}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
@@ -130,25 +137,60 @@ function PersonSearch() {
             <div className="image-container">
                 <img src={planoSectores} alt="Plano Sectores" className="plano-sectores" />
             </div>
-            <div className="search-parameters">
-                <select onChange={(e) => setSelectedDeviceId(e.target.value)}>
-                    <option value="">Seleccionar Dispositivo...</option>
-                    {devices.map(device => (
-                        <option key={device.id} value={device.id}>{device.device_asignado}</option>
-                    ))}
-                </select>
-                <input
-                    type="datetime-local"
-                    value={startDate}
-                    onChange={e => setStartDate(e.target.value)}
-                    placeholder="Fecha y hora de inicio"
-                />
-                <input
-                    type="datetime-local"
-                    value={endDate}
-                    onChange={e => setEndDate(e.target.value)}
-                    placeholder="Fecha y hora de fin"
-                />
+            <div className="search-container">
+                <div className="device-selection">
+                    <select onChange={(e) => setSelectedDeviceId(e.target.value)}>
+                        <option value="">Seleccionar Dispositivo...</option>
+                        {devices.map(device => (
+                            <option key={device.id} value={device.id}>{device.device_asignado}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="date-selection">
+                    <h3>Seleccionar Día</h3>
+                    <input
+                        type="date"
+                        value={selectedDay}
+                        onChange={e => setSelectedDay(e.target.value)}
+                    />
+                </div>
+                <div className="time-selection">
+                    <h3>Seleccionar Rango de Horas y Minutos</h3>
+                    <label>Hora Inicio:</label>
+                    <input
+                        type="number"
+                        value={startHour}
+                        onChange={e => setStartHour(e.target.value)}
+                        placeholder="HH"
+                        min="0"
+                        max="23"
+                    />
+                    <input
+                        type="number"
+                        value={startMinute}
+                        onChange={e => setStartMinute(e.target.value)}
+                        placeholder="MM"
+                        min="0"
+                        max="59"
+                    />
+                    <label>Hora Fin:</label>
+                    <input
+                        type="number"
+                        value={endHour}
+                        onChange={e => setEndHour(e.target.value)}
+                        placeholder="HH"
+                        min="0"
+                        max="23"
+                    />
+                    <input
+                        type="number"
+                        value={endMinute}
+                        onChange={e => setEndMinute(e.target.value)}
+                        placeholder="MM"
+                        min="0"
+                        max="59"
+                    />
+                </div>
                 <button onClick={fetchSearchResults}>Buscar</button>
                 <button onClick={downloadCSV}>Descargar Resultados</button>
             </div>
@@ -164,17 +206,18 @@ function PersonSearch() {
                 </thead>
                 <tbody>
                     {searchResults.map((result, index) => {
+                        const sector = getSector(result.beaconId);
                         const permanence = calculatePermanence(result.entrada, result.salida);
-                        const permanenceMinutes = (new Date(result.salida ? result.salida : endDate) - new Date(result.entrada)) / (1000 * 60);
-                        const semaphore = getSemaphoreColor(permanenceMinutes);
+                        const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
+                        const semaphoreClass = getSemaphoreClass(permanenceMinutes);
                         return (
                             <tr key={index}>
                                 <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
-                                <td>{getSector(result.beaconId)}</td>
+                                <td className={sector.className}>{sector.text}</td>
                                 <td>{formatDate(result.entrada)}</td>
                                 <td>{permanence}</td>
-                                <td style={{ backgroundColor: semaphore.color }}>
-                                    {semaphore.label}
+                                <td className={semaphoreClass}>
+                                    {semaphoreClass.replace('green', 'On Time').replace('yellow', 'Over Time').replace('red', 'Past Deadline')}
                                 </td>
                             </tr>
                         );
