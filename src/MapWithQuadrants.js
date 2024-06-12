@@ -113,37 +113,25 @@ const MapWithQuadrants = () => {
     return `${hours}h ${minutes}m`;
   };
 
-  const getSemaphoreColor = (beaconId, timestamp) => {
+  const getSemaphoreClass = (beaconId, timestamp) => {
     const now = new Date();
     const start = new Date(timestamp);
     const duration = (now - start) / (1000 * 60); // Duración en minutos
 
     if (duration <= umbrales.umbral_verde) {
-      return { color: 'green', label: 'On Time' };
+      return 'green';
     } else if (duration > umbrales.umbral_verde && duration <= umbrales.umbral_amarillo) {
-      return { color: 'yellow', label: 'Over Time' };
+      return 'yellow';
     } else if (duration > umbrales.umbral_amarillo) {
-      return { color: 'red', label: 'Past Deadline' };
+      return 'red';
     }
 
-    return { color: 'transparent', label: 'N/A' };
+    return '';
   };
 
   return (
     <div className="map-with-quadrants">
       <Header title="Ubicaciones Interior Tiempo Real" />
-      <div className="plano-container" style={{ position: 'relative', width: '100%', height: 'auto' }}>
-        <img src={planoBase} alt="Plano de la Oficina" className="plano-oficina" style={{ width: '70%', height: 'auto' }} />
-        {activeBeacons.map(beaconId => (
-          <img 
-            key={beaconId}
-            src={personal3Icon} 
-            alt="Personal 3" 
-            className="personal-icon" 
-            style={{ position: 'absolute', ...getIconPosition(beaconId) }} 
-          />
-        ))}
-      </div>
       <table className="beacon-logs-table">
         <thead>
           <tr>
@@ -161,13 +149,25 @@ const MapWithQuadrants = () => {
               <td>{getSector(beaconId)}</td>
               <td>{beaconLogs[beaconId] ? new Date(beaconLogs[beaconId].timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
               <td>{beaconLogs[beaconId] ? calculatePermanence(beaconLogs[beaconId].timestamp) : 'N/A'}</td>
-              <td style={{ backgroundColor: beaconLogs[beaconId] ? getSemaphoreColor(beaconId, beaconLogs[beaconId].timestamp).color : 'transparent' }}>
-                {beaconLogs[beaconId] ? getSemaphoreColor(beaconId, beaconLogs[beaconId].timestamp).label : 'N/A'}
+              <td className={beaconLogs[beaconId] ? getSemaphoreClass(beaconId, beaconLogs[beaconId].timestamp) : ''}>
+                {beaconLogs[beaconId] ? getSemaphoreClass(beaconId, beaconLogs[beaconId].timestamp).replace('green', 'On Time').replace('yellow', 'Over Time').replace('red', 'Past Deadline') : 'N/A'}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <div className="plano-container" style={{ position: 'relative', width: '100%', height: 'auto' }}>
+        <img src={planoBase} alt="Plano de la Oficina" className="plano-oficina" />
+        {activeBeacons.map(beaconId => (
+          <img 
+            key={beaconId}
+            src={personal3Icon} 
+            alt="Personal 3" 
+            className="personal-icon" 
+            style={{ position: 'absolute', ...getIconPosition(beaconId) }} 
+          />
+        ))}
+      </div>
     </div>
   );
 };
