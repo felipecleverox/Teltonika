@@ -20,7 +20,10 @@ const server = http.createServer(app); // Create HTTP server with Express app
 const { Server } = require('socket.io'); // Import Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all origins, adjust as needed for security
+    origin: "http://thenext.ddns.net:3000", // Adjust as needed for security
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true
   }
 });
 
@@ -50,11 +53,17 @@ const pool = mysql.createPool({
 const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Coordinates for Santiago, Chile
 
 // Middleware
-app.use(cors()); // Enable CORS for all routes
+const corsOptions = {
+  origin: 'http://thenext.ddns.net:3000',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+  credentials: true
+};
+
+app.use(cors(corsOptions)); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
 app.use(bodyParser.urlencoded({ extended: false })); // Parse URL-encoded request bodies
 app.use(bodyParser.json()); // Parse JSON request bodies
-
 // Helper function to get sector name based on beacon ID
 const getSector = (beaconId) => {
   switch (beaconId) {
@@ -1063,9 +1072,12 @@ async function getUbicacionFromIdent(ident, timestamp) {
     connection.release();
   }
 }
-
+// Example endpoint to demonstrate CORS configuration
+app.get('/api/example', (req, res) => {
+  res.json({ message: 'CORS is configured correctly' });
+});
 
 // Start the server
-server.listen(port, '0.0.0.0', () => {
+server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

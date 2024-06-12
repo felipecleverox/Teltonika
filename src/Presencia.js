@@ -15,7 +15,7 @@ const Presencia = () => {
   useEffect(() => {
     console.log('Fetching beacon data...');
     // Obtener datos de beacons
-    axios.get('http://localhost:3000/api/beacons')
+    axios.get('http://thenext.ddns.net:3000/api/beacons')
       .then(response => {
         console.log('Beacons data:', response.data);
         setBeacons(response.data);
@@ -34,7 +34,7 @@ const Presencia = () => {
 
     console.log(`Fetching data for date range: ${startDate} - ${endDate}`);
 
-    axios.get('http://localhost:3000/api/beacons-detection-status', {
+    axios.get('http://thenext.ddns.net:3000/api/beacons-detection-status', {
       params: {
         startDate: startDate,
         endDate: endDate

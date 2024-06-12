@@ -28,6 +28,8 @@ th {
 }
 
 th .rotate {
+  -webkit-transform: rotate(-90deg); /* Safari */
+  -ms-transform: rotate(-90deg); /* IE 9 */
   transform: rotate(-90deg);
   white-space: nowrap;
   display: inline-block;
@@ -46,6 +48,8 @@ tbody tr {
 }
 
 .status-bar-wrapper {
+  display: -webkit-box; /* Safari */
+  display: -ms-flexbox; /* IE 10 */
   display: flex;
   align-items: center;
   justify-content: center;
