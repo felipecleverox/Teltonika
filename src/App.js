@@ -1,4 +1,3 @@
-// App.js
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import LastKnownPosition from './LastKnownPosition';
@@ -13,6 +12,7 @@ import Configuration from './Configuration';
 import Presencia from './Presencia';
 import SmsData from './SmsData';
 import DoorStatusMatrix from './DoorStatusMatrix';
+import UserRegistration from './UserRegistration';
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -34,6 +34,7 @@ function App() {
         <Route path="/sms-data" element={<PrivateRoute><SmsData /></PrivateRoute>} />
         <Route path="/presencia" element={<PrivateRoute><Presencia /></PrivateRoute>} />
         <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
+        <Route path="/register-user" element={<PrivateRoute><UserRegistration /></PrivateRoute>} />
       </Routes>
     </Router>
   );

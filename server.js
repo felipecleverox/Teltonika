@@ -725,21 +725,29 @@ app.post('/api/umbrales', async (req, res) => {
 
 // Endpoint for user registration
 app.post('/api/register', async (req, res) => {
-  const { username, password, email } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const { userId, username, password, email, permissions } = req.body;
+  const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
   try {
-    // Check if the username already exists
-    const [existingUser] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-    if (existingUser.length > 0) {
-      return res.status(400).send('Username already exists');
-    }
+    if (userId) {
+      // Update existing user
+      await pool.query(
+        'UPDATE users SET username = ?, email = ?, permissions = ? WHERE id = ?',
+        [username, email, permissions, userId]
+      );
+      res.sendStatus(200);
+    } else {
+      // Create new user
+      const [existingUser] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+      if (existingUser.length > 0) {
+        return res.status(400).send('Username already exists');
+      }
 
-    // Insert the new user into the database
-    await pool.query('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', [username, hashedPassword, email]);
-    res.sendStatus(201); // User created successfully
+      await pool.query('INSERT INTO users (username, password, email, permissions) VALUES (?, ?, ?, ?)', [username, hashedPassword, email, permissions]);
+      res.sendStatus(201);
+    }
   } catch (error) {
-    console.error('Error registering user:', error);
+    console.error('Error registering or updating user:', error);
     res.status(500).send('Server Error');
   }
 });
@@ -749,69 +757,34 @@ app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // Fetch the user by username
     const [user] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
     if (user.length === 0) {
       return res.status(400).send('Invalid username or password');
     }
 
-    // Compare the provided password with the stored hashed password
     const validPassword = await bcrypt.compare(password, user[0].password);
     if (!validPassword) {
       return res.status(400).send('Invalid username or password');
     }
 
-    // Generate a JWT token
-    const token = jwt.sign({ userId: user[0].id }, 'your_jwt_secret', { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user[0].id, permissions: user[0].permissions }, 'your_jwt_secret', { expiresIn: '1h' });
     res.json({ token });
   } catch (error) {
     console.error('Error logging in user:', error);
     res.status(500).send('Server Error');
   }
 });
-
-// Endpoint for password reset request
-app.post('/api/request-password-reset', async (req, res) => {
-  const { email } = req.body;
-
+// Endpoint to get the list of users
+app.get('/api/users', async (req, res) => {
   try {
-    // Fetch the user by email
-    const [user] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (user.length === 0) {
-      return res.status(400).send('User with this email does not exist');
-    }
-
-    // Generate a reset token and expiry time
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
-
-    // Update the user with the reset token and expiry time
-    await pool.query('UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE email = ?', [resetToken, resetTokenExpiry, email]);
-
-    // Send the reset token via email
-    const transporter = nodemailer.createTransport({
-      service: 'Gmail',
-      auth: {
-        user: 'your_email@gmail.com',
-        pass: 'your_email_password',
-      },
-    });
-
-    const mailOptions = {
-      from: 'your_email@gmail.com',
-      to: email,
-      subject: 'Password Reset',
-      text: `You requested for a password reset. Use this token to reset your password: ${resetToken}`,
-    };
-
-    transporter.sendMail(mailOptions);
-
-    res.send('Password reset email sent');
+    const [users] = await pool.query('SELECT id, username, email, permissions FROM users');
+    res.json(users);
   } catch (error) {
-    console.error('Error requesting password reset:', error);
+    console.error('Error fetching users:', error);
     res.status(500).send('Server Error');
   }
 });
+
 
 // Endpoint for resetting the password
 app.post('/api/reset-password', async (req, res) => {
@@ -835,7 +808,6 @@ app.post('/api/reset-password', async (req, res) => {
   }
 });
 
-// Zapier function to format timestamp
 // Helper function to format timestamp
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
@@ -930,42 +902,7 @@ function formatTimestamp(timestamp) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
 }
 
-// Endpoint to handle Flespi webhook
-app.post('/flespi-webhook', async (req, res) => {
-  const { "ble.sensor.magnet.status.1": magnetStatus, "device.id": deviceId } = req.body;
 
-  console.log('Webhook Data Received:', req.body);
-
-  if (magnetStatus !== undefined && deviceId) {
-    try {
-      let result;
-      const timestamp = new Date().toISOString();
-
-      if (magnetStatus) {
-        // Puerta abierta
-        result = await pool.query(
-          'INSERT INTO puertas (Puerta_Sector, Timestamp_Apertura) VALUES (?, ?)',
-          [deviceId, timestamp]
-        );
-        console.log('Puerta abierta registrada:', result);
-      } else {
-        // Puerta cerrada
-        result = await pool.query(
-          'UPDATE puertas SET Timestamp_Cierre = ? WHERE Puerta_Sector = ? AND Timestamp_Cierre IS NULL',
-          [timestamp, deviceId]
-        );
-        console.log('Puerta cerrada registrada:', result);
-      }
-
-      res.sendStatus(200);
-    } catch (error) {
-      console.error('Error processing webhook data:', error);
-      res.status(500).send('Server Error');
-    }
-  } else {
-    res.status(400).send('Invalid data format');
-  }
-});
 async function getDeviceAsignado(deviceId) {
   try {
     const connection = await pool.getConnection();
