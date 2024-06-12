@@ -921,6 +921,150 @@ function formatTimestamp(timestamp) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
 }
 
+// Endpoint to handle Flespi webhook
+app.post('/flespi-webhook', async (req, res) => {
+  const { "ble.sensor.magnet.status.1": magnetStatus, "device.id": deviceId } = req.body;
+
+  console.log('Webhook Data Received:', req.body);
+
+  if (magnetStatus !== undefined && deviceId) {
+    try {
+      let result;
+      const timestamp = new Date().toISOString();
+
+      if (magnetStatus) {
+        // Puerta abierta
+        result = await pool.query(
+          'INSERT INTO puertas (Puerta_Sector, Timestamp_Apertura) VALUES (?, ?)',
+          [deviceId, timestamp]
+        );
+        console.log('Puerta abierta registrada:', result);
+      } else {
+        // Puerta cerrada
+        result = await pool.query(
+          'UPDATE puertas SET Timestamp_Cierre = ? WHERE Puerta_Sector = ? AND Timestamp_Cierre IS NULL',
+          [timestamp, deviceId]
+        );
+        console.log('Puerta cerrada registrada:', result);
+      }
+
+      res.sendStatus(200);
+    } catch (error) {
+      console.error('Error processing webhook data:', error);
+      res.status(500).send('Server Error');
+    }
+  } else {
+    res.status(400).send('Invalid data format');
+  }
+});
+async function getDeviceAsignado(deviceId) {
+  try {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query('SELECT device_asignado FROM devices WHERE telefono = ?', [deviceId]);
+      
+      if (rows.length > 0) {
+        const deviceID_name = rows[0].device_asignado;
+        console.log('Device Asignado:', deviceID_name);
+        return deviceID_name;
+      } else {
+        console.log('No se encontró ningún dispositivo asignado para el teléfono:', deviceId);
+        return null;
+      }
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error al obtener el dispositivo asignado:', error);
+    throw error;
+  }
+}
+function getLatitudeFromMessage(message) {
+  // Expresión regular para encontrar la latitud en el mensaje
+  const latRegex = /Lat:-?(\d+\.\d+)/;
+  const match = message.match(latRegex);
+  
+  if (match && match[1]) {
+    return parseFloat(match[1]);
+  } else {
+    console.error('Latitud no encontrada en el mensaje:', message);
+    return null;
+  }
+}
+function getLongitudeFromMessage(message) {
+  // Expresión regular para encontrar la latitud en el mensaje
+  const latRegex = /Lon:-?(\d+\.\d+)/;
+  const match = message.match(latRegex);
+  
+  if (match && match[1]) {
+    return parseFloat(match[1]);
+  } else {
+    console.error('Longitud no encontrada en el mensaje:', message);
+    return null;
+  }
+}
+
+async function getIdentFromDeviceID(deviceId){
+  try {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query('SELECT id FROM devices WHERE telefono = ?', [deviceId]);
+      
+      if (rows.length > 0) {
+        const deviceID = rows[0].id; // Correcto
+        console.log('Device id obtenido:', deviceID);
+        return deviceID;
+      } else {
+        console.log('No se encontró ningún ID para el teléfono:', deviceId);
+        return null;
+      }
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error al obtener el ID:', error);
+    throw error;
+  }
+}
+
+// Función para obtener la ubicación desde el ident y el timestamp
+async function getUbicacionFromIdent(ident, timestamp) {
+  if (timestamp === null) {
+    throw new Error('Invalid timestamp');
+  }
+  
+  const connection = await pool.getConnection();
+  try {
+    const [latestRecord] = await connection.query(`
+      SELECT ble_beacons FROM gps_data
+      WHERE ident = ? AND timestamp <= ? and ble_beacons != "[]"
+      ORDER BY timestamp DESC limit 1
+    `, [ident, timestamp]);
+
+    console.log('Ultimo Registro obtenido:', latestRecord);
+
+    if (latestRecord.length > 0 && latestRecord[0].ble_beacons && latestRecord[0].ble_beacons !== '[]') {
+      const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
+      const activeBeaconIds = beaconsData.map(beacon => beacon.id);
+      console.log('Active Beacon IDs:', activeBeaconIds);
+
+      const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE id = ?`, [activeBeaconIds[0]]);
+      console.log('Ubicación:', location);
+
+      return location.length > 0 ? location[0].ubicacion : null;
+    } else {
+      console.log('No active beacons found.');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching active beacons:', error);
+    throw new Error('Error fetching active beacons');
+  } finally {
+    connection.release();
+  }
+}
+
+
 // Start the server
 server.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
