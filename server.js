@@ -74,41 +74,24 @@ const getSector = (beaconId) => {
 
 
 // Endpoint to receive GPS data
-// Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
-  // Extract GPS data from the request body
   const gpsDatas = req.body;
-
-  // Log the received GPS data
   console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
 
   try {
-    // Iterate over each GPS data entry
     for (const gpsData of gpsDatas) {
-      // Log the current GPS data being processed
-      console.log('Processing GPS Data:', JSON.stringify(gpsData, null, 2));
-
-      // Extract beacons from the GPS data
       const beacons = gpsData['ble.beacons'] || [];
-      console.log('Beacons:', JSON.stringify(beacons, null, 2));
-
-      // Check if a specific beacon exists in the beacons array
-      const beaconExists = beacons.some(beacon => beacon.id === "0C403019-61C7-55AA-B7EA-DAC30C720055");
-
-      // Identify the type of record (sensor data or position data)
       const isSensorData = gpsData.hasOwnProperty('battery.level');
 
-      // Initialize query and parameters for the database insertion
       let query = '';
       let params = [];
 
       if (isSensorData) {
-        // If the record contains sensor data, construct the query for sensor data
+        // Insertar datos del sensor en la tabla 'gps_data'
         query = `
-          INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp, battery_level, battery_voltage, ble_sensor_humidity_1, ble_sensor_humidity_2, ble_sensor_humidity_3, ble_sensor_humidity_4, ble_sensor_low_battery_status_1, ble_sensor_magnet_status_1, ble_sensor_temperature_1, ble_sensor_temperature_2, ble_sensor_temperature_3, ble_sensor_temperature_4, bluetooth_state_enum, gnss_state_enum, gnss_status, gsm_mcc, gsm_mnc, gsm_operator_code, gsm_signal_level, movement_status, position_hdop, position_pdop, position_valid, sleep_mode_enum, custom_param_116)
+          INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp, battery_level, battery_voltage, ble_sensor_humidity_1, ble_sensor_humidity_2, ble_sensor_humidity_3, ble_sensor_humidity_4, ble_sensor_low_battery_status_1, ble_sensor_magnet_status_1, ble_sensor_temperature_1, ble_sensor_temperature_2, ble_sensor_temperature_3, ble_sensor_temperature_4, bluetooth_state_enum, gnss_state_enum, gnss_status, gsm_mcc, gsm_mnc, gsm_operator.code, gsm_signal_level, movement_status, position_hdop, position_pdop, position_valid, sleep_mode_enum, custom_param_116)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        // Populate parameters for sensor data
         params = [
           JSON.stringify(beacons),
           gpsData['channel.id'],
@@ -154,13 +137,43 @@ app.post('/gps-data', async (req, res) => {
           gpsData['sleep.mode.enum'],
           gpsData['custom.param.116']
         ];
+
+        // Ejecutar la inserción en gps_data
+        await pool.query(query, params);
+
+        // Insertar en la nueva tabla 'door_status'
+        if (gpsData['ble.sensor.magnet.status.1'] !== null && gpsData['ble.sensor.temperature.1'] !== null) {
+          const [lastBeaconRecord] = await pool.query(`
+            SELECT ubicacion 
+            FROM beacons 
+            WHERE id LIKE CONCAT('%', 
+                JSON_UNQUOTE(JSON_EXTRACT((SELECT ble_beacons 
+                                           FROM gps_data 
+                                           WHERE id = (SELECT MAX(id) 
+                                                       FROM gps_data 
+                                                       WHERE ble_beacons IS NOT NULL 
+                                                       AND ble_beacons != '[]' 
+                                                       AND device_name = ?)
+                                           ), '$[0].id')), 
+                '%')
+          `, [gpsData['device.name']]);
+
+          const sector = lastBeaconRecord.length > 0 ? lastBeaconRecord[0].ubicacion : 'Desconocido';
+          const magnetStatus = gpsData['ble.sensor.magnet.status.1'];
+          const temperature = gpsData['ble.sensor.temperature.1'];
+          const timestamp = new Date(gpsData.timestamp * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+          await pool.query(`
+            INSERT INTO door_status (sector, magnet_status, temperature, timestamp)
+            VALUES (?, ?, ?, ?)
+          `, [sector, magnetStatus, temperature, timestamp]);
+        }
       } else {
-        // If the record contains position data, construct the query for position data
+        // Insertar datos de posición en la tabla 'gps_data'
         query = `
           INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_enum, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        // Populate parameters for position data
         params = [
           JSON.stringify(beacons),
           gpsData['channel.id'],
@@ -182,21 +195,41 @@ app.post('/gps-data', async (req, res) => {
           gpsData['server.timestamp'],
           gpsData.timestamp
         ];
-      }
 
-      // Execute the query with the constructed parameters
-      await pool.query(query, params);
+        await pool.query(query, params);
+      }
     }
 
-    // Send a success response if all GPS data entries are processed
     res.status(200).send('GPS Data processed successfully');
   } catch (error) {
-    // Log any errors that occur during the processing
     console.error('Error processing GPS data:', error);
-    // Send a 500 Internal Server Error response if an error occurs
     res.status(500).send('Server Error');
   }
 });
+
+
+// Definir el endpoint para obtener el estado de las puertas
+app.get('/api/door-status', async (req, res) => {
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    return res.status(400).send('startDate and endDate are required');
+  }
+
+  try {
+    const query = `
+      SELECT sector, magnet_status, temperature, timestamp
+      FROM door_status
+      WHERE timestamp BETWEEN ? AND ?
+    `;
+    const [rows] = await pool.query(query, [startDate, endDate]);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching door status:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
 
 // Endpoint for querying GPS data with filters
 app.get('/api/get-gps-data', async (req, res) => {

@@ -12,6 +12,7 @@ import Header from './Header';
 import Configuration from './Configuration';
 import Presencia from './Presencia';
 import SmsData from './SmsData';
+import DoorStatusMatrix from './DoorStatusMatrix';
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -28,6 +29,7 @@ function App() {
         <Route path="/ubicaciones-interior" element={<PrivateRoute><MapWithQuadrants /></PrivateRoute>} />
         <Route path="/busqueda-entradas-persona" element={<PrivateRoute><PersonSearch /></PrivateRoute>} />
         <Route path="/consulta-historica-movimientos" element={<PrivateRoute><HistoricalMovementsSearch /></PrivateRoute>} />
+        <Route path="/door-status-matrix" element={<PrivateRoute><DoorStatusMatrix /></PrivateRoute>} />
         <Route path="/inteligencia-de-datos" element={<PrivateRoute><DataIntelligence /></PrivateRoute>} />
         <Route path="/sms-data" element={<PrivateRoute><SmsData /></PrivateRoute>} />
         <Route path="/presencia" element={<PrivateRoute><Presencia /></PrivateRoute>} />
