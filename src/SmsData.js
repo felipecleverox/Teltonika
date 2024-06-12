@@ -10,7 +10,7 @@ const SmsData = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:1337/api/sms-data');
+        const response = await axios.get('http://thenext.ddns.net:1337/api/sms-data');
         // Ordenar los datos en orden inverso
         const sortedData = response.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         setSmsData(sortedData);
