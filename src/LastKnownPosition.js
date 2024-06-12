@@ -1,90 +1,180 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import React, { useState, useEffect, useRef } from 'react';
+import MapboxGL from 'mapbox-gl';
 import axios from 'axios';
-import Header from './Header'; // Importa el nuevo encabezado
+import Header from './Header'; // Assuming you have a Header component
+import './LastKnownPosition.css'; // Your CSS file
 
-const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Santiago de Chile
+MapboxGL.accessToken = 'pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZDgybHB2OTh4dmo3Z2EifQ.bpZlTBTa56pF4cPhE3aSzg'; 
 
-// Define the custom icon for the marker
-const customIcon = L.icon({
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
-
-function CenterMap({ position }) {
-    const map = useMap();
-
-    useEffect(() => {
-        if (position) {
-            map.setView([position.lat, position.lng], 25);
-        }
-    }, [position, map]);
-
-    return null;
-}
+const defaultPosition = { lat: -33.4489, lng: -70.6693 };
 
 function LastKnownPosition({ showHeader = true }) {
-    const [position, setPosition] = useState(null); // Start state as null
-    const [timestamp, setTimestamp] = useState(null);
-    const [error, setError] = useState(null); // Add error state
+  const [devices, setDevices] = useState([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState('');
+  const [positions, setPositions] = useState([]);
+  const [selectedPosition, setSelectedPosition] = useState(null); // Estado para almacenar la posición seleccionada
+  const [error, setError] = useState(null);
+  const mapRef = useRef(null);
+  const markersRef = useRef({}); // Referencia para los marcadores
 
-    useEffect(() => {
-        const fetchLastKnownPosition = async () => {
-            setError(null); // Clear any previous errors
-            try {
-                const response = await axios.get('http://thenext.ddns.net:1337/api/last-known-position');
-                if (response.data && response.data.latitude && response.data.longitude) {
-                    setPosition({ lat: response.data.latitude, lng: response.data.longitude });
-                    setTimestamp(response.data.unixTimestamp); 
-                } else {
-                    setPosition(defaultPosition);
-                    setTimestamp(null);
-                }
-            } catch (error) {
-                console.error('Failed to fetch last known position:', error);
-                setError(error.message); // Set the error state
-                setPosition(defaultPosition);
-                setTimestamp(null);
-            }
-        };
+  useEffect(() => {
+    const fetchDevices = async () => {
+      try {
+        const response = await axios.get('http://thenext.ddns.net:1337/api/devices');
+        console.log('Fetched devices:', response.data);
+        setDevices(response.data);
+      } catch (error) {
+        console.error('Error fetching devices:', error);
+      }
+    };
 
-        fetchLastKnownPosition();
-        const intervalId = setInterval(fetchLastKnownPosition, 10000); // Update every 10 seconds
+    fetchDevices();
+  }, []);
 
-        return () => clearInterval(intervalId); // Cleanup on unmount
-    }, []);
+  useEffect(() => {
+    const fetchLastKnownPosition = async () => {
+      setError(null); 
+      try {
+        console.log('Selected device_id:', selectedDeviceId); // Registro del device_id seleccionado
+        const endpoint = 'http://thenext.ddns.net:1337/api/last-known-position';
+        const params = { device_id: selectedDeviceId };
+        const response = await axios.get(endpoint, { params });
 
-    const formattedTime = timestamp ? new Date(timestamp).toLocaleString() : 'N/A';
+        if (response.data) {
+          console.log('Response data:', response.data); // Registro de la respuesta del servidor
+          setPositions([response.data]);
+        } else {
+          setPositions([]);
+        }
+      } catch (error) {
+        if (error.response && error.response.status === 404) {
+          console.log('Error: No data available');
+          setError('No data available');
+        } else {
+          console.error('Failed to fetch last known position:', error);
+          setError('Server Error');
+        }
+        setPositions([]);
+      }
+    };
 
-    return (
-        <div> 
-            {showHeader && <Header title="Ubicación Exteriores Tiempo Real" />}
-            {error && <div className="error-message">Error: {error}</div>}
-            <MapContainer center={position || defaultPosition} zoom={13} style={{ height: '300px', width: '100%' }}>
-                <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                />
-                {position && <CenterMap position={position} />}
-                {position && (
-                    <Marker position={[position.lat, position.lng]} icon={customIcon}>
-                        <Popup>
-                            <div>
-                                <strong>Time:</strong> {formattedTime}<br />
-                                <strong>Lat:</strong> {position.lat}<br />
-                                <strong>Lng:</strong> {position.lng}
-                            </div>
-                        </Popup>
-                    </Marker>
-                )}
-            </MapContainer>
+    if (selectedDeviceId) {
+      fetchLastKnownPosition();
+      const intervalId = setInterval(fetchLastKnownPosition, 10000);
+      return () => clearInterval(intervalId); 
+    }
+  }, [selectedDeviceId]);
+
+  useEffect(() => {
+    if (!mapRef.current) {
+      mapRef.current = new MapboxGL.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11', 
+        center: [defaultPosition.lng, defaultPosition.lat],
+        zoom: 15,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (positions.length > 0 && mapRef.current) {
+      positions.forEach(position => {
+        if (position.unixTimestamp === null) return;
+
+        const lat = parseFloat(position.latitude);
+        const lng = parseFloat(position.longitude);
+
+        if (isNaN(lat) || isNaN(lng)) {
+          console.error('Invalid coordinates:', { lat, lng });
+          return;
+        }
+
+        if (!markersRef.current[position.device_id]) {
+          markersRef.current[position.device_id] = new MapboxGL.Marker({ draggable: false });
+        }
+
+        const marker = markersRef.current[position.device_id];
+        marker.setLngLat([lng, lat]).addTo(mapRef.current);
+
+        const formattedTime = new Date(position.unixTimestamp).toLocaleString('es-CL', { hour12: false });
+        const popup = new MapboxGL.Popup({ offset: 25 }).setHTML(
+          `<strong>Time:</strong> ${formattedTime}<br/><strong>Lat:</strong> ${lat}<br/><strong>Lng:</strong> ${lng}`
+        );
+
+        marker.setPopup(popup).togglePopup();
+
+        marker.getElement().addEventListener('click', () => {
+          setSelectedPosition({
+            time: formattedTime,
+            lat,
+            lng
+          });
+        });
+
+        mapRef.current.setCenter([lng, lat]);
+      });
+    }
+  }, [positions, selectedDeviceId]);
+
+  const getSelectedPosition = () => {
+    return selectedPosition;
+  };
+
+  const selectedPositionData = getSelectedPosition();
+
+  return (
+    <div>
+      {showHeader && <Header title="Ubicación Exteriores Tiempo Real" />} 
+      {error && <div className="error-message">Error: {error}</div>}
+
+      <div className="device-selection-popup">
+        <h3>Seleccionar Dispositivo</h3>
+        <select onChange={(e) => {
+          setSelectedDeviceId(e.target.value);
+          setError(null); // Resetear mensaje de error al seleccionar un nuevo dispositivo
+        }}>
+          <option value="">Seleccionar...</option>
+          {devices.map(device => (
+            <option key={device.id} value={device.id}>{device.device_asignado}</option>
+          ))}
+        </select>
+      </div>
+
+      <div id="map" className="map-container" style={{ marginTop: showHeader ? '150px' : '0px' }}></div>
+
+      {selectedDeviceId && positions.length === 0 && !error && (
+        <div className="no-data-message">Sin datos disponibles para el dispositivo seleccionado.</div>
+      )}
+
+      {selectedPositionData && selectedPositionData !== null && (
+        <div className="last-known-info">
+          <table className="info-table">
+            <thead>
+              <tr>
+                <th>Información</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Última Actualización</td>
+                <td>{selectedPositionData.time}</td>
+              </tr>
+              <tr>
+                <td>Latitud</td>
+                <td>{selectedPositionData.lat.toFixed(6)}</td>
+              </tr>
+              <tr>
+                <td>Longitud</td>
+                <td>{selectedPositionData.lng.toFixed(6)}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-    );
+      )}
+    </div>
+  );
 }
 
 export default LastKnownPosition;

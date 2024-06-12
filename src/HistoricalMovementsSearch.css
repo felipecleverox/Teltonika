@@ -4,34 +4,68 @@
 
 body {
     font-family: 'Roboto', sans-serif;
-    margin: 0; /* Eliminar márgenes predeterminados */
+    margin: 0;
     padding: 0;
 }
 
-.search-parameters {
+.search-container {
     display: flex;
-    flex-direction: column; /* Establecer dirección de flexbox a columna */
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    margin: 20px 0; /* Ajusta el margen según sea necesario */
+    margin: 20px 0;
 }
 
-.search-parameters input,
-.search-parameters button {
-    width: 100%; /* Ajustar el ancho de los elementos al 100% del contenedor */
-    margin: 10px 0; /* Añadir márgenes a los elementos */
+.device-selection,
+.date-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.time-selection {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.time-selection label {
+    margin-right: 10px;
+}
+
+.time-selection input {
+    width: 60px;
+    margin: 0 5px;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.search-container select,
+.search-container input[type="date"],
+.search-container button {
+    width: 100%;
+    margin: 10px 0;
     padding: 10px;
     font-size: 16px;
 }
 
 .map-container {
-    width: 100%; /* Ajustar el ancho del mapa al 100% del contenedor */
-    height: 400px; /* Establecer una altura mínima para el mapa */
+    width: 100%;
+    height: 600px;
     margin-top: 20px;
+    position: relative;
+    z-index: 0;
+}
+
+.data-table-container {
+    position: relative;
+    z-index: 1;
 }
 
 .data-table {
-    width: 100%; /* Ajustar el ancho de la tabla al 100% del contenedor */
+    width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
 }
@@ -56,25 +90,30 @@ body {
 
 /* Estilos para dispositivos móviles */
 @media (max-width: 768px) {
-    .search-parameters input,
-    .search-parameters button {
-        font-size: 14px; /* Reducir el tamaño de fuente */
+    .search-container {
+        flex-direction: column;
+    }
+    .search-container select,
+    .search-container input,
+    .search-container button {
+        font-size: 14px;
     }
     .map-container {
-        height: 300px; /* Reducir la altura del mapa */
+        height: 300px;
     }
     .data-table td {
-        font-size: 12px; /* Reducir el tamaño de fuente en las celdas de la tabla */
+        font-size: 12px;
     }
 }
 
 /* Estilos para tablets */
 @media (min-width: 768px) and (max-width: 1024px) {
-    .search-parameters input,
-    .search-parameters button {
-        font-size: 15px; /* Ajustar el tamaño de fuente */
+    .search-container select,
+    .search-container input,
+    .search-container button {
+        font-size: 15px;
     }
     .map-container {
-        height: 350px; /* Ajustar la altura del mapa */
+        height: 350px;
     }
 }

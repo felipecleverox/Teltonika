@@ -1,36 +1,85 @@
-import React from 'react';
+// LandingPage.js
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
-import logo from './assets/images/tns_logo_blanco.png'; // Asegúrate de que esta ruta sea correcta
-import productImage from './assets/images/producto.webp'; // Asegúrate de que esta ruta sea correcta
-import newLogo from './assets/images/TNS track azul.jpg'; // Importar el nuevo logo
-import Clock from './Clock'; // Importar el componente Clock
+import mapImage from './assets/images/map-of-a-map.jpeg';
+import centerImage from './assets/images/TNS Track White.png';
+import rightImage from './assets/images/tns_logo_blanco.png';
 
 const LandingPage = () => {
-  const navigate = useNavigate();
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [message, setMessage] = useState('');
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const navigate = useNavigate();
 
-  const handleEnterClick = () => {
-    navigate('/select-routine'); // Redirige a la nueva página de selección de rutina
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-  return (
-    <div className="landing-page">
-      <header className="landing-header">
-        <img src={logo} alt="Logo de la Empresa" className="landing-logo" />
-      </header>
-      <main className="landing-content">
-        <div className="image-container">
-          <img src={newLogo} alt="Nuevo Logo" className="new-logo" />
-          <img src={productImage} alt="Producto" className="landing-product-image" />
+        try {
+            const response = await axios.post('/api/login', { username, password });
+            localStorage.setItem('token', response.data.token);
+            navigate('/select-routine');
+        } catch (error) {
+            setMessage('Error: ' + (error.response?.data || error.message));
+        }
+    };
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleForgotPassword = () => {
+        // Lógica para recuperación de contraseña
+        navigate('/forgot-password');
+    };
+
+    return (
+        <div className="landing-page">
+            <div className="image-container">
+                <img src={mapImage} alt="Map Image" className="map-image" />
+                <img src={centerImage} alt="Center Image" className="center-image" />
+            </div>
+            <div className="form-container">
+                <h2>Login</h2>
+                <form onSubmit={handleSubmit}>
+                    <div>
+                        <label>Username:</label>
+                        <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label>Password:</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <button type="submit">Login</button>
+                    <p onClick={handleForgotPassword}>Forgot password?</p>
+                </form>
+                {message && <p>{message}</p>}
+            </div>
+            <div className="footer-images">
+                <img src={rightImage} alt="Right Image" className="right-image" />
+            </div>
+            <footer className="footer">
+                <div className="footer-left">Version 1.01</div>
+                <div className="footer-right">{currentTime.toLocaleString()}</div>
+            </footer>
         </div>
-        <button onClick={handleEnterClick} className="enter-button">Enter</button>
-      </main>
-      <footer className="landing-footer">
-        <div className="software-version">Ver. 1.0.1</div>
-        <Clock />
-      </footer>
-    </div>
-  );
+    );
 };
 
 export default LandingPage;

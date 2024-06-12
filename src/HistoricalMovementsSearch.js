@@ -1,103 +1,241 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import MapboxGL from 'mapbox-gl';
 import axios from 'axios';
-import MapView from './MapView';
-import LastKnownPosition from './LastKnownPosition'; // Importar el componente LastKnownPosition
-import DataTable from './DataTable';
-import Header from './Header'; // Importar el encabezado
-import './HistoricalMovementsSearch.css'; // Importar estilos
+import Header from './Header';
+import './HistoricalMovementsSearch.css';
+
+MapboxGL.accessToken = 'pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZDgybHB2OTh4dmo3Z2EifQ.bpZlTBTa56pF4cPhE3aSzg';
 
 const HistoricalMovementsSearch = () => {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [pathCoordinates, setPathCoordinates] = useState([]);
-  const [historicalDataError, setHistoricalDataError] = useState(null);
+    const [selectedDay, setSelectedDay] = useState('');
+    const [startHour, setStartHour] = useState('');
+    const [startMinute, setStartMinute] = useState('');
+    const [endHour, setEndHour] = useState('');
+    const [endMinute, setEndMinute] = useState('');
+    const [pathCoordinates, setPathCoordinates] = useState([]);
+    const [historicalDataError, setHistoricalDataError] = useState(null);
+    const [devices, setDevices] = useState([]);
+    const [selectedDeviceId, setSelectedDeviceId] = useState('');
+    const [isDataAvailable, setIsDataAvailable] = useState(false);
 
-  const handleSearch = async () => {
-    setHistoricalDataError(null);
-    try {
-      const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
-      const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
+    useEffect(() => {
+        const fetchDevices = async () => {
+            try {
+                const response = await axios.get('http://thenext.ddns.net:1337/api/devices');
+                setDevices(response.data);
+            } catch (error) {
+                console.error('Error fetching devices:', error);
+            }
+        };
 
-      const response = await axios.get('http://thenext.ddns.net:1337/api/get-gps-data', {
-        params: {
-          startDate: startTimestamp,
-          endDate: endTimestamp
+        fetchDevices();
+    }, []);
+
+    const handleSearch = async () => {
+        setHistoricalDataError(null);
+        setIsDataAvailable(false);
+        try {
+            const startTimestamp = Math.floor(new Date(`${selectedDay}T${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}:00`).getTime() / 1000);
+            const endTimestamp = Math.floor(new Date(`${selectedDay}T${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}:00`).getTime() / 1000);
+
+            const response = await axios.get('http://thenext.ddns.net:1337/api/get-gps-data', {
+                params: {
+                    startDate: startTimestamp,
+                    endDate: endTimestamp,
+                    device_id: selectedDeviceId
+                }
+            });
+
+            const newCoordinates = response.data.map(item => {
+                const latitude = parseFloat(item.latitude);
+                const longitude = parseFloat(item.longitude);
+                if (!isNaN(latitude) && !isNaN(longitude)) {
+                    return { latitude, longitude, timestamp: item.unixTimestamp };
+                }
+                return null;
+            }).filter(coord => coord !== null);
+
+            setPathCoordinates(newCoordinates);
+            setIsDataAvailable(newCoordinates.length > 0);
+        } catch (error) {
+            setHistoricalDataError(error.message);
         }
-      });
+    };
 
-      const newCoordinates = response.data.map(item => {
-        const latitude = parseFloat(item.latitude);
-        const longitude = parseFloat(item.longitude);
-        return { latitude, longitude, timestamp: item.unixTimestamp };
-      });
+    const formatDate = (timestamp) => {
+        if (!timestamp) return 'N/A';
+        const date = new Date(timestamp * 1000);
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    };
 
-      setPathCoordinates(newCoordinates);
-    } catch (error) {
-      setHistoricalDataError(error.message);
-    }
-  };
+    const downloadCSV = () => {
+        const headers = ['Fecha', 'Hora', 'Latitud', 'Longitud'];
+        const rows = pathCoordinates.map(item => [
+            formatDate(item.timestamp).split(' ')[0],
+            formatDate(item.timestamp).split(' ')[1],
+            item.latitude,
+            item.longitude
+        ]);
 
-  const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A';
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-  };
+        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
 
-  return (
-    <div>
-      <Header title="Consulta Histórica de Movimientos en Exterior" />
-      <LastKnownPosition showHeader={false} /> {/* Eliminar el header dentro de LastKnownPosition */}
-      <div className="search-parameters">
-        <input
-          type="datetime-local"
-          value={startDate}
-          onChange={e => setStartDate(e.target.value)}
-          placeholder="Start Date and Time"
-        />
-        <input
-          type="datetime-local"
-          value={endDate}
-          onChange={e => setEndDate(e.target.value)}
-          placeholder="End Date and Time"
-        />
-        <button onClick={handleSearch}>Search</button>
-        {historicalDataError && <div className="error-message">Error: {historicalDataError}</div>}
-      </div>
-      <div className="map-container">
-        <h2>Map View</h2>
-        {pathCoordinates.length === 0 ? (
-          <p>No data available for the selected range</p>
-        ) : (
-          <MapView pathCoordinates={pathCoordinates.map(({ latitude, longitude }) => [latitude, longitude])} />
-        )}
-      </div>
-      {pathCoordinates.length > 0 && (
-        <div className="data-table-container">
-          <h2>Tabla de Datos de Ubicaciones</h2>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Latitud</th>
-                <th>Longitud</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pathCoordinates.map(({ latitude, longitude, timestamp }, index) => (
-                <tr key={index}>
-                  <td>{formatDate(timestamp).split(' ')[0]}</td>
-                  <td>{formatDate(timestamp).split(' ')[1]}</td>
-                  <td>{latitude}</td>
-                  <td>{longitude}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `historical_movements_${selectedDay}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    useEffect(() => {
+        if (pathCoordinates.length > 0) {
+            const map = new MapboxGL.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/streets-v11',
+                center: [pathCoordinates[0].longitude, pathCoordinates[0].latitude],
+                zoom: 13
+            });
+
+            const coordinates = pathCoordinates.map(({ latitude, longitude }) => [longitude, latitude]);
+
+            map.on('load', () => {
+                map.addSource('route', {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: coordinates
+                        }
+                    }
+                });
+
+                map.addLayer({
+                    id: 'route',
+                    type: 'line',
+                    source: 'route',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#888',
+                        'line-width': 6
+                    }
+                });
+
+                coordinates.forEach(coord => {
+                    new MapboxGL.Marker()
+                        .setLngLat(coord)
+                        .addTo(map);
+                });
+            });
+
+            return () => map.remove();
+        }
+    }, [pathCoordinates]);
+
+    return (
+        <div>
+            <Header title="Consulta Histórica de Movimientos en Exterior" />
+            
+            <div className="search-container">
+                <div className="device-selection">
+                    <h3>Seleccionar Dispositivo</h3>
+                    <select onChange={(e) => {
+                        setSelectedDeviceId(e.target.value);
+                        setHistoricalDataError(null);
+                    }}>
+                        <option value="">Seleccionar...</option>
+                        {devices.map(device => (
+                            <option key={device.id} value={device.id}>{device.device_asignado}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="date-selection">
+                    <h3>Seleccionar Día</h3>
+                    <input
+                        type="date"
+                        value={selectedDay}
+                        onChange={e => setSelectedDay(e.target.value)}
+                    />
+                    <h3>Seleccionar Rango de Horas y Minutos</h3>
+                    <div className="time-selection">
+                        <label>Hora Inicio:</label>
+                        <input
+                            type="number"
+                            value={startHour}
+                            onChange={e => setStartHour(e.target.value)}
+                            placeholder="HH"
+                            min="0"
+                            max="23"
+                        />
+                        <input
+                            type="number"
+                            value={startMinute}
+                            onChange={e => setStartMinute(e.target.value)}
+                            placeholder="MM"
+                            min="0"
+                            max="59"
+                        />
+                        <label>Hora Fin:</label>
+                        <input
+                            type="number"
+                            value={endHour}
+                            onChange={e => setEndHour(e.target.value)}
+                            placeholder="HH"
+                            min="0"
+                            max="23"
+                        />
+                        <input
+                            type="number"
+                            value={endMinute}
+                            onChange={e => setEndMinute(e.target.value)}
+                            placeholder="MM"
+                            min="0"
+                            max="59"
+                        />
+                    </div>
+                    <button onClick={handleSearch}>Buscar</button>
+                    <button onClick={downloadCSV} disabled={!isDataAvailable}>Descargar Resultados</button>
+                </div>
+            </div>
+
+            {historicalDataError && <div className="error-message">Error: {historicalDataError}</div>}
+
+            <div id="map" className="map-container"></div>
+
+            {pathCoordinates.length > 0 && (
+                <div className="data-table-container">
+                    <h2>Tabla de Datos de Ubicaciones</h2>
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Latitud</th>
+                                <th>Longitud</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pathCoordinates.map(({ latitude, longitude, timestamp }, index) => (
+                                <tr key={index}>
+                                    <td>{formatDate(timestamp).split(' ')[0]}</td>
+                                    <td>{formatDate(timestamp).split(' ')[1]}</td>
+                                    <td>{latitude}</td>
+                                    <td>{longitude}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default HistoricalMovementsSearch;

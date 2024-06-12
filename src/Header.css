@@ -1,36 +1,40 @@
 /* Header.css */
-/* Ejemplo en un archivo CSS específico, como Header.css */
 .header {
-  font-family: 'Roboto', sans-serif;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #6b9fd4;
+  color: white;
 }
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #6b9fd4;
-    padding: 10px 20px;
-  }
-  
-  .header-left,
-  .header-center,
-  .header-right {
-    display: flex;
-    align-items: center;
-  }
-  
-  .header-logo {
-    height: 40px;
-    margin-right: 20px;
-  }
-  
-  .header-title {
-    font-size: 24px;
-    color: #fff;
-  }
-  
-  .header-right {
-    font-size: 18px;
-    color: #fff;
-  }
-  
+.header-left, .header-center, .header-right {
+  display: flex;
+  align-items: center;
+}
+
+.header-icon {
+  height: 40px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.header-logo {
+  height: 40px;
+}
+
+.header-title {
+  font-size: 24px;
+}
+
+.logout-button {
+  background-color: #ff4d4d;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background-color: #ff3333;
+}

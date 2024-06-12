@@ -1,0 +1,142 @@
+.data-intelligence {
+  text-align: center;
+}
+
+.routine-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+.routine-card {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-width: 300px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.routine-card:hover {
+  transform: scale(1.05);
+}
+
+.routine-image {
+  width: 100%;
+  max-width: 150px;
+  height: auto;
+  margin: 20px 0;
+}
+
+.routine-content {
+  padding: 15px;
+  text-align: center;
+  flex-grow: 1;
+}
+
+.routine-title {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+
+.routine-button {
+  width: calc(100% - 30px);
+  padding: 10px;
+  background-color: #6b9fd4;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.routine-button:hover {
+  background-color: #5a88c6;
+}
+
+.back-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
+/* Additional styles from the original DataIntelligence.css */
+.search-parameters {
+  margin-top: 20px;
+}
+
+.search-parameters input {
+  margin: 5px;
+  padding: 10px;
+  width: calc(50% - 22px);
+}
+
+.search-parameters button {
+  margin: 5px;
+  padding: 10px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.search-parameters button:disabled {
+  background-color: #d3d3d3;
+  cursor: not-allowed;
+}
+
+.selected-option-message {
+  margin-top: 20px;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+}
+
+.data-table-container {
+  margin-top: 20px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th, .data-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.data-table th {
+  background-color: #f2f2f2;
+}
+
+.data-table th {
+  text-align: left;
+  background-color: #4CAF50;
+  color: white;
+}
+
+.data-table tr:hover {
+  background-color: #ddd;
+}

@@ -1,0 +1,68 @@
+/* DoorStatusMatrix.css */
+.door-status-matrix {
+  margin: 20px;
+}
+
+.door-status-matrix h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.door-status-matrix input {
+  display: block;
+  margin: 0 auto 20px;
+}
+
+.door-status-matrix table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.door-status-matrix th {
+  background-color: #6b9fd4;
+  font-size: 16px; /* Ajusta este valor según sea necesario */
+}
+
+.door-status-matrix th,
+.door-status-matrix td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.open {
+  background-color: #b43026cf; /* Rojo */
+  color: white;
+}
+
+.closed {
+  background-color: #4caf50; /* Verde */
+  color: white;
+}
+
+.col-width {
+  width: 50px; /* Ajusta este valor según sea necesario */
+}
+
+.minute-labels td,
+.minute-label {
+  font-size: 12px; /* Ajusta este valor según sea necesario */
+}
+
+.minute-labels {
+  text-align: center;
+}
+
+.minute-labels td {
+  padding: 08px 8px;
+  vertical-align: middle; /* Asegura la alineación vertical */
+}
+
+.minute-label {
+  color: inherit; /* Mismo color que el texto del sector */
+}
+
+/* Clase específica para la temperatura */
+.temperature {
+  font-size: 12px; /* Ajusta este valor según sea necesario */
+}
