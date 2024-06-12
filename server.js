@@ -4,6 +4,7 @@
 const express = require('express'); // Web framework for Node.js
 const cors = require('cors'); // Middleware to enable Cross-Origin Resource Sharing
 const mysql = require('mysql2/promise'); // MySQL client for Node.js with Promise support
+const moment = require('moment-timezone'); // Importar moment-timezone
 const bcrypt = require('bcrypt'); // Library to hash passwords
 const crypto = require('crypto'); // Library for cryptographic functions
 const nodemailer = require('nodemailer'); // Library to send emails
@@ -71,7 +72,10 @@ const getSector = (beaconId) => {
       return 'Unknown'; // Return 'Unknown' if beacon ID does not match any case
   }
 };
-
+// Convert timestamp to local time in Chile
+const convertToLocalTime = (timestamp) => {
+  return moment(timestamp * 1000).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss');
+};
 
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
@@ -161,7 +165,7 @@ app.post('/gps-data', async (req, res) => {
           const sector = lastBeaconRecord.length > 0 ? lastBeaconRecord[0].ubicacion : 'Desconocido';
           const magnetStatus = gpsData['ble.sensor.magnet.status.1'];
           const temperature = gpsData['ble.sensor.temperature.1'];
-          const timestamp = new Date(gpsData.timestamp * 1000).toISOString().slice(0, 19).replace('T', ' ');
+          const timestamp = convertToLocalTime(gpsData.timestamp); // Convertir a hora local de Chile
 
           await pool.query(`
             INSERT INTO door_status (sector, magnet_status, temperature, timestamp)
@@ -206,7 +210,6 @@ app.post('/gps-data', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
 
 // Definir el endpoint para obtener el estado de las puertas
 app.get('/api/door-status', async (req, res) => {
