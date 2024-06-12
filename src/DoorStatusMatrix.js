@@ -77,18 +77,30 @@ const DoorStatusMatrix = () => {
     <div className="door-status-matrix">
       <Header />
       <h1>Estado de Puertas por Sector</h1>
-      <DatePicker 
-        selected={selectedDate} 
-        onChange={handleDateChange} 
-        dateFormat="yyyy-MM-dd"
-        className="date-picker"
-      />
+      <div className="controls">
+        <DatePicker 
+          selected={selectedDate} 
+          onChange={handleDateChange} 
+          dateFormat="yyyy-MM-dd"
+          className="date-picker"
+        />
+        <div className="legends">
+          <div className="legend">
+            <div className="color-box open"></div>
+            <span>Puerta Abierta</span>
+          </div>
+          <div className="legend">
+            <div className="color-box closed"></div>
+            <span>Puerta Cerrada</span>
+          </div>
+        </div>
+      </div>
       <div className="table-wrapper">
         <table>
           <thead>
             <tr>
               <th className="col-sector">Sector</th>
-              <th className="col-minutes">Minutos</th>
+              <th className="col-minutes">Minutos hasta</th>
               {Array.from({ length: 16 }, (_, i) => (
                 <th key={i} className="col-width">{`${8 + i}:00`}</th>
               ))}
@@ -101,7 +113,7 @@ const DoorStatusMatrix = () => {
                 <td className="minute-labels">
                   <table>
                     <tbody>
-                      {['00:00', '10:00', '20:00', '30:00', '40:00', '50:00'].map((minute, index) => (
+                      {['00:00 10:00', '00:11 00:20', '00:21 00:30', '00:31 00:40', '00:41 00:50', '00:51 00:00'].map((minute, index) => (
                         <tr key={index}>
                           <td className="minute-label" style={{ color: 'inherit' }}>{minute}</td>
                         </tr>
