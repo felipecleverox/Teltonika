@@ -820,12 +820,11 @@ function formatTimestamp(timestamp) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
 }
 
-// Endpoint to receive SMS data
+// Endpoint para recibir datos de SMS
 app.post('/sms', async (req, res) => {
   console.log('Request Headers:', req.headers);
   console.log('Request Body:', req.body);
 
-  // Validate the request body
   if (typeof req.body !== 'object' || !req.body.From || !req.body.Body) {
     console.log('Received incorrect data format:', req.body);
     return res.status(400).json({ error: 'Invalid data format', received: req.body });
@@ -833,7 +832,6 @@ app.post('/sms', async (req, res) => {
 
   try {
     const currentEpoch = Math.floor(Date.now() / 1000);
-    console.log('current Epoch ' + currentEpoch);
     const deviceId = req.body.From;
     const deviceID_name = await getDeviceAsignado(deviceId);
     const message = req.body.Body;
@@ -845,25 +843,24 @@ app.post('/sms', async (req, res) => {
 
     console.log('Parsed SMS:', { deviceId, message, currentEpoch });
 
-    // Validate the parsed data
     if (!deviceId || !message) {
       console.log('Invalid data format', req.body);
       return res.status(400).json({ error: 'Invalid data format', received: req.body });
     }
 
-    // Format the timestamp
-    const formattedTimestamp = formatTimestamp(new Date(currentEpoch * 1000));
+    // Formatear el timestamp
+    const formattedTimestamp = moment(timestamp).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss');
 
     const connection = await pool.getConnection();
     try {
-      // Insert the SMS data into the database
+      // Insertar los datos del SMS en la base de datos
       const [result] = await connection.query(
         'INSERT INTO sms_data (device_id, message, timestamp, latitud, longitud, sector) VALUES (?, ?, ?, ?, ?, ?)',
         [deviceID_name, message, formattedTimestamp, lat, lon, ubicacion]
       );
       console.log('SMS inserted successfully:', { id: result.insertId });
 
-      // Emit an event for the new SMS
+      // Emitir un evento para el nuevo SMS
       io.emit('new_sms', { id: result.insertId, deviceId, message, timestamp: formattedTimestamp });
 
       res.status(201).json({ id: result.insertId });
@@ -876,6 +873,16 @@ app.post('/sms', async (req, res) => {
   } catch (error) {
     console.error('Error storing SMS:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.get('/api/sms-data', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM sms_data');
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching SMS data:', error);
+    res.status(500).json({ error: 'Error fetching SMS data' });
   }
 });
 
@@ -895,7 +902,7 @@ async function getDeviceAsignado(deviceId) {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query('SELECT device_asignado FROM devices WHERE telefono = ?', [deviceId]);
-      
+
       if (rows.length > 0) {
         const deviceID_name = rows[0].device_asignado;
         console.log('Device Asignado:', deviceID_name);
@@ -912,11 +919,12 @@ async function getDeviceAsignado(deviceId) {
     throw error;
   }
 }
+// Función para extraer la latitud del mensaje
 function getLatitudeFromMessage(message) {
   // Expresión regular para encontrar la latitud en el mensaje
-  const latRegex = /Lat:-?(\d+\.\d+)/;
+  const latRegex = /Lat:(-?\d+\.\d+)/;
   const match = message.match(latRegex);
-  
+
   if (match && match[1]) {
     return parseFloat(match[1]);
   } else {
@@ -924,11 +932,12 @@ function getLatitudeFromMessage(message) {
     return null;
   }
 }
+// Función para extraer la longitud del mensaje
 function getLongitudeFromMessage(message) {
-  // Expresión regular para encontrar la latitud en el mensaje
-  const latRegex = /Lon:-?(\d+\.\d+)/;
-  const match = message.match(latRegex);
-  
+  // Expresión regular para encontrar la longitud en el mensaje
+  const lonRegex = /Lon:(-?\d+\.\d+)/;
+  const match = message.match(lonRegex);
+
   if (match && match[1]) {
     return parseFloat(match[1]);
   } else {
