@@ -1,16 +1,14 @@
-// SmsData.js
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import moment from 'moment-timezone';
 import Header from './Header';
-import pinIcon from './assets/images/pngkit.png'; // Importar la imagen del ícono
-import MapModal from './MapModal'; // Importar el componente MapModal
+import pinIcon from './assets/images/pngkit.png';
+import MapModal from './MapModal';
 
 const SmsData = () => {
   const [smsData, setSmsData] = useState([]);
-  const [selectedPosition, setSelectedPosition] = useState(null); // Estado para almacenar la posición seleccionada
-  const [isModalOpen, setIsModalOpen] = useState(false); // Estado para controlar la apertura del modal
+  const [selectedPosition, setSelectedPosition] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,6 +33,24 @@ const SmsData = () => {
     setIsModalOpen(true);
   };
 
+  const extractAlertMessage = (message) => {
+    if (message.includes('Hombre Caido') || message.includes('ManDown')) {
+      return 'Hombre Caído';
+    } else if (message.includes('Necesito ayuda')) {
+      return 'Necesito Ayuda';
+    }
+    return '';
+  };
+
+  const getAlertStyle = (message) => {
+    if (message.includes('Hombre Caido') || message.includes('ManDown')) {
+      return { backgroundColor: 'rgba(255, 0, 0, 0.5)', color: 'white' };
+    } else if (message.includes('Necesito ayuda')) {
+      return { backgroundColor: 'rgba(255, 255, 0, 0.5)', color: 'black' };
+    }
+    return {};
+  };
+
   return (
     <div>
       <Header title="Base de Mensajes Recibidos" />
@@ -45,6 +61,7 @@ const SmsData = () => {
             <tr>
               <th>ID</th>
               <th>Device ID</th>
+              <th>Alerta</th> {/* Nueva columna */}
               <th>Sector</th>
               <th>Latitud</th>
               <th>Longitud</th>
@@ -57,6 +74,7 @@ const SmsData = () => {
               <tr key={sms.id}>
                 <td>{sms.id}</td>
                 <td>{sms.device_id}</td>
+                <td style={getAlertStyle(sms.message)}>{extractAlertMessage(sms.message)}</td> {/* Columna de alerta */}
                 <td>{sms.sector}</td>
                 <td>{sms.latitud}</td>
                 <td>{sms.longitud}</td>
@@ -65,7 +83,7 @@ const SmsData = () => {
                   <img
                     src={pinIcon}
                     alt="Mapa"
-                    style={{ cursor: 'pointer', width: '14px', height: '24px' }} // Ajustar el tamaño del ícono
+                    style={{ cursor: 'pointer', width: '14px', height: '24px' }}
                     onClick={() => handleIconClick(sms.latitud, sms.longitud)}
                   />
                 </td>
