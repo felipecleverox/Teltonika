@@ -39,12 +39,12 @@
 }
 
 .open {
-  background-color: #b43026cf; /* Rojo */
+  background-color: #26b43bcf; /* Rojo */
   color: white;
 }
 
 .closed {
-  background-color: #4caf50; /* Verde */
+  background-color: #af4c4f; /* Verde */
   color: white;
 }
 

@@ -18,14 +18,14 @@ import userRegistrationImage from './assets/images/user_registration.png';
 
 // Define las rutas y las propiedades de cada rutina
 const routines = [
-  { title: "Ubicación en Interiores Tiempo real", image: lastKnownPositionImage, route: "/ubicaciones-interior", permission: "view_interior" },
-  { title: "Búsqueda Histórica Ubicación en Interiores", image: personSearchImage, route: "/busqueda-entradas-persona", permission: "search_interior" },
-  { title: "Presencia Personal por Sectores", image: presenciaImage, route: "/Presencia", permission: "view_presence" },
-  { title: "Ubicación Exteriores Tiempo real", image: interiorLocationsImage, route: "/last-known-position", permission: "view_exterior" },
-  { title: "Búsqueda Histórica Ubicación en Exteriores", image: historicalMovementsImage, route: "/consulta-historica-movimientos", permission: "search_exterior" },
-  { title: "Visualización Mensajes SMS", image: smsDataImage, route: "/sms-data", permission: "view_sms" },
-  { title: "Estado de Puertas por Sector", image: doorStatusImage, route: "/door-status-matrix", permission: "view_door_status" },
-  { title: "Inteligencia de Datos", image: dataIntelligenceImage, route: "/inteligencia-de-datos", permission: "view_data_intelligence" },
+  { title: "Interior : Ubicación en Tiempo Real", image: lastKnownPositionImage, route: "/ubicaciones-interior", permission: "view_interior" },
+  { title: "Interior : Búsqueda Histórica Ubicación", image: personSearchImage, route: "/busqueda-entradas-persona", permission: "search_interior" },
+  { title: "Exterior : Ubicación Tiempo Real", image: interiorLocationsImage, route: "/last-known-position", permission: "view_exterior" },
+  { title: "Exterior : Búsqueda Histórica Ubicación", image: historicalMovementsImage, route: "/consulta-historica-movimientos", permission: "search_exterior" },
+  { title: "Sectores : Presencia Personal", image: presenciaImage, route: "/Presencia", permission: "view_presence" },
+  { title: "Mensajes SOS : Visualización por Ubicación", image: smsDataImage, route: "/sms-data", permission: "view_sms" },
+  { title: "Puertas : Status Cierre / Apertura", image: doorStatusImage, route: "/door-status-matrix", permission: "view_door_status" },
+  { title: "Datos : Análisis Forense", image: dataIntelligenceImage, route: "/inteligencia-de-datos", permission: "view_data_intelligence" },
   { title: "Configuración", image: configurationImage, route: "/configuracion", permission: "view_configuration" },
   { title: "Registrar Usuario", image: userRegistrationImage, route: "/register-user", permission: "create_users" },
 ];
@@ -58,7 +58,10 @@ const SelectRoutine = () => {
           <div className="routine-card" key={index} onClick={() => handleCardClick(routine)}>
             <img src={routine.image} alt={routine.title} className="routine-image" />
             <div className="routine-content">
-              <h3 className="routine-title">{routine.title}</h3>
+              <h3 className="routine-title">
+                {routine.title.split(":")[0]}<br />
+                {routine.title.split(":")[1]}
+              </h3>
               <button className="routine-button">Ir a la App</button>
             </div>
           </div>
