@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import mapboxgl from 'mapbox-gl';
 import './HistoricalMovementsSearch.css';
-import markerIcon from './assets/images/pinazul.png';  // Asegúrate de que la ruta sea correcta
+import markerIcon from './assets/images/pinazul.png';
+import Header from './Header';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZDgybHB2OTh4dmo3Z2EifQ.bpZlTBTa56pF4cPhE3aSzg';
 
@@ -128,51 +129,54 @@ const HistoricalMovementsSearch = () => {
   const createCustomMarker = () => {
     const marker = document.createElement('div');
     marker.style.backgroundImage = `url(${markerIcon})`;
-    marker.style.width = '18px';  // Ajusta el ancho
-    marker.style.height = '22px'; // Ajusta la altura
+    marker.style.width = '20px';  // Ajusta el ancho
+    marker.style.height = '24px'; // Ajusta la altura
     marker.style.backgroundSize = '100%';
     return marker;
   };
 
   return (
     <div className="historical-movements-search">
+      <Header title="Ubicación Exteriores Tiempo Real" />
       <form onSubmit={handleSubmit}>
-        <label>
-          Dispositivo:
-          <select value={device} onChange={(e) => setDevice(e.target.value)}>
-            <option value="">Seleccione un dispositivo</option>
-            {devices.map((device) => (
-              <option key={device.id} value={device.id}>
-                {device.device_asignado}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Fecha:
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-        </label>
-        <label>
-          Hora de inicio:
-          <input
-            type="time"
-            value={startHour}
-            onChange={(e) => setStartHour(e.target.value)}
-          />
-        </label>
-        <label>
-          Hora de fin:
-          <input
-            type="time"
-            value={endHour}
-            onChange={(e) => setEndHour(e.target.value)}
-          />
-        </label>
-        <button type="submit">Buscar</button>
+        <div className="form-row">
+          <label>
+            Dispositivo:
+            <select value={device} onChange={(e) => setDevice(e.target.value)}>
+              <option value="">Seleccione un dispositivo</option>
+              {devices.map((device) => (
+                <option key={device.id} value={device.id}>
+                  {device.device_asignado}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Fecha:
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </label>
+          <label>
+            Hora de inicio:
+            <input
+              type="time"
+              value={startHour}
+              onChange={(e) => setStartHour(e.target.value)}
+            />
+          </label>
+          <label>
+            Hora de fin:
+            <input
+              type="time"
+              value={endHour}
+              onChange={(e) => setEndHour(e.target.value)}
+            />
+          </label>
+          <button type="submit">Buscar</button>
+        </div>
       </form>
       {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Mostrar mensaje de error */}
       <div id="map" className="map"></div>

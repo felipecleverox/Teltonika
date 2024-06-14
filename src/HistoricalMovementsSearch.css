@@ -1,20 +1,22 @@
-/* HistoricalMovementsSearch.css */
 .historical-movements-search {
     margin: 20px;
   }
   
   .historical-movements-search form {
-    display: flex;
-    flex-direction: column;
     margin-bottom: 20px;
   }
   
+  .historical-movements-search .form-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
   .historical-movements-search label {
-    margin-bottom: 10px;
+    margin-bottom: 0; /* Elimina el margen inferior para los elementos en una fila */
   }
   
   .historical-movements-search button {
-    align-self: flex-start;
     padding: 10px 20px;
   }
   
