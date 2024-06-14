@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import MapboxGL from 'mapbox-gl';
 import axios from 'axios';
 import Header from './Header';
 import './HistoricalMovementsSearch.css';
-
-MapboxGL.accessToken = 'pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZDgybHB2OTh4dmo3Z2EifQ.bpZlTBTa56pF4cPhE3aSzg';
 
 const HistoricalMovementsSearch = () => {
     const [selectedDay, setSelectedDay] = useState('');
@@ -66,77 +63,6 @@ const HistoricalMovementsSearch = () => {
         return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
     };
 
-    const downloadCSV = () => {
-        const headers = ['Fecha', 'Hora', 'Latitud', 'Longitud'];
-        const rows = pathCoordinates.map(item => [
-            formatDate(item.timestamp).split(' ')[0],
-            formatDate(item.timestamp).split(' ')[1],
-            item.latitude,
-            item.longitude
-        ]);
-
-        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `historical_movements_${selectedDay}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    useEffect(() => {
-        if (pathCoordinates.length > 0) {
-            const map = new MapboxGL.Map({
-                container: 'map',
-                style: 'mapbox://styles/mapbox/streets-v11',
-                center: [pathCoordinates[0].longitude, pathCoordinates[0].latitude],
-                zoom: 13
-            });
-
-            const coordinates = pathCoordinates.map(({ latitude, longitude }) => [longitude, latitude]);
-
-            map.on('load', () => {
-                map.addSource('route', {
-                    type: 'geojson',
-                    data: {
-                        type: 'Feature',
-                        properties: {},
-                        geometry: {
-                            type: 'LineString',
-                            coordinates: coordinates
-                        }
-                    }
-                });
-
-                map.addLayer({
-                    id: 'route',
-                    type: 'line',
-                    source: 'route',
-                    layout: {
-                        'line-join': 'round',
-                        'line-cap': 'round'
-                    },
-                    paint: {
-                        'line-color': '#888',
-                        'line-width': 6
-                    }
-                });
-
-                coordinates.forEach(coord => {
-                    new MapboxGL.Marker()
-                        .setLngLat(coord)
-                        .addTo(map);
-                });
-            });
-
-            return () => map.remove();
-        }
-    }, [pathCoordinates]);
-
     return (
         <div>
             <Header title="Consulta Histórica de Movimientos en Exterior" />
@@ -182,12 +108,9 @@ const HistoricalMovementsSearch = () => {
                     </div>
                 </div>
                 <button onClick={handleSearch}>Buscar</button>
-                <button onClick={downloadCSV} disabled={!isDataAvailable}>Descargar Resultados</button>
             </div>
 
             {historicalDataError && <div className="error-message">Error: {historicalDataError}</div>}
-
-            <div id="map" className="map-container"></div>
 
             {pathCoordinates.length > 0 && (
                 <div className="data-table-container">

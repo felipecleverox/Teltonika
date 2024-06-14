@@ -684,7 +684,7 @@ app.post('/api/configuracion', async (req, res) => {
 app.get('/api/umbrales', async (req, res) => {
   try {
     // Ejecutar una consulta SQL para seleccionar el primer registro de la tabla 'umbrales'
-    const [results] = await pool.query('SELECT * FROM umbrales LIMIT 1');
+    const [results] = await pool.query('SELECT * FROM configuracion LIMIT 1');
     
     // Enviar el primer resultado de la consulta como una respuesta JSON
     res.json(results[0]);
@@ -704,7 +704,7 @@ app.post('/api/umbrales', async (req, res) => {
 
   try {
     // Vaciar la tabla 'umbrales' antes de insertar nuevos umbrales
-    await pool.query('TRUNCATE TABLE umbrales');
+    await pool.query('TRUNCATE TABLE configuracion');
 
     // Insertar los nuevos umbrales en la tabla 'umbrales'
     await pool.query(
