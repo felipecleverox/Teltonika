@@ -163,3 +163,40 @@ body {
         font-size: 12px;
     }
 }
+.date-time-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.date-time-selection > div {
+    margin: 10px 0;
+}
+.date-time-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.date-time-inputs {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.date-time-inputs .date-input,
+.date-time-inputs .time-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.date-time-inputs input {
+    margin: 5px;
+    padding: 10px;
+    font-size: 16px;
+}

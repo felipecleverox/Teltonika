@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './PersonSearch.css';
-import personal3Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png';
+import personal3Icon from './assets/images/Personal 3.png';
 import planoSectores from './assets/images/plano_sectores.jpg'; // Ensure this path is correct
 import Header from './Header'; // Import the new header component
 
 function PersonSearch() {
     const [selectedDay, setSelectedDay] = useState('');
-    const [startHour, setStartHour] = useState('');
-    const [startMinute, setStartMinute] = useState('');
-    const [endHour, setEndHour] = useState('');
-    const [endMinute, setEndMinute] = useState('');
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [umbrales, setUmbrales] = useState({});
     const [devices, setDevices] = useState([]);
@@ -39,14 +37,14 @@ function PersonSearch() {
     }, []);
 
     const fetchSearchResults = async () => {
-        const startDate = `${selectedDay}T${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}:00`;
-        const endDate = `${selectedDay}T${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}:00`;
+        const startDateTime = `${selectedDay}T${startTime}:00`;
+        const endDateTime = `${selectedDay}T${endTime}:00`;
 
         try {
             const response = await axios.get('http://thenext.ddns.net:1337/api/beacon-entries-exits', {
                 params: {
-                    startDate,
-                    endDate,
+                    startDate: startDateTime,
+                    endDate: endDateTime,
                     device_id: selectedDeviceId // Use device ID
                 }
             });
@@ -146,50 +144,34 @@ function PersonSearch() {
                         ))}
                     </select>
                 </div>
-                <div className="date-selection">
-                    <h3>Seleccionar Día</h3>
-                    <input
-                        type="date"
-                        value={selectedDay}
-                        onChange={e => setSelectedDay(e.target.value)}
-                    />
-                </div>
-                <div className="time-selection">
-                    <h3>Seleccionar Rango de Horas y Minutos</h3>
-                    <label>Hora Inicio:</label>
-                    <input
-                        type="number"
-                        value={startHour}
-                        onChange={e => setStartHour(e.target.value)}
-                        placeholder="HH"
-                        min="0"
-                        max="23"
-                    />
-                    <input
-                        type="number"
-                        value={startMinute}
-                        onChange={e => setStartMinute(e.target.value)}
-                        placeholder="MM"
-                        min="0"
-                        max="59"
-                    />
-                    <label>Hora Fin:</label>
-                    <input
-                        type="number"
-                        value={endHour}
-                        onChange={e => setEndHour(e.target.value)}
-                        placeholder="HH"
-                        min="0"
-                        max="23"
-                    />
-                    <input
-                        type="number"
-                        value={endMinute}
-                        onChange={e => setEndMinute(e.target.value)}
-                        placeholder="MM"
-                        min="0"
-                        max="59"
-                    />
+                <div className="date-time-selection">
+                    <h3>Seleccionar Día y Hora</h3>
+                    <div className="date-time-inputs">
+                        <div className="date-input">
+                            <label>Seleccionar Día:</label>
+                            <input
+                                type="date"
+                                value={selectedDay}
+                                onChange={e => setSelectedDay(e.target.value)}
+                            />
+                        </div>
+                        <div className="time-input">
+                            <label>Hora Inicio:</label>
+                            <input
+                                type="time"
+                                value={startTime}
+                                onChange={e => setStartTime(e.target.value)}
+                            />
+                        </div>
+                        <div className="time-input">
+                            <label>Hora Fin:</label>
+                            <input
+                                type="time"
+                                value={endTime}
+                                onChange={e => setEndTime(e.target.value)}
+                            />
+                        </div>
+                    </div>
                 </div>
                 <button onClick={fetchSearchResults}>Buscar</button>
                 <button onClick={downloadCSV}>Descargar Resultados</button>
