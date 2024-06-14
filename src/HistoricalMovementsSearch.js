@@ -1,144 +1,203 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Header from './Header';
+import mapboxgl from 'mapbox-gl';
 import './HistoricalMovementsSearch.css';
+import markerIcon from './assets/images/pinazul.png';  // Asegúrate de que la ruta sea correcta
+
+mapboxgl.accessToken = 'pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZDgybHB2OTh4dmo3Z2EifQ.bpZlTBTa56pF4cPhE3aSzg';
 
 const HistoricalMovementsSearch = () => {
-    const [selectedDay, setSelectedDay] = useState('');
-    const [startTime, setStartTime] = useState('');
-    const [endTime, setEndTime] = useState('');
-    const [pathCoordinates, setPathCoordinates] = useState([]);
-    const [historicalDataError, setHistoricalDataError] = useState(null);
-    const [devices, setDevices] = useState([]);
-    const [selectedDeviceId, setSelectedDeviceId] = useState('');
-    const [isDataAvailable, setIsDataAvailable] = useState(false);
+  const [devices, setDevices] = useState([]);
+  const [device, setDevice] = useState('');
+  const [date, setDate] = useState('');
+  const [startHour, setStartHour] = useState('');
+  const [endHour, setEndHour] = useState('');
+  const [data, setData] = useState([]);
+  const [map, setMap] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(''); // Variable de estado para el mensaje de error
 
-    useEffect(() => {
-        const fetchDevices = async () => {
-            try {
-                const response = await axios.get('http://thenext.ddns.net:1337/api/devices');
-                setDevices(response.data);
-            } catch (error) {
-                console.error('Error fetching devices:', error);
-            }
-        };
-
-        fetchDevices();
-    }, []);
-
-    const handleSearch = async () => {
-        setHistoricalDataError(null);
-        setIsDataAvailable(false);
-        try {
-            const startTimestamp = Math.floor(new Date(`${selectedDay}T${startTime}:00`).getTime() / 1000);
-            const endTimestamp = Math.floor(new Date(`${selectedDay}T${endTime}:00`).getTime() / 1000);
-
-            const response = await axios.get('http://thenext.ddns.net:1337/api/get-gps-data', {
-                params: {
-                    startDate: startTimestamp,
-                    endDate: endTimestamp,
-                    device_id: selectedDeviceId
-                }
-            });
-
-            const newCoordinates = response.data.map(item => {
-                const latitude = parseFloat(item.latitude);
-                const longitude = parseFloat(item.longitude);
-                if (!isNaN(latitude) && !isNaN(longitude)) {
-                    return { latitude, longitude, timestamp: item.unixTimestamp };
-                }
-                return null;
-            }).filter(coord => coord !== null);
-
-            setPathCoordinates(newCoordinates);
-            setIsDataAvailable(newCoordinates.length > 0);
-        } catch (error) {
-            setHistoricalDataError(error.message);
-        }
+  useEffect(() => {
+    const fetchDevices = async () => {
+      try {
+        const result = await axios.get('/api/devices');
+        console.log('Fetched devices:', result.data);
+        setDevices(result.data);
+      } catch (error) {
+        console.error('Error fetching devices:', error);
+      }
     };
 
-    const formatDate = (timestamp) => {
-        if (!timestamp) return 'N/A';
-        const date = new Date(timestamp * 1000);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-    };
+    fetchDevices();
+  }, []);
 
-    return (
-        <div>
-            <Header title="Consulta Histórica de Movimientos en Exterior" />
-            
-            <div className="search-container">
-                <div className="device-selection">
-                    <select onChange={(e) => {
-                        setSelectedDeviceId(e.target.value);
-                        setHistoricalDataError(null);
-                    }}>
-                        <option value="">Seleccionar Dispositivo...</option>
-                        {devices.map(device => (
-                            <option key={device.id} value={device.id}>{device.device_asignado}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="date-time-selection">
-                    <div className="date-time-inputs">
-                        <div className="date-time-input">
-                            <label>Seleccionar Día:</label>
-                            <input
-                                type="date"
-                                value={selectedDay}
-                                onChange={e => setSelectedDay(e.target.value)}
-                            />
-                        </div>
-                        <div className="date-time-input">
-                            <label>Hora Inicio:</label>
-                            <input
-                                type="time"
-                                value={startTime}
-                                onChange={e => setStartTime(e.target.value)}
-                            />
-                        </div>
-                        <div className="date-time-input">
-                            <label>Hora Fin:</label>
-                            <input
-                                type="time"
-                                value={endTime}
-                                onChange={e => setEndTime(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                </div>
-                <button onClick={handleSearch}>Buscar</button>
-            </div>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log('Submitting form with values:', { device, date, startHour, endHour });
+    try {
+      const result = await axios.get('/api/historical-gps-data', {
+        params: {
+          device_id: device,
+          date,
+          startHour,
+          endHour,
+        },
+      });
+      console.log('Response data:', result.data);
+      const validData = result.data.filter(d => d.latitude !== null && d.longitude !== null); // Filtrar datos válidos
+      setData(validData);
+      if (validData.length > 0) {
+        setErrorMessage(''); // Limpiar el mensaje de error
+        plotRoute(validData);
+      } else {
+        setErrorMessage('Sin Datos para esa Búsqueda');
+      }
+    } catch (error) {
+      console.error('Error fetching historical GPS data:', error);
+      setErrorMessage('Error al buscar los datos GPS históricos'); // Mensaje de error en caso de fallo en la búsqueda
+    }
+  };
 
-            {historicalDataError && <div className="error-message">Error: {historicalDataError}</div>}
+  const plotRoute = (gpsData) => {
+    console.log('Plotting route with GPS data:', gpsData);
 
-            {pathCoordinates.length > 0 && (
-                <div className="data-table-container">
-                    <h2>Tabla de Datos de Ubicaciones</h2>
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Latitud</th>
-                                <th>Longitud</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {pathCoordinates.map(({ latitude, longitude, timestamp }, index) => (
-                                <tr key={index}>
-                                    <td>{formatDate(timestamp).split(' ')[0]}</td>
-                                    <td>{formatDate(timestamp).split(' ')[1]}</td>
-                                    <td>{latitude}</td>
-                                    <td>{longitude}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-        </div>
-    );
+    if (map) {
+      map.remove();
+    }
+
+    const mapInstance = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [-70.6693, -33.4489],
+      zoom: 10,
+    });
+
+    mapInstance.addControl(new mapboxgl.NavigationControl());
+
+    setMap(mapInstance);
+
+    const coordinates = gpsData.map((data) => [parseFloat(data.longitude), parseFloat(data.latitude)]);
+
+    console.log('Coordinates:', coordinates);
+
+    if (coordinates.length > 0) {
+      mapInstance.on('load', () => {
+        mapInstance.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates,
+            },
+          },
+        });
+
+        mapInstance.addLayer({
+          id: 'route',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': '#0000FF', // Color azul
+            'line-width': 6,
+          },
+        });
+
+        coordinates.forEach(coord => {
+          new mapboxgl.Marker({ element: createCustomMarker() })
+            .setLngLat(coord)
+            .addTo(mapInstance);
+        });
+
+        // Adjust the map view to the bounds of the coordinates
+        const bounds = coordinates.reduce((bounds, coord) => {
+          return bounds.extend(coord);
+        }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+
+        mapInstance.fitBounds(bounds, { padding: 50 });
+      });
+    } else {
+      console.log('No coordinates to plot.');
+    }
+  };
+
+  const createCustomMarker = () => {
+    const marker = document.createElement('div');
+    marker.style.backgroundImage = `url(${markerIcon})`;
+    marker.style.width = '18px';  // Ajusta el ancho
+    marker.style.height = '22px'; // Ajusta la altura
+    marker.style.backgroundSize = '100%';
+    return marker;
+  };
+
+  return (
+    <div className="historical-movements-search">
+      <form onSubmit={handleSubmit}>
+        <label>
+          Dispositivo:
+          <select value={device} onChange={(e) => setDevice(e.target.value)}>
+            <option value="">Seleccione un dispositivo</option>
+            {devices.map((device) => (
+              <option key={device.id} value={device.id}>
+                {device.device_asignado}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Fecha:
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </label>
+        <label>
+          Hora de inicio:
+          <input
+            type="time"
+            value={startHour}
+            onChange={(e) => setStartHour(e.target.value)}
+          />
+        </label>
+        <label>
+          Hora de fin:
+          <input
+            type="time"
+            value={endHour}
+            onChange={(e) => setEndHour(e.target.value)}
+          />
+        </label>
+        <button type="submit">Buscar</button>
+      </form>
+      {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Mostrar mensaje de error */}
+      <div id="map" className="map"></div>
+      {data.length > 0 && (
+        <table>
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Latitud</th>
+              <th>Longitud</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item, index) => (
+              <tr key={index}>
+                <td>{item.timestamp}</td>
+                <td>{item.latitude}</td>
+                <td>{item.longitude}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
 };
 
 export default HistoricalMovementsSearch;

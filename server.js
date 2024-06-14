@@ -20,7 +20,7 @@ const server = http.createServer(app); // Create HTTP server with Express app
 const { Server } = require('socket.io'); // Import Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: "http://thenext.ddns.net:3000", // Adjust as needed for security
+    origin: ["http://thenext.ddns.net:3000", "http://localhost:3000"], // Allow both origins
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true
@@ -242,44 +242,41 @@ app.get('/api/door-status', async (req, res) => {
   }
 });
 
+// Endpoint para obtener datos históricos de GPS
+app.get('/api/historical-gps-data', async (req, res) => {
+  const { device_id, date, startHour, endHour } = req.query;
 
-// Endpoint for querying GPS data with filters
-app.get('/api/get-gps-data', async (req, res) => {
-  // Extract startDate and endDate from query parameters
-  const { startDate, endDate } = req.query;
+  // Convertir la fecha y hora a Unix timestamp usando la zona horaria de Chile
+  const startDateTime = moment.tz(`${date} ${startHour}:00`, 'YYYY-MM-DD HH:mm:ss', 'America/Santiago').unix();
+  const endDateTime = moment.tz(`${date} ${endHour}:59`, 'YYYY-MM-DD HH:mm:ss', 'America/Santiago').unix();
 
-  // SQL query to select device_id, latitude, longitude, and timestamp from gps_data table
-  // The query filters records where the timestamp is between startDate and endDate
-  const query = `
-        SELECT device_id, latitude, longitude, timestamp AS unixTimestamp
-        FROM gps_data
-        WHERE timestamp BETWEEN ? AND ?
-    `;
-
-  // Convert startDate and endDate to integers and store them in params array
-  const params = [parseInt(startDate), parseInt(endDate)];
-
-  // Log the query parameters, SQL query, and SQL parameters for debugging purposes
-  console.log('Query Params:', { startDate, endDate });
-  console.log('SQL Query:', query);
-  console.log('SQL Params:', params);
+  console.log(`Received request with device_id: ${device_id}, date: ${date}, startHour: ${startHour}, endHour: ${endHour}`);
+  console.log(`Constructed datetime range: ${startDateTime} to ${endDateTime}`);
 
   try {
-    // Execute the SQL query with the provided parameters
-    const [results] = await pool.query(query, params);
-    // Log the query results for debugging purposes
-    console.log('Query Results:', results);
+    const query = `
+      SELECT latitude, longitude, timestamp
+      FROM gps_data
+      WHERE device_name = ? AND timestamp BETWEEN ? AND ?
+      ORDER BY timestamp ASC
+    `;
+    const [results] = await pool.query(query, [device_id, startDateTime, endDateTime]);
 
-    // Send the query results as a JSON response
+    console.log(`Query results: ${JSON.stringify(results)}`);
+    if (results.length === 0) {
+      console.log(`No data found for device_id: ${device_id} between ${startDateTime} and ${endDateTime}`);
+    } else {
+      results.forEach(result => {
+        result.timestamp = convertToLocalTime(result.timestamp);
+      });
+    }
+
     res.json(results);
   } catch (error) {
-    // Log any errors that occur during the query execution
-    console.error('Error fetching GPS data:', error);
-    // Send a 500 Internal Server Error response if an error occurs
+    console.error('Error fetching historical GPS data:', error);
     res.status(500).send('Server Error');
   }
 });
-
 
 // Endpoint to get the last known position
 app.get('/api/last-known-position', async (req, res) => {
