@@ -21,7 +21,7 @@ function LastKnownPosition({ showHeader = true }) {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await axios.get('http://thenext.ddns.net:1337/api/devices');
+        const response = await axios.get('/api/devices');
         console.log('Fetched devices:', response.data);
         setDevices(response.data);
       } catch (error) {
