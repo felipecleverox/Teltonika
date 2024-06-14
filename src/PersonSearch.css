@@ -11,13 +11,13 @@
     --color-rojo-letra: white;
     --sector-bodega-bg: #c1ff72; /* Verde pálido */
     --sector-bodega-text: black;
-    --sector-farmacia-bg: #e1bee7; /* Violeta pálido */
+    --sector-farmacia-bg: #ea9bdd; /* Violeta pálido */
     --sector-farmacia-text: black;
     --sector-entrada-bg: #ffcccb; /* Granate pálido */
     --sector-entrada-text: black;
-    --sector-pasillo-bg: #ffcccb; /* Granate pálido */
+    --sector-pasillo-bg: #cbfffe; /* Granate pálido */
     --sector-pasillo-text: black;
-    --sector-electro-bg: #ffcccb; /* Granate pálido */
+    --sector-electro-bg: #f5ffcb; /* Granate pálido */
     --sector-electro-text: black;
 }
 
@@ -163,16 +163,7 @@ body {
         font-size: 12px;
     }
 }
-.date-time-selection {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 20px;
-}
 
-.date-time-selection > div {
-    margin: 10px 0;
-}
 .date-time-selection {
     display: flex;
     flex-direction: column;

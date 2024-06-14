@@ -8,10 +8,8 @@ MapboxGL.accessToken = 'pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZ
 
 const HistoricalMovementsSearch = () => {
     const [selectedDay, setSelectedDay] = useState('');
-    const [startHour, setStartHour] = useState('');
-    const [startMinute, setStartMinute] = useState('');
-    const [endHour, setEndHour] = useState('');
-    const [endMinute, setEndMinute] = useState('');
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
     const [pathCoordinates, setPathCoordinates] = useState([]);
     const [historicalDataError, setHistoricalDataError] = useState(null);
     const [devices, setDevices] = useState([]);
@@ -35,8 +33,8 @@ const HistoricalMovementsSearch = () => {
         setHistoricalDataError(null);
         setIsDataAvailable(false);
         try {
-            const startTimestamp = Math.floor(new Date(`${selectedDay}T${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}:00`).getTime() / 1000);
-            const endTimestamp = Math.floor(new Date(`${selectedDay}T${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}:00`).getTime() / 1000);
+            const startTimestamp = Math.floor(new Date(`${selectedDay}T${startTime}:00`).getTime() / 1000);
+            const endTimestamp = Math.floor(new Date(`${selectedDay}T${endTime}:00`).getTime() / 1000);
 
             const response = await axios.get('http://thenext.ddns.net:1337/api/get-gps-data', {
                 params: {
@@ -145,64 +143,46 @@ const HistoricalMovementsSearch = () => {
             
             <div className="search-container">
                 <div className="device-selection">
-                    <h3>Seleccionar Dispositivo</h3>
                     <select onChange={(e) => {
                         setSelectedDeviceId(e.target.value);
                         setHistoricalDataError(null);
                     }}>
-                        <option value="">Seleccionar...</option>
+                        <option value="">Seleccionar Dispositivo...</option>
                         {devices.map(device => (
                             <option key={device.id} value={device.id}>{device.device_asignado}</option>
                         ))}
                     </select>
                 </div>
-                <div className="date-selection">
-                    <h3>Seleccionar Día</h3>
-                    <input
-                        type="date"
-                        value={selectedDay}
-                        onChange={e => setSelectedDay(e.target.value)}
-                    />
-                    <h3>Seleccionar Rango de Horas y Minutos</h3>
-                    <div className="time-selection">
-                        <label>Hora Inicio:</label>
-                        <input
-                            type="number"
-                            value={startHour}
-                            onChange={e => setStartHour(e.target.value)}
-                            placeholder="HH"
-                            min="0"
-                            max="23"
-                        />
-                        <input
-                            type="number"
-                            value={startMinute}
-                            onChange={e => setStartMinute(e.target.value)}
-                            placeholder="MM"
-                            min="0"
-                            max="59"
-                        />
-                        <label>Hora Fin:</label>
-                        <input
-                            type="number"
-                            value={endHour}
-                            onChange={e => setEndHour(e.target.value)}
-                            placeholder="HH"
-                            min="0"
-                            max="23"
-                        />
-                        <input
-                            type="number"
-                            value={endMinute}
-                            onChange={e => setEndMinute(e.target.value)}
-                            placeholder="MM"
-                            min="0"
-                            max="59"
-                        />
+                <div className="date-time-selection">
+                    <div className="date-time-inputs">
+                        <div className="date-time-input">
+                            <label>Seleccionar Día:</label>
+                            <input
+                                type="date"
+                                value={selectedDay}
+                                onChange={e => setSelectedDay(e.target.value)}
+                            />
+                        </div>
+                        <div className="date-time-input">
+                            <label>Hora Inicio:</label>
+                            <input
+                                type="time"
+                                value={startTime}
+                                onChange={e => setStartTime(e.target.value)}
+                            />
+                        </div>
+                        <div className="date-time-input">
+                            <label>Hora Fin:</label>
+                            <input
+                                type="time"
+                                value={endTime}
+                                onChange={e => setEndTime(e.target.value)}
+                            />
+                        </div>
                     </div>
-                    <button onClick={handleSearch}>Buscar</button>
-                    <button onClick={downloadCSV} disabled={!isDataAvailable}>Descargar Resultados</button>
                 </div>
+                <button onClick={handleSearch}>Buscar</button>
+                <button onClick={downloadCSV} disabled={!isDataAvailable}>Descargar Resultados</button>
             </div>
 
             {historicalDataError && <div className="error-message">Error: {historicalDataError}</div>}

@@ -100,35 +100,6 @@ function PersonSearch() {
         return '';
     };
 
-    const downloadCSV = () => {
-        const headers = ['Personal', 'Sector', 'Desde Detección', 'Permanencia', 'Estado'];
-        const rows = searchResults.map(result => {
-            const sector = getSector(result.beaconId);
-            const permanence = calculatePermanence(result.entrada, result.salida);
-            const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
-            const semaphoreClass = getSemaphoreClass(permanenceMinutes);
-            return [
-                'Personal 3', // Assuming the icon represents "Personal 3"
-                sector.text,
-                formatDate(result.entrada),
-                permanence,
-                semaphoreClass
-            ];
-        });
-
-        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `historical_movements_${selectedDay}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
     return (
         <div className="person-search">
             <Header title="Busqueda Histórica Ubicación Interiores" />
@@ -145,9 +116,8 @@ function PersonSearch() {
                     </select>
                 </div>
                 <div className="date-time-selection">
-                    <h3>Seleccionar Día y Hora</h3>
                     <div className="date-time-inputs">
-                        <div className="date-input">
+                        <div className="date-time-input">
                             <label>Seleccionar Día:</label>
                             <input
                                 type="date"
@@ -155,7 +125,7 @@ function PersonSearch() {
                                 onChange={e => setSelectedDay(e.target.value)}
                             />
                         </div>
-                        <div className="time-input">
+                        <div className="date-time-input">
                             <label>Hora Inicio:</label>
                             <input
                                 type="time"
@@ -163,7 +133,7 @@ function PersonSearch() {
                                 onChange={e => setStartTime(e.target.value)}
                             />
                         </div>
-                        <div className="time-input">
+                        <div className="date-time-input">
                             <label>Hora Fin:</label>
                             <input
                                 type="time"
@@ -174,7 +144,6 @@ function PersonSearch() {
                     </div>
                 </div>
                 <button onClick={fetchSearchResults}>Buscar</button>
-                <button onClick={downloadCSV}>Descargar Resultados</button>
             </div>
             <table className="search-results-table">
                 <thead>
