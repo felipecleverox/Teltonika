@@ -752,6 +752,7 @@ app.get('/api/retrive_MapWithQuadrants_information', async (req, res) => {
       devices,
     };
 
+
     // Enviar la respuesta consolidada como JSON
     res.json(combinedData);
   } catch (error) {

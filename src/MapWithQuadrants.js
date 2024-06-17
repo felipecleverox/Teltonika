@@ -18,65 +18,20 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
 
   useEffect(() => {
     
-    const fetchDevices = async () => {
-      try {
-        const result = await axios.get('/api/devices');
-        console.log('Fetched devices:', result.data);
-        setDevices(result.data);
-      } catch (error) {
-        console.error('Error fetching devices:', error);
-      }
-    };
+    const fetchThresholds = (beaconID) => {
+      // Utiliza los umbrales obtenidos de la respuesta combinada
+      const thresholdData = umbrales[beaconID];
     
-    const fetchSectors = async () => {
-      try {
-        const response = await axios.get('/api/sectores');
-        setSectors(response.data);
-      } catch (error) {
-        console.error('Error fetching sectors:', error);
-      }
-    };
-
-    const fetchConfiguration = async (beaconID) => {
-      try {
-        // Asegurarse de que beaconID esté presente
-        if (!beaconID) {
-          throw new Error('beaconID is required');
-        }
-    
-        // Realizar la solicitud GET con el beaconID en la URL
-        const response = await axios.get(`/api/configuracion_uno_solo/${beaconID}`);
-        
-        // Reducir los datos de la respuesta en el formato deseado
-        const data = response.data.reduce((acc, cur) => {
-          acc[cur.beacon_id] = {
-            minTiempoPermanencia: cur.min_tiempo_permanencia,
-            maxTiempoPermanencia: cur.max_tiempo_permanencia,
-          };
-          return acc;
-        }, {});
-    
-        // Establecer la configuración con los datos obtenidos
-        setConfig(data);
-      } catch (error) {
-        console.error('Error fetching configuration:', error);
-      }
-    };
-    
-
-    const fetchThresholds = async (beaconID) => {
-      try {
-        const response = await axios.get(`/api/configuracion_uno_solo/${beaconID}`);
-        const data = response.data[0];
+      if (thresholdData) {
         const parsedData = {
-          ...data,
-          umbral_verde: Number(data.umbral_verde),
-          umbral_amarillo: Number(data.umbral_amarillo),
+          ...thresholdData,
+          umbral_verde: Number(thresholdData.umbral_verde),
+          umbral_amarillo: Number(thresholdData.umbral_amarillo),
         };
         setUmbrales(parsedData);
         console.log('Umbrales actualizados:', parsedData);
-      } catch (error) {
-        console.error('Error fetching thresholds:', error);
+      } else {
+        console.error('Thresholds not found for beaconID:', beaconID);
       }
     };
 
@@ -110,12 +65,10 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
       }
     };
 
-
-
-    const handleDeviceSearch = async (deviceAsignado) => {
+    const handleDeviceSearch = (deviceAsignado) => {
       const device = devices.find(d => d.device_asignado === deviceAsignado);
       if (device) {
-        await fetchDataForDevice(device.id);
+        fetchDataForDevice(device.id);
       } else {
         setNoData(true);
       }
@@ -142,13 +95,22 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
 
     const fetchData = async () => {
       try {
-        fetchSectors();
-        fetchConfiguration(await fetchActiveBeacons());
+        const response = await axios.get('/api/retrive_MapWithQuadrants_information');
+        const { sectors, configuration, thresholds, devices } = response.data;
+    
+        setSectors(sectors);
+        setConfig(configuration);
+        if (Object.keys(thresholds).length > 0) {
+          setUmbrales(thresholds);
+        }
+        setDevices(devices);
+    
         const activeBeaconIds = await fetchActiveBeacons();
         if (activeBeaconIds && activeBeaconIds.length > 0) {
-          fetchThresholds(activeBeaconIds[0]);
+          // Utiliza los umbrales obtenidos en lugar de hacer una nueva solicitud
+          // fetchThresholds(activeBeaconIds[0]);
         }
-        fetchDevices();
+    
         if (selectedDeviceAsignado) {
           handleDeviceSearch(selectedDeviceAsignado);
         }
@@ -199,16 +161,21 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
     const now = new Date();
     const start = new Date(timestamp);
     const duration = (now - start) / (1000 * 60); // Duración en minutos
-    // Verificar si umbrales no es undefined y si las propiedades existen
-    if (umbrales && umbrales.umbral_verde !== undefined && umbrales.umbral_amarillo !== undefined) {
-      if (duration <= umbrales.umbral_verde) {
+  
+    // Buscar los umbrales específicos para el beacon_id
+    const thresholdData = umbrales.find(threshold => threshold.beacon_id === beacon_id);
+  
+    if (thresholdData) {
+      const { umbral_verde, umbral_amarillo } = thresholdData;
+      if (duration <= umbral_verde) {
         return 'green';
-      } else if (duration > umbrales.umbral_verde && duration <= umbrales.umbral_amarillo) {
+      } else if (duration > umbral_verde && duration <= umbral_amarillo) {
         return 'yellow';
-      } else if (duration > umbrales.umbral_amarillo) {
+      } else if (duration > umbral_amarillo) {
         return 'red';
       }
     }
+  
     return '';
   };
 
