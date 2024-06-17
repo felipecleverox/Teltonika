@@ -67,6 +67,29 @@
     color: var(--color-rojo-letra);
 }
 
+/* Estilos para el semáforo */
+.semaphore {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.semaphore.green {
+  background-color: var(--color-verde);
+  color: var(--color-verde-letra);
+}
+
+.semaphore.yellow {
+  background-color: var(--color-amarillo);
+  color: var(--color-amarillo-letra);
+}
+
+.semaphore.red {
+  background-color: var(--color-rojo);
+  color: var(--color-rojo-letra);
+}
+
 /* Estilos para dispositivos móviles */
 @media (max-width: 768px) {
     .plano-container {

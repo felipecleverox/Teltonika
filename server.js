@@ -278,6 +278,42 @@ app.get('/api/historical-gps-data', async (req, res) => {
   }
 });
 
+
+app.get('/api/get-gps-data', async (req, res) => {
+  const { startDate, endDate, device_name } = req.query;
+
+  // Agregar logs para verificar los valores de los parámetros recibidos
+  console.log('Start Date:', startDate);
+  console.log('End Date:', endDate);
+  console.log('Device Name:', device_name);
+
+  const query = `
+      SELECT device_id, latitude, longitude, timestamp AS unixTimestamp
+      FROM gps_data
+      WHERE timestamp BETWEEN ? AND ? AND device_name = ?
+  `;
+
+  const params = [parseInt(startDate), parseInt(endDate), device_name];
+
+  try {
+      const [results] = await pool.query(query, params);
+      
+      // Agregar logs para verificar los resultados de la consulta
+      if (results.length === 0) {
+          console.log(`No data found for device_name: ${device_name} between ${startDate} and ${endDate}`);
+          return res.json({ data: [], message: 'No data found' });
+      }
+
+      console.log('Query Results:', results);
+
+      res.json({ data: results, message: 'Data found' });
+  } catch (error) {
+      console.error('Error fetching GPS data:', error);
+      res.status(500).send('Server Error');
+  }
+});
+
+
 // Endpoint to get the last known position
 app.get('/api/last-known-position', async (req, res) => {
   // Extract device_id from query parameters
@@ -362,17 +398,12 @@ app.get('/api/active-beacons', async (req, res) => {
             LIMIT 1
         `);
 
-    // Log the latest record for debugging purposes
-    console.log('Latest Record:', latestRecord);
-
     // Check if the latest record exists and contains non-empty ble_beacons
     if (latestRecord.length && latestRecord[0].ble_beacons && latestRecord[0].ble_beacons !== '[]') {
       // Parse the ble_beacons JSON string to an array
       const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
       // Extract the IDs of active beacons
       const activeBeaconIds = beaconsData.map(beacon => beacon.id);
-      // Log the active beacon IDs for debugging purposes
-      console.log('Active Beacon IDs:', activeBeaconIds);
       // Send the active beacon IDs as a JSON response
       res.json({ activeBeaconIds });
     } else {
@@ -641,6 +672,7 @@ app.get('/api/configuracion', async (req, res) => {
   }
 });
 
+
 // Endpoint para actualizar la configuración
 app.post('/api/configuracion', async (req, res) => {
   // Obtener las configuraciones del cuerpo de la solicitud
@@ -672,6 +704,58 @@ app.post('/api/configuracion', async (req, res) => {
     console.error('Error updating configuration:', error);
     
     // Enviar una respuesta de error 500 (Internal Server Error) con un mensaje de error
+    res.status(500).send('Server Error');
+  }
+});
+
+app.get('/api/configuracion_uno_solo/:beaconID', async (req, res) => {
+  try {
+    // Obtener el beaconID de los parámetros de la URL
+    const { beaconID } = req.params;
+    
+    // Ejecutar una consulta SQL para seleccionar los registros de la tabla 'configuracion' donde el beaconID coincida
+    const [results] = await pool.query('SELECT * FROM configuracion WHERE beacon_id = ?', [beaconID]);
+    
+    // Enviar los resultados de la consulta como una respuesta JSON
+    res.json(results);
+  } catch (error) {
+    // Registrar cualquier error que ocurra durante la ejecución de la consulta
+    console.error('Error fetching configuration:', error);
+    
+    // Enviar una respuesta de error 500 (Internal Server Error) con un mensaje de error
+    res.status(500).send('Server Error');
+  }
+});
+
+// ...
+
+// Endpoint consolidado para obtener sectores, configuración, umbrales y dispositivos
+app.get('/api/retrive_MapWithQuadrants_information', async (req, res) => {
+  try {
+    // Obtener sectores
+    const [sectors] = await pool.query('SELECT * FROM sectores');
+
+    // Obtener configuración
+    const [configuration] = await pool.query('SELECT * FROM configuracion');
+
+    // Obtener umbrales
+    const [thresholds] = await pool.query('SELECT * FROM configuracion');
+
+    // Obtener dispositivos
+    const [devices] = await pool.query('SELECT * FROM devices');
+
+    // Construir el objeto de respuesta consolidada
+    const combinedData = {
+      sectors,
+      configuration,
+      thresholds,
+      devices,
+    };
+
+    // Enviar la respuesta consolidada como JSON
+    res.json(combinedData);
+  } catch (error) {
+    console.error('Error fetching combined data:', error);
     res.status(500).send('Server Error');
   }
 });

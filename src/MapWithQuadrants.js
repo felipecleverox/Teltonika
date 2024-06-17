@@ -1,3 +1,4 @@
+// MapWithQuadrants.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './MapWithQuadrants.css';
@@ -6,6 +7,7 @@ import personal3Icon from './assets/images/Personal 3.png';
 import Header from './Header';
 
 const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
+  
   const [activeBeacons, setActiveBeacons] = useState([]);
   const [beaconLogs, setBeaconLogs] = useState({});
   const [config, setConfig] = useState({});
@@ -15,6 +17,17 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
   const [devices, setDevices] = useState([]);
 
   useEffect(() => {
+    
+    const fetchDevices = async () => {
+      try {
+        const result = await axios.get('/api/devices');
+        console.log('Fetched devices:', result.data);
+        setDevices(result.data);
+      } catch (error) {
+        console.error('Error fetching devices:', error);
+      }
+    };
+    
     const fetchSectors = async () => {
       try {
         const response = await axios.get('/api/sectores');
@@ -24,9 +37,17 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
       }
     };
 
-    const fetchConfiguration = async () => {
+    const fetchConfiguration = async (beaconID) => {
       try {
-        const response = await axios.get('/api/configuracion');
+        // Asegurarse de que beaconID esté presente
+        if (!beaconID) {
+          throw new Error('beaconID is required');
+        }
+    
+        // Realizar la solicitud GET con el beaconID en la URL
+        const response = await axios.get(`/api/configuracion_uno_solo/${beaconID}`);
+        
+        // Reducir los datos de la respuesta en el formato deseado
         const data = response.data.reduce((acc, cur) => {
           acc[cur.beacon_id] = {
             minTiempoPermanencia: cur.min_tiempo_permanencia,
@@ -34,16 +55,26 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
           };
           return acc;
         }, {});
+    
+        // Establecer la configuración con los datos obtenidos
         setConfig(data);
       } catch (error) {
         console.error('Error fetching configuration:', error);
       }
     };
+    
 
-    const fetchThresholds = async () => {
+    const fetchThresholds = async (beaconID) => {
       try {
-        const response = await axios.get('/api/umbrales');
-        setUmbrales(response.data);
+        const response = await axios.get(`/api/configuracion_uno_solo/${beaconID}`);
+        const data = response.data[0];
+        const parsedData = {
+          ...data,
+          umbral_verde: Number(data.umbral_verde),
+          umbral_amarillo: Number(data.umbral_amarillo),
+        };
+        setUmbrales(parsedData);
+        console.log('Umbrales actualizados:', parsedData);
       } catch (error) {
         console.error('Error fetching thresholds:', error);
       }
@@ -69,6 +100,7 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
         if (activeBeaconIds.length > 0) {
           activeBeaconIds.forEach(fetchOldestBeaconDetections);
           setNoData(false);
+          return activeBeaconIds;
         } else {
           setNoData(true);
         }
@@ -78,14 +110,7 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
       }
     };
 
-    const fetchDevices = async () => {
-      try {
-        const response = await axios.get('/api/devices');
-        setDevices(response.data);
-      } catch (error) {
-        console.error('Error fetching devices:', error);
-      }
-    };
+
 
     const handleDeviceSearch = async (deviceAsignado) => {
       const device = devices.find(d => d.device_asignado === deviceAsignado);
@@ -115,14 +140,24 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
       }
     };
 
-    fetchSectors();
-    fetchConfiguration();
-    fetchThresholds();
-    fetchActiveBeacons();
-    fetchDevices();
-    if (selectedDeviceAsignado) {
-      handleDeviceSearch(selectedDeviceAsignado);
-    }
+    const fetchData = async () => {
+      try {
+        fetchSectors();
+        fetchConfiguration(await fetchActiveBeacons());
+        const activeBeaconIds = await fetchActiveBeacons();
+        if (activeBeaconIds && activeBeaconIds.length > 0) {
+          fetchThresholds(activeBeaconIds[0]);
+        }
+        fetchDevices();
+        if (selectedDeviceAsignado) {
+          handleDeviceSearch(selectedDeviceAsignado);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
     const intervalId = setInterval(fetchActiveBeacons, 20000);
 
     return () => clearInterval(intervalId);
@@ -140,11 +175,11 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
       case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
         return { bottom: '25%', right: '55%', width: '2%' };
       case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
-        return { bottom: '10%', right: '72%', width: '2%' };
+        return { bottom: '10%', right: '64%', width: '2%' };
       case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
-        return { bottom: '41%', right: '28%' };
+        return { bottom: '41%', right: '28%', width: '2%' };
       case 'F7826DA6-BC5B-71E0-893E-54654370696F':
-        return { bottom: '68%', right: '30%' };
+        return { bottom: '68%', right: '30%', width: '2%' };
       default:
         return {};
     }
@@ -160,20 +195,34 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
     return `${hours}h ${minutes}m`;
   };
 
-  const getSemaphoreClass = (beaconId, timestamp) => {
+  const getSemaphoreClass = (beacon_id, timestamp) => {
     const now = new Date();
     const start = new Date(timestamp);
     const duration = (now - start) / (1000 * 60); // Duración en minutos
-
-    if (duration <= umbrales.umbral_verde) {
-      return 'green';
-    } else if (duration > umbrales.umbral_verde && duration <= umbrales.umbral_amarillo) {
-      return 'yellow';
-    } else if (duration > umbrales.umbral_amarillo) {
-      return 'red';
+    // Verificar si umbrales no es undefined y si las propiedades existen
+    if (umbrales && umbrales.umbral_verde !== undefined && umbrales.umbral_amarillo !== undefined) {
+      if (duration <= umbrales.umbral_verde) {
+        return 'green';
+      } else if (duration > umbrales.umbral_verde && duration <= umbrales.umbral_amarillo) {
+        return 'yellow';
+      } else if (duration > umbrales.umbral_amarillo) {
+        return 'red';
+      }
     }
-
     return '';
+  };
+
+  const getSemaphoreText = (semaphoreClass) => {
+    switch (semaphoreClass) {
+      case 'green':
+        return 'On Time';
+      case 'yellow':
+        return 'Over Time';
+      case 'red':
+        return 'Past Deadline';
+      default:
+        return 'N/A';
+    }
   };
 
   return (
@@ -194,17 +243,21 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
               </tr>
             </thead>
             <tbody>
-              {activeBeacons.map(beaconId => (
-                <tr key={beaconId}>
-                  <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
-                  <td>{getSector(beaconId)}</td>
-                  <td>{beaconLogs[beaconId] ? new Date(beaconLogs[beaconId].timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
-                  <td>{beaconLogs[beaconId] ? calculatePermanence(beaconLogs[beaconId].timestamp) : 'N/A'}</td>
-                  <td className={beaconLogs[beaconId] ? getSemaphoreClass(beaconId, beaconLogs[beaconId].timestamp) : ''}>
-                    {beaconLogs[beaconId] ? getSemaphoreClass(beaconId, beaconLogs[beaconId].timestamp).replace('green', 'On Time').replace('yellow', 'Over Time').replace('red', 'Past Deadline') : 'N/A'}
-                  </td>
-                </tr>
-              ))}
+              {activeBeacons.map(beaconId => {
+                const semaphoreClass = beaconLogs[beaconId] ? getSemaphoreClass(beaconId, beaconLogs[beaconId].timestamp) : '';
+                const semaphoreText = getSemaphoreText(semaphoreClass);
+                return (
+                  <tr key={beaconId}>
+                    <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
+                    <td>{getSector(beaconId)}</td>
+                    <td>{beaconLogs[beaconId] ? new Date(beaconLogs[beaconId].timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
+                    <td>{beaconLogs[beaconId] ? calculatePermanence(beaconLogs[beaconId].timestamp) : 'N/A'}</td>
+                    <td>
+                      <span className={`semaphore ${semaphoreClass}`}>{semaphoreText}</span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           <div className="plano-container" style={{ position: 'relative', width: '100%', height: 'auto' }}>

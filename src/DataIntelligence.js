@@ -12,182 +12,205 @@ const searchOptions = [
   { title: "Búsqueda de Datos de Exteriores", image: exteriorSearchImage, option: 'exterior' },
 ];
 
-const DataIntelligence = () => {
-  const [selectedOption, setSelectedOption] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [error, setError] = useState(null);
-  const [isSearching, setIsSearching] = useState(false);
+function PersonSearch() {
+    const [selectedDay, setSelectedDay] = useState('');
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [umbrales, setUmbrales] = useState({});
+    const [devices, setDevices] = useState([]);
+    const [selectedDeviceId, setSelectedDeviceId] = useState('');
 
-  const handleOptionSelect = (option) => {
-    setSelectedOption(option);
-    setStartDate('');
-    setEndDate('');
-    setSearchResults([]);
-    setError(null);
-  };
+    useEffect(() => {
+        const fetchThresholds = async () => {
+            try {
+                const response = await axios.get('/api/umbrales');
+                setUmbrales(response.data);
+            } catch (error) {
+                console.error('Error fetching thresholds:', error);
+            }
+        };
+        fetchThresholds();
+        
+        const fetchDevices = async () => {
+            try {
+                const response = await axios.get('http://thenext.ddns.net:1337/api/devices');
+                setDevices(response.data);
+            } catch (error) {
+                console.error('Error fetching devices:', error);
+            }
+        };
+        fetchDevices();
+    }, []);
 
-  const handleSearch = async () => {
-    setIsSearching(true);
-    setError(null);
-    try {
-      const startTimestamp = new Date(startDate).getTime();
-      const endTimestamp = new Date(endDate).getTime();
+    const fetchSearchResults = async () => {
+        const startDateTime = `${selectedDay}T${startTime}:00`;
+        const endDateTime = `${selectedDay}T${endTime}:00`;
 
-      const url = selectedOption === 'interior'
-        ? 'http://thenext.ddns.net:1337/api/beacon-entries-exits'
-        : 'http://thenext.ddns.net:1337/api/get-gps-data';
+        try {
+            const response = await axios.get('http://thenext.ddns.net:1337/api/beacon-entries-exits', {
+                params: {
+                    startDate: startDateTime,
+                    endDate: endDateTime,
+                    device_id: selectedDeviceId // Use device ID
+                }
+            });
+            console.log('Data received:', response.data);
+            setSearchResults(response.data);
+        } catch (error) {
+            console.error('Error fetching search results:', error);
+        }
+    };
 
-      const params = selectedOption === 'interior'
-        ? { startDate, endDate, person: '352592573522828 (autocreated)' }
-        : { startDate: startTimestamp / 1000, endDate: endTimestamp / 1000 };
+    const formatDate = (timestamp) => {
+        if (!timestamp) return 'N/A';
+        const date = new Date(timestamp);
+        return date.toLocaleString();
+    };
 
-      const response = await axios.get(url, { params });
+    const getSector = (beaconId) => {
+        switch (beaconId) {
+            case '0C403019-61C7-55AA-B7EA-DAC30C720055':
+                return { text: 'E/S Bodega', className: 'sector-bodega' };
+            case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
+                return { text: 'Farmacia', className: 'sector-farmacia' };
+            case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
+                return { text: 'Entrada', className: 'sector-entrada' };
+            case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
+                return { text: 'Pasillo Central', className: 'sector-pasillo' };
+            case 'F7826DA6-BC5B-71E0-893E-54654370696F':
+                return { text: 'Electro', className: 'sector-electro' };
+            default:
+                return { text: 'Unknown', className: '' };
+        }
+    };
 
-      let results = [];
-      if (selectedOption === 'interior') {
-        results = response.data.map(record => ({
-          beaconId: record.beaconId,
-          sector: record.sector,
-          entrada: record.entrada,
-          salida: record.salida ? record.salida : null,
-          tiempoPermanencia: record.tiempoPermanencia,
-        }));
-      } else {
-        results = response.data.map(item => ({
-          latitude: parseFloat(item.latitude),
-          longitude: parseFloat(item.longitude),
-          timestamp: item.unixTimestamp * 1000,
-        }));
-      }
+    const calculatePermanence = (entrada, salida) => {
+        const start = new Date(entrada);
+        const end = salida ? new Date(salida) : new Date(); // Usa la fecha actual si no hay salida
+        const duration = end - start;
 
-      console.log("Search Results:", results);
-      setSearchResults(results);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+        const hours = Math.floor(duration / (1000 * 60 * 60));
+        const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+        return `${hours}h ${minutes}m`;
+    };
 
-  const formatDate = (timestamp, format = 'full') => {
-    if (!timestamp) return 'N/A';
-    const date = new Date(timestamp);
-    return date.toLocaleDateString([], { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+    const getSemaphoreClass = (permanenceMinutes) => {
+        if (permanenceMinutes <= umbrales.umbral_verde) {
+            return 'green';
+        } else if (permanenceMinutes > umbrales.umbral_verde && permanenceMinutes <= umbrales.umbral_amarillo) {
+            return 'yellow';
+        } else if (permanenceMinutes > umbrales.umbral_amarillo) {
+            return 'red';
+        }
 
-  const formatDuration = (durationInMillis) => {
-    if (durationInMillis === 'En progreso') return 'En progreso';
-    const totalMinutes = Math.floor(durationInMillis / 1000 / 60);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return `${hours}h ${minutes}m`;
-  };
+        return '';
+    };
 
-  const downloadCSV = () => {
-    const headers = selectedOption === 'interior'
-      ? ['Sector', 'Fecha y Hora de Entrada', 'Fecha y Hora de Salida', 'Tiempo de Permanencia']
-      : ['Fecha y Hora GPS', 'Latitud', 'Longitud'];
+    const downloadCSV = () => {
+        const headers = ['Personal', 'Sector', 'Desde Detección', 'Permanencia', 'Estado'];
+        const rows = searchResults.map(result => {
+            const sector = getSector(result.beaconId);
+            const permanence = calculatePermanence(result.entrada, result.salida);
+            const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
+            const semaphoreClass = getSemaphoreClass(permanenceMinutes);
+            return [
+                'Personal 3', // Assuming the icon represents "Personal 3"
+                sector.text,
+                formatDate(result.entrada),
+                permanence,
+                semaphoreClass
+            ];
+        });
 
-    const rows = searchResults.map(item => (
-      selectedOption === 'interior'
-        ? [
-            item.sector,
-            formatDate(item.entrada),
-            item.salida ? formatDate(item.salida, 'time') : 'N/A',
-            formatDuration(item.tiempoPermanencia),
-          ]
-        : [
-            formatDate(item.timestamp),
-            item.latitude,
-            item.longitude,
-          ]
-    ));
+        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
 
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `historical_movements_${startDate}_${endDate}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `historical_movements_${selectedDay}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
-  return (
-    <div className="data-intelligence">
-      <Header title="Inteligencia de Datos" />
-      <div className="routine-cards">
-        {searchOptions.map((option, index) => (
-          <div className="routine-card" key={index} onClick={() => handleOptionSelect(option.option)}>
-            <img src={option.image} alt={option.title} className="routine-image" />
-            <div className="routine-content">
-              <h3 className="routine-title">{option.title}</h3>
-              <button className="routine-button">Seleccionar</button>
+    return (
+        <div className="person-search">
+            <Header title="Busqueda Histórica Ubicación Interiores" />
+            <div className="search-container">
+                <div className="device-selection">
+                    <select onChange={(e) => setSelectedDeviceId(e.target.value)}>
+                        <option value="">Seleccionar Dispositivo...</option>
+                        {devices.map(device => (
+                            <option key={device.id} value={device.id}>{device.device_asignado}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="date-time-selection">
+                    <div className="date-time-inputs">
+                        <div className="date-time-input">
+                            <label>Seleccionar Día:</label>
+                            <input
+                                type="date"
+                                value={selectedDay}
+                                onChange={e => setSelectedDay(e.target.value)}
+                            />
+                        </div>
+                        <div className="date-time-input">
+                            <label>Hora Inicio:</label>
+                            <input
+                                type="time"
+                                value={startTime}
+                                onChange={e => setStartTime(e.target.value)}
+                            />
+                        </div>
+                        <div className="date-time-input">
+                            <label>Hora Fin:</label>
+                            <input
+                                type="time"
+                                value={endTime}
+                                onChange={e => setEndTime(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </div>
+                <button onClick={fetchSearchResults}>Buscar</button>
+                <button onClick={downloadCSV}>Descargar Resultados</button>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {selectedOption && (
-        <>
-          <div className="selected-option-message">
-            Ha seleccionado {selectedOption === 'interior' ? 'Búsqueda de Datos de Interiores' : 'Búsqueda de Datos de Exteriores'}
-          </div>
-          <div className="search-parameters">
-            <input
-              type="datetime-local"
-              value={startDate}
-              onChange={e => setStartDate(e.target.value)}
-              placeholder="Fecha y hora de inicio"
-            />
-            <input
-              type="datetime-local"
-              value={endDate}
-              onChange={e => setEndDate(e.target.value)}
-              placeholder="Fecha y hora de fin"
-            />
-            <button onClick={handleSearch} disabled={isSearching}>Buscar</button>
-            <button onClick={downloadCSV} disabled={isSearching || searchResults.length === 0} style={{ backgroundColor: isSearching || searchResults.length === 0 ? '#d3d3d3' : '#28a745' }}>
-              Descargar Resultados
-            </button>
-            {error && <div className="error-message">Error: {error}</div>}
-          </div>
-        </>
-      )}
-
-      {searchResults.length > 0 && (
-        <div className="data-table-container">
-          <h2>Resultados de la Búsqueda</h2>
-          <table className="data-table">
-            <thead>
-              <tr>
-                {selectedOption === 'interior' ? <th>Sector</th> : <th>Fecha y Hora GPS</th>}
-                {selectedOption === 'interior' ? <th>Fecha y Hora de Entrada</th> : null}
-                {selectedOption === 'interior' ? <th>Fecha y Hora de Salida</th> : null}
-                {selectedOption === 'interior' ? <th>Tiempo de Permanencia</th> : <th>Latitud</th>}
-                {selectedOption === 'exterior' ? <th>Longitud</th> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {searchResults.map((result, index) => (
-                <tr key={index}>
-                  {selectedOption === 'interior' ? <td>{result.sector}</td> : <td>{formatDate(result.timestamp)}</td>}
-                  {selectedOption === 'interior' ? <td>{formatDate(result.entrada)}</td> : null}
-                  {selectedOption === 'interior' ? <td>{result.salida ? formatDate(result.salida, 'time') : 'N/A'}</td> : null}
-                  {selectedOption === 'interior' ? <td>{formatDuration(result.tiempoPermanencia)}</td> : <td>{result.latitude}</td>}
-                  {selectedOption === 'exterior' ? <td>{result.longitude}</td> : null}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            <table className="search-results-table">
+                <thead>
+                    <tr>
+                        <th>Personal</th>
+                        <th>Sector</th>
+                        <th>Desde Detección</th>
+                        <th>Permanencia</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {searchResults.map((result, index) => {
+                        const sector = getSector(result.beaconId);
+                        const permanence = calculatePermanence(result.entrada, result.salida);
+                        const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
+                        const semaphoreClass = getSemaphoreClass(permanenceMinutes);
+                        return (
+                            <tr key={index}>
+                                <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
+                                <td className={sector.className}>{sector.text}</td>
+                                <td>{formatDate(result.entrada)}</td>
+                                <td>{permanence}</td>
+                                <td className={semaphoreClass}>
+                                    {semaphoreClass.replace('green', 'On Time').replace('yellow', 'Over Time').replace('red', 'Past Deadline')}
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
         </div>
-      )}
-    </div>
-  );
-};
+    );
+}
 
-export default DataIntelligence;
+export default PersonSearch;

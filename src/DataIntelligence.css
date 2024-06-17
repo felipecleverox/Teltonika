@@ -1,142 +1,182 @@
-.data-intelligence {
-  text-align: center;
+/* PersonSearch.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+:root {
+  --color-verde: #4CAF50;
+  --color-verde-letra: white;
+  --color-amarillo: rgb(218, 218, 45);
+  --color-amarillo-letra: black;
+  --color-rojo: rgb(190, 74, 74);
+  --color-rojo-letra: white;
+  --sector-bodega-bg: #c1ff72; /* Verde pálido */
+  --sector-bodega-text: black;
+  --sector-farmacia-bg: #ea9bdd; /* Violeta pálido */
+  --sector-farmacia-text: black;
+  --sector-entrada-bg: #ffcccb; /* Granate pálido */
+  --sector-entrada-text: black;
+  --sector-pasillo-bg: #cbfffe; /* Granate pálido */
+  --sector-pasillo-text: black;
+  --sector-electro-bg: #f5ffcb; /* Granate pálido */
+  --sector-electro-text: black;
 }
 
-.routine-cards {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
-.routine-card {
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  max-width: 300px;
-  height: 400px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  transition: transform 0.2s;
+.person-search {
+    padding: 20px;
 }
 
-.routine-card:hover {
-  transform: scale(1.05);
+.search-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
-.routine-image {
-  width: 100%;
-  max-width: 150px;
-  height: auto;
-  margin: 20px 0;
+.device-selection,
+.date-selection,
+.time-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
-.routine-content {
-  padding: 15px;
-  text-align: center;
-  flex-grow: 1;
+.time-selection {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 10px;
 }
 
-.routine-title {
-  font-size: 1.2em;
-  margin-bottom: 10px;
+.time-selection label {
+    margin-right: 10px;
 }
 
-.routine-button {
-  width: calc(100% - 30px);
-  padding: 10px;
-  background-color: #6b9fd4;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-bottom: 20px;
+.time-selection input {
+    width: 60px;
+    margin: 0 5px;
+    padding: 10px;
+    font-size: 16px;
 }
 
-.routine-button:hover {
-  background-color: #5a88c6;
+.search-container select,
+.search-container input[type="date"],
+.search-container button {
+    width: 100%;
+    max-width: 300px;
+    margin: 10px 0;
+    padding: 10px;
+    font-size: 16px;
 }
 
-.back-button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+.search-results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
 }
 
-.back-button:hover {
-  background-color: #5a6268;
+.search-results-table th,
+.search-results-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
 }
 
-/* Additional styles from the original DataIntelligence.css */
-.search-parameters {
-  margin-top: 20px;
+.search-results-table th {
+    background-color: #6b9fd4;
+    color: white;
 }
 
-.search-parameters input {
-  margin: 5px;
-  padding: 10px;
-  width: calc(50% - 22px);
+.search-results-table tr:nth-child(even) {
+    background-color: #f2f2f2;
 }
 
-.search-parameters button {
-  margin: 5px;
-  padding: 10px 20px;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+.search-results-table .green {
+    background-color: var(--color-verde);
+    color: var(--color-verde-letra);
 }
 
-.search-parameters button:disabled {
-  background-color: #d3d3d3;
-  cursor: not-allowed;
+.search-results-table .yellow {
+    background-color: var(--color-amarillo);
+    color: var(--color-amarillo-letra);
 }
 
-.selected-option-message {
-  margin-top: 20px;
-  font-size: 1.2em;
-  font-weight: bold;
+.search-results-table .red {
+    background-color: var(--color-rojo);
+    color: var(--color-rojo-letra);
 }
 
-.error-message {
-  color: red;
-  margin-top: 10px;
+.search-results-table .sector-bodega {
+    background-color: var(--sector-bodega-bg);
+    color: var(--sector-bodega-text);
 }
 
-.data-table-container {
-  margin-top: 20px;
+.search-results-table .sector-farmacia {
+    background-color: var(--sector-farmacia-bg);
+    color: var(--sector-farmacia-text);
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
+.search-results-table .sector-entrada {
+    background-color: var(--sector-entrada-bg);
+    color: var(--sector-entrada-text);
 }
 
-.data-table th, .data-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
+.search-results-table .sector-pasillo {
+    background-color: var(--sector-pasillo-bg);
+    color: var(--sector-pasillo-text);
 }
 
-.data-table th {
-  background-color: #f2f2f2;
+.search-results-table .sector-electro {
+    background-color: var(--sector-electro-bg);
+    color: var(--sector-electro-text);
 }
 
-.data-table th {
-  text-align: left;
-  background-color: #4CAF50;
-  color: white;
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+    .search-container {
+        flex-direction: column;
+    }
+    .search-container select,
+    .search-container input,
+    .search-container button {
+        font-size: 14px;
+    }
+    .search-results-table td {
+        font-size: 12px;
+    }
 }
 
-.data-table tr:hover {
-  background-color: #ddd;
+.date-time-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.date-time-inputs {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.date-time-inputs .date-input,
+.date-time-inputs .time-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.date-time-inputs input {
+    margin: 5px;
+    padding: 10px;
+    font-size: 16px;
 }

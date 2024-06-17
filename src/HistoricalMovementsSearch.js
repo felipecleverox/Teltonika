@@ -20,7 +20,7 @@ const HistoricalMovementsSearch = () => {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const result = await axios.get('http://thenext.ddns.net:1337/api/devices');
+        const result = await axios.get('/api/devices');
         console.log('Fetched devices:', result.data);
         setDevices(result.data);
       } catch (error) {

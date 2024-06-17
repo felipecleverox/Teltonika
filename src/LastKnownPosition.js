@@ -36,7 +36,6 @@ function LastKnownPosition({ showHeader = true }) {
     const fetchLastKnownPosition = async () => {
       setError(null); 
       try {
-        console.log('Selected device_id:', selectedDeviceId); // Registro del device_id seleccionado
         const endpoint = 'http://thenext.ddns.net:1337/api/last-known-position';
         const params = { device_id: selectedDeviceId };
         const response = await axios.get(endpoint, { params });
