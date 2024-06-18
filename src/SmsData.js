@@ -58,45 +58,16 @@ const SmsData = () => {
         <h1>SMS Data</h1>
         <table>
           <thead>
-            <tr>
-              <th>ID</th>
-              <th>Device ID</th>
-              <th>Alerta</th> {/* Nueva columna */}
-              <th>Sector</th>
-              <th>Latitud</th>
-              <th>Longitud</th>
-              <th>Timestamp</th>
-              <th>Mapa</th> {/* Columna para el ícono del mapa */}
-            </tr>
+            <tr><th>ID</th><th>Device ID</th><th>Alerta</th><th>Sector</th><th>Latitud</th><th>Longitud</th><th>Timestamp</th><th>Mapa</th></tr>
           </thead>
           <tbody>
             {smsData.map((sms) => (
-              <tr key={sms.id}>
-                <td>{sms.id}</td>
-                <td>{sms.device_id}</td>
-                <td style={getAlertStyle(sms.message)}>{extractAlertMessage(sms.message)}</td> {/* Columna de alerta */}
-                <td>{sms.sector}</td>
-                <td>{sms.latitud}</td>
-                <td>{sms.longitud}</td>
-                <td>{formatTimestamp(sms.timestamp)}</td>
-                <td>
-                  <img
-                    src={pinIcon}
-                    alt="Mapa"
-                    style={{ cursor: 'pointer', width: '14px', height: '24px' }}
-                    onClick={() => handleIconClick(sms.latitud, sms.longitud)}
-                  />
-                </td>
-              </tr>
+              <tr key={sms.id}><td>{sms.id}</td><td>{sms.device_id}</td><td style={getAlertStyle(sms.message)}>{extractAlertMessage(sms.message)}</td><td>{sms.sector}</td><td>{sms.latitud}</td><td>{sms.longitud}</td><td>{formatTimestamp(sms.timestamp)}</td><td><img src={pinIcon} alt="Mapa" style={{ cursor: 'pointer', width: '14px', height: '24px' }} onClick={() => handleIconClick(sms.latitud, sms.longitud)} /></td></tr>
             ))}
           </tbody>
         </table>
         {isModalOpen && selectedPosition && (
-          <MapModal
-            latitud={selectedPosition.latitud}
-            longitud={selectedPosition.longitud}
-            onClose={() => setIsModalOpen(false)}
-          />
+          <MapModal latitud={selectedPosition.latitud} longitud={selectedPosition.longitud} onClose={() => setIsModalOpen(false)} />
         )}
       </div>
     </div>

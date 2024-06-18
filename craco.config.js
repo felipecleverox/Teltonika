@@ -9,23 +9,31 @@ module.exports = {
   webpack: {
     configure: (webpackConfig) => {
       webpackConfig.resolve.fallback = {
-        ...webpackConfig.resolve.fallback,
-        fs: require.resolve('browserify-fs'),
+        fs: false,
         path: require.resolve('path-browserify'),
-        process: require.resolve('process/browser'),
         buffer: require.resolve('buffer/'),
         crypto: require.resolve('crypto-browserify'),
         stream: require.resolve('stream-browserify'),
-        vm: require.resolve('vm-browserify'), // Polyfill para vm
+        util: require.resolve('util/'),
+        assert: require.resolve('assert/'),
+        vm: require.resolve('vm-browserify'),
+        process: require.resolve('process/browser'), // Add the process polyfill
       };
+
+      webpackConfig.plugins.unshift(
+        new webpack.ProvidePlugin({
+          process: 'process/browser', // Provide the polyfill globally
+          Buffer: ['buffer', 'Buffer'],
+        })
+      );
+
+      webpackConfig.resolve.alias = {
+        ...webpackConfig.resolve.alias,
+        'readable-stream': 'readable-stream/readable-browser.js',
+        'stream': 'stream-browserify/index.js', // Explicitly point to browser entry
+      };
+
       return webpackConfig;
     },
-    plugins: [
-      new webpack.ProvidePlugin({
-        process: 'process/browser',
-        Buffer: ['buffer', 'Buffer'],
-      }),
-    ],
   },
 };
-
