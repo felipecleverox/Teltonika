@@ -1,5 +1,7 @@
 // server.js
 
+//test
+
 // Import necessary libraries
 const express = require('express'); // Web framework for Node.js
 const cors = require('cors'); // Middleware to enable Cross-Origin Resource Sharing
