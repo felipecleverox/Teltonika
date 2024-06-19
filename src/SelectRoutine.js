@@ -37,8 +37,14 @@ const SelectRoutine = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      const decodedToken = jwt.decode(token);
-      setUserPermissions(decodedToken.permissions.split(','));
+      try {
+        // Utiliza jwt.verify() para validar y decodificar el token
+        const decodedToken = jwt.verify(token, 'your_jwt_secret'); 
+        setUserPermissions(decodedToken.permissions.split(','));
+      } catch (error) {
+        console.error('Error decoding token:', error);
+        // ... Maneja el error de token inválido
+      }
     }
   }, []);
 

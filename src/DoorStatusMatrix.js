@@ -20,7 +20,7 @@ const DoorStatusMatrix = () => {
     const endDate = dayjs(date).set('hour', 23).set('minute', 0).set('second', 0).format('YYYY-MM-DD HH:mm:ss');
 
     try {
-      const response = await axios.get('http://thenext.ddns.net:3000/api/door-status', {
+      const response = await axios.get('/api/door-status', {
         params: { startDate, endDate }
       });
       const fetchedData = response.data;
