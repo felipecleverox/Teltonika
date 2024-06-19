@@ -1,18 +1,18 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import LastKnownPosition from './LastKnownPosition';
-import MapWithQuadrants from './MapWithQuadrants';
-import PersonSearch from './PersonSearch';
-import LandingPage from './LandingPage';
-import SelectRoutine from './SelectRoutine';
-import HistoricalMovementsSearch from './HistoricalMovementsSearch';
-import DataIntelligence from './DataIntelligence';
-import Header from './Header';
-import Configuration from './Configuration';
-import Presencia from './Presencia';
-import SmsData from './SmsData';
-import DoorStatusMatrix from './DoorStatusMatrix';
-import UserRegistration from './UserRegistration';
+import LastKnownPosition from '../LastKnownPosition';
+import MapWithQuadrants from '../MapWithQuadrants';
+import PersonSearch from '../PersonSearch';
+import LandingPage from '../LandingPage';
+import SelectRoutine from '../SelectRoutine';
+import HistoricalMovementsSearch from '../HistoricalMovementsSearch';
+import DataIntelligence from '../DataIntelligence';
+import Header from '../Header';
+import Configuration from '../Configuration';
+import Presencia from '../Presencia';
+import SmsData from '../SmsData';
+import DoorStatusMatrix from '../DoorStatusMatrix';
+import UserRegistration from '../UserRegistration';
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');

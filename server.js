@@ -1,7 +1,5 @@
 // server.js
 
-//test
-
 // Import necessary libraries
 const express = require('express'); // Web framework for Node.js
 const cors = require('cors'); // Middleware to enable Cross-Origin Resource Sharing
@@ -11,7 +9,6 @@ const bcrypt = require('bcrypt'); // Library to hash passwords
 const crypto = require('crypto'); // Library for cryptographic functions
 const nodemailer = require('nodemailer'); // Library to send emails
 const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
-const bodyParser = require('body-parser'); // Middleware to parse incoming request bodies
 
 // Create an Express application
 const app = express();
@@ -56,7 +53,7 @@ const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Coordinates for San
 
 // Middleware
 const corsOptions = {
-  origin: 'http://thenext.ddns.net:3000',
+  origin: ['http://thenext.ddns.net:3000', 'http://localhost:3000'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
   credentials: true
@@ -64,8 +61,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions)); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
-app.use(bodyParser.urlencoded({ extended: false })); // Parse URL-encoded request bodies
-app.use(bodyParser.json()); // Parse JSON request bodies
+app.use(express.urlencoded({ extended: false })); // Parse URL-encoded request bodies
+
 // Helper function to get sector name based on beacon ID
 const getSector = (beaconId) => {
   switch (beaconId) {
@@ -83,6 +80,7 @@ const getSector = (beaconId) => {
       return 'Unknown'; // Return 'Unknown' if beacon ID does not match any case
   }
 };
+
 // Convert timestamp to local time in Chile
 const convertToLocalTime = (timestamp) => {
   return moment(timestamp * 1000).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss');
@@ -93,8 +91,15 @@ app.post('/gps-data', async (req, res) => {
   const gpsDatas = req.body;
   console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
 
+  // Verifica si gpsDatas es un array
+  if (!Array.isArray(gpsDatas)) {
+    console.error('Received data is not an array:', gpsDatas);
+    return res.status(400).send('Invalid data format');
+  }
+
   try {
     for (const gpsData of gpsDatas) {
+      console.log('Processing GPS Data:', gpsData);
       const beacons = gpsData['ble.beacons'] || [];
       const isSensorData = gpsData.hasOwnProperty('battery.level');
 
@@ -102,7 +107,6 @@ app.post('/gps-data', async (req, res) => {
       let params = [];
 
       if (isSensorData) {
-        // Insertar datos del sensor en la tabla 'gps_data'
         query = `
           INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp, battery_level, battery_voltage, ble_sensor_humidity_1, ble_sensor_humidity_2, ble_sensor_humidity_3, ble_sensor_humidity_4, ble_sensor_low_battery_status_1, ble_sensor_magnet_status_1, ble_sensor_temperature_1, ble_sensor_temperature_2, ble_sensor_temperature_3, ble_sensor_temperature_4, bluetooth_state_enum, gnss_state_enum, gnss_status, gsm_mcc, gsm_mnc, gsm_operator_code, gsm_signal_level, movement_status, position_hdop, position_pdop, position_valid, sleep_mode_enum, custom_param_116)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -153,38 +157,8 @@ app.post('/gps-data', async (req, res) => {
           gpsData['custom.param.116']
         ];
 
-        // Ejecutar la inserción en gps_data
         await pool.query(query, params);
-
-        // Insertar en la nueva tabla 'door_status'
-        if (gpsData['ble.sensor.magnet.status.1'] !== null && gpsData['ble.sensor.temperature.1'] !== null) {
-          const [lastBeaconRecord] = await pool.query(`
-            SELECT ubicacion 
-            FROM beacons 
-            WHERE id LIKE CONCAT('%', 
-                JSON_UNQUOTE(JSON_EXTRACT((SELECT ble_beacons 
-                                           FROM gps_data 
-                                           WHERE id = (SELECT MAX(id) 
-                                                       FROM gps_data 
-                                                       WHERE ble_beacons IS NOT NULL 
-                                                       AND ble_beacons != '[]' 
-                                                       AND device_name = ?)
-                                           ), '$[0].id')), 
-                '%')
-          `, [gpsData['device.name']]);
-
-          const sector = lastBeaconRecord.length > 0 ? lastBeaconRecord[0].ubicacion : 'Desconocido';
-          const magnetStatus = gpsData['ble.sensor.magnet.status.1'];
-          const temperature = gpsData['ble.sensor.temperature.1'];
-          const timestamp = convertToLocalTime(gpsData.timestamp); // Convertir a hora local de Chile
-
-          await pool.query(`
-            INSERT INTO door_status (sector, magnet_status, temperature, timestamp)
-            VALUES (?, ?, ?, ?)
-          `, [sector, magnetStatus, temperature, timestamp]);
-        }
       } else {
-        // Insertar datos de posición en la tabla 'gps_data'
         query = `
           INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_enum, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -659,6 +633,7 @@ app.get('/api/sectores', async (req, res) => {
 
 // Endpoint para obtener la configuración
 app.get('/api/configuracion', async (req, res) => {
+  
   try {
     // Ejecutar una consulta SQL para seleccionar todos los registros de la tabla 'configuracion'
     const [results] = await pool.query('SELECT * FROM configuracion');
