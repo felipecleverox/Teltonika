@@ -935,16 +935,6 @@ app.post('/sms', async (req, res) => {
   }
 });
 
-app.get('/api/sms-data', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM sms_data');
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching SMS data:', error);
-    res.status(500).json({ error: 'Error fetching SMS data' });
-  }
-});
-
 // Endpoint to fetch SMS data
 app.get('/api/sms-data', async (req, res) => {
   try {
