@@ -51,7 +51,7 @@ const pool = mysql.createPool({
 // Define default position coordinates
 const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Coordinates for Santiago, Chile
 
-// Middleware
+// Middleware CORS (debe estar antes de otros middleware o rutas)
 const corsOptions = {
   origin: ['http://thenext.ddns.net:3000', 'http://localhost:3000'],
   methods: ['GET', 'POST'],
@@ -60,9 +60,12 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions)); // Enable CORS for all routes
+
+// Otros middleware (deben estar después del middleware CORS)
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: false })); // Parse URL-encoded request bodies
 
+// Helper function to get sector name based on beacon ID
 // Helper function to get sector name based on beacon ID
 const getSector = (beaconId) => {
   switch (beaconId) {

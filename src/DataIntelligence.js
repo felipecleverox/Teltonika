@@ -34,7 +34,7 @@ function PersonSearch() {
         
         const fetchDevices = async () => {
             try {
-                const response = await axios.get('http://thenext.ddns.net:1337/api/devices');
+                const response = await axios.get('/api/devices');
                 setDevices(response.data);
             } catch (error) {
                 console.error('Error fetching devices:', error);
@@ -48,7 +48,7 @@ function PersonSearch() {
         const endDateTime = `${selectedDay}T${endTime}:00`;
 
         try {
-            const response = await axios.get('http://thenext.ddns.net:1337/api/beacon-entries-exits', {
+            const response = await axios.get('/api/beacon-entries-exits', {
                 params: {
                     startDate: startDateTime,
                     endDate: endDateTime,

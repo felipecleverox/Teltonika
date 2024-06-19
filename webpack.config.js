@@ -54,8 +54,12 @@ module.exports = {
     },
     compress: true,
     port: 3000,
-    allowedHosts: [
-      '.thenext.ddns.net'
-    ]
+    proxy: [
+      {
+        context: ['/api'], 
+        target: process.env.API_URL || 'http://localhost:1337', // URL por defecto: localhost
+        changeOrigin: true, 
+      },
+    ], 
   }
 };
