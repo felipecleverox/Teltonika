@@ -94,15 +94,8 @@ app.post('/gps-data', async (req, res) => {
   const gpsDatas = req.body;
   console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
 
-  // Verifica si gpsDatas es un array
-  if (!Array.isArray(gpsDatas)) {
-    console.error('Received data is not an array:', gpsDatas);
-    return res.status(400).send('Invalid data format');
-  }
-
   try {
     for (const gpsData of gpsDatas) {
-      console.log('Processing GPS Data:', gpsData);
       const beacons = gpsData['ble.beacons'] || [];
       const isSensorData = gpsData.hasOwnProperty('battery.level');
 
@@ -110,6 +103,7 @@ app.post('/gps-data', async (req, res) => {
       let params = [];
 
       if (isSensorData) {
+        // Insertar datos del sensor en la tabla 'gps_data'
         query = `
           INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp, battery_level, battery_voltage, ble_sensor_humidity_1, ble_sensor_humidity_2, ble_sensor_humidity_3, ble_sensor_humidity_4, ble_sensor_low_battery_status_1, ble_sensor_magnet_status_1, ble_sensor_temperature_1, ble_sensor_temperature_2, ble_sensor_temperature_3, ble_sensor_temperature_4, bluetooth_state_enum, gnss_state_enum, gnss_status, gsm_mcc, gsm_mnc, gsm_operator_code, gsm_signal_level, movement_status, position_hdop, position_pdop, position_valid, sleep_mode_enum, custom_param_116)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -160,8 +154,38 @@ app.post('/gps-data', async (req, res) => {
           gpsData['custom.param.116']
         ];
 
+        // Ejecutar la inserción en gps_data
         await pool.query(query, params);
+
+        // Insertar en la nueva tabla 'door_status'
+        if (gpsData['ble.sensor.magnet.status.1'] !== null && gpsData['ble.sensor.temperature.1'] !== null) {
+          const [lastBeaconRecord] = await pool.query(`
+            SELECT ubicacion 
+            FROM beacons 
+            WHERE id LIKE CONCAT('%', 
+                JSON_UNQUOTE(JSON_EXTRACT((SELECT ble_beacons 
+                                           FROM gps_data 
+                                           WHERE id = (SELECT MAX(id) 
+                                                       FROM gps_data 
+                                                       WHERE ble_beacons IS NOT NULL 
+                                                       AND ble_beacons != '[]' 
+                                                       AND device_name = ?)
+                                           ), '$[0].id')), 
+                '%')
+          `, [gpsData['device.name']]);
+
+          const sector = lastBeaconRecord.length > 0 ? lastBeaconRecord[0].ubicacion : 'Desconocido';
+          const magnetStatus = gpsData['ble.sensor.magnet.status.1'];
+          const temperature = gpsData['ble.sensor.temperature.1'];
+          const timestamp = convertToLocalTime(gpsData.timestamp); // Convertir a hora local de Chile
+
+          await pool.query(`
+            INSERT INTO door_status (sector, magnet_status, temperature, timestamp)
+            VALUES (?, ?, ?, ?)
+          `, [sector, magnetStatus, temperature, timestamp]);
+        }
       } else {
+        // Insertar datos de posición en la tabla 'gps_data'
         query = `
           INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_enum, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
