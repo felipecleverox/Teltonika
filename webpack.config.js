@@ -54,10 +54,12 @@ module.exports = {
     },
     compress: true,
     port: 3000,
+    host: '0.0.0.0', // Permite conexiones desde cualquier host
+    allowedHosts: ['localhost', 'thenext.ddns.net'], // Permite estos hosts
     proxy: [
       {
-        context: ['/api'], 
-        target: process.env.API_URL || 'http://localhost:1337', // URL por defecto: localhost
+        context: ['/api'],
+        target: process.env.API_URL || 'http://localhost:1337',
         changeOrigin: true, 
       },
     ], 

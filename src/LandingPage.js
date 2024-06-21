@@ -1,7 +1,3 @@
-// LandingPage.js
-
-// LandingPage.js
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
@@ -11,6 +7,9 @@ import rightImage from './assets/images/tns_logo_blanco.png';
 
 const LandingPage = () => {
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -20,6 +19,28 @@ const LandingPage = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Login failed');
+            }
+
+            const data = await response.json();
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('permissions', data.permissions);
+            navigate('/select-routine');
+        } catch (error) {
+            setError('Invalid username or password');
+        }
+    };
+
     return (
         <div className="landing-page">
             <div className="image-container">
@@ -28,7 +49,24 @@ const LandingPage = () => {
             </div>
             <div className="form-container">
                 <h2>Welcome</h2>
-                <button onClick={() => navigate('/select-routine')}>Go to Select Routine</button>
+                <form onSubmit={handleLogin}>
+                    <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Username"
+                        required
+                    />
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Password"
+                        required
+                    />
+                    <button type="submit">Login</button>
+                </form>
+                {error && <p className="error">{error}</p>}
             </div>
             <div className="footer-images">
                 <img src={rightImage} alt="Right Image" className="right-image" />
