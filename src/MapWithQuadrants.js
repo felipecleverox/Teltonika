@@ -4,7 +4,7 @@ import './MapWithQuadrants.css';
 import planoBase from './assets/images/plano_super.jpg';
 import personal3Icon from './assets/images/Personal 3.png';
 import Header from './Header';
-import LoadingIcon from './LoadingIcon'; // Asegúrate de crear este componente para el ícono de carga
+import LoadingIcon from './LoadingIcon';
 
 const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
   const [activeBeacons, setActiveBeacons] = useState([]);
@@ -14,7 +14,7 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
   const [sectors, setSectors] = useState([]);
   const [noData, setNoData] = useState(false);
   const [devices, setDevices] = useState([]);
-  const [loading, setLoading] = useState(true); // Estado para manejar la carga
+  const [loading, setLoading] = useState(true);
 
   const fetchDataForDevice = useCallback(async (deviceId) => {
     try {
@@ -50,6 +50,7 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
   }, []);
 
   const fetchActiveBeacons = useCallback(async () => {
+    setLoading(true); // Start loading state when fetching data
     try {
       const response = await axios.get('/api/active-beacons');
       const activeBeaconIds = response.data.activeBeaconIds || [];
@@ -68,7 +69,7 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
       console.error('Failed to fetch active beacons:', error);
       setNoData(true);
     } finally {
-      setLoading(false); // Finaliza la carga
+      setLoading(false); // End loading state
     }
   }, [fetchOldestBeaconDetections]);
 
@@ -77,31 +78,24 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
       try {
         const response = await axios.get('/api/retrive_MapWithQuadrants_information');
         const { sectors, configuration, thresholds, devices } = response.data;
-    
         setSectors(sectors);
         setConfig(configuration);
         if (Object.keys(thresholds).length > 0) {
           setUmbrales(thresholds);
         }
         setDevices(devices);
-    
-        await fetchActiveBeacons();
-    
         if (selectedDeviceAsignado) {
           handleDeviceSearch(selectedDeviceAsignado);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
-        setLoading(false); // Finaliza la carga
+        setLoading(false);
       }
     };
 
     fetchData();
-    const intervalId = setInterval(fetchActiveBeacons, 20000);
-
-    return () => clearInterval(intervalId);
-  }, [fetchActiveBeacons, selectedDeviceAsignado, handleDeviceSearch]);
+  }, [selectedDeviceAsignado, handleDeviceSearch]);
 
   const getSector = useCallback((beaconId) => {
     const sector = sectors.find(sector => sector.id === beaconId);
@@ -119,21 +113,20 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
     return positions[beaconId] || {};
   }, []);
 
-  const calculatePermanence = useCallback((timestamp) => {
+  const calculatePermanence = (timestamp) => {
     const now = new Date();
     const start = new Date(timestamp);
     const duration = now - start;
     const hours = Math.floor(duration / (1000 * 60 * 60));
     const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
     return `${hours}h ${minutes}m`;
-  }, []);
+  };
 
-  const getSemaphoreClass = useCallback((beacon_id, timestamp) => {
+  const getSemaphoreClass = (beacon_id, timestamp) => {
     const now = new Date();
     const start = new Date(timestamp);
-    const duration = (now - start) / (1000 * 60); // Duración en minutos
+    const duration = (now - start) / (1000 * 60); // Duration in minutes
     const thresholdData = umbrales.find(threshold => threshold.beacon_id === beacon_id);
-  
     if (thresholdData) {
       const { umbral_verde, umbral_amarillo } = thresholdData;
       if (duration <= umbral_verde) {
@@ -145,9 +138,9 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
       }
     }
     return '';
-  }, [umbrales]);
+  };
 
-  const getSemaphoreText = useCallback((semaphoreClass) => {
+  const getSemaphoreText = (semaphoreClass) => {
     const texts = {
       green: 'On Time',
       yellow: 'Over Time',
@@ -155,9 +148,9 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
       '': 'N/A'
     };
     return texts[semaphoreClass];
-  }, []);
+  };
 
-  const renderBeaconRow = useCallback((beaconId) => {
+  const renderBeaconRow = (beaconId) => {
     const semaphoreClass = beaconLogs[beaconId] ? getSemaphoreClass(beaconId, beaconLogs[beaconId].timestamp) : '';
     const semaphoreText = getSemaphoreText(semaphoreClass);
     return (
@@ -166,18 +159,16 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
         <td>{getSector(beaconId)}</td>
         <td>{beaconLogs[beaconId] ? new Date(beaconLogs[beaconId].timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
         <td>{beaconLogs[beaconId] ? calculatePermanence(beaconLogs[beaconId].timestamp) : 'N/A'}</td>
-        <td>
-          <span className={`semaphore ${semaphoreClass}`}>{semaphoreText}</span>
-        </td>
+        <td><span className={`semaphore ${semaphoreClass}`}>{semaphoreText}</span></td>
       </tr>
     );
-  }, [beaconLogs, getSector, getSemaphoreClass, getSemaphoreText, calculatePermanence]);
+  };
 
   return (
     <div className="map-with-quadrants">
       <Header title="Ubicaciones Interior Tiempo Real" />
       {loading ? (
-        <LoadingIcon /> // Mostramos el ícono de carga mientras se cargan los datos
+        <LoadingIcon />
       ) : (
         noData ? (
           <p className="no-data-message">Sin datos para ese Dispositivo</p>
@@ -197,6 +188,7 @@ const MapWithQuadrants = ({ selectedDeviceAsignado }) => {
                 {activeBeacons.map(renderBeaconRow)}
               </tbody>
             </table>
+            <button onClick={fetchActiveBeacons}>Actualizar Datos</button> {/* Update Button */}
             <div className="plano-container" style={{ position: 'relative', width: '100%', height: 'auto' }}>
               <img src={planoBase} alt="Plano de la Oficina" className="plano-oficina" />
               {activeBeacons.map(beaconId => (

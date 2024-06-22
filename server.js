@@ -748,14 +748,17 @@ app.get('/api/retrive_MapWithQuadrants_information', async (req, res) => {
     // Obtener dispositivos
     const [devices] = await pool.query('SELECT * FROM devices');
 
+    // Obtener personal
+    const [personal] = await pool.query('SELECT * FROM personal');
+
     // Construir el objeto de respuesta consolidada
     const combinedData = {
       sectors,
       configuration,
       thresholds,
       devices,
+      personal,  // Añadir los datos de personal aquí
     };
-
 
     // Enviar la respuesta consolidada como JSON
     res.json(combinedData);
@@ -764,6 +767,7 @@ app.get('/api/retrive_MapWithQuadrants_information', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 
 // Endpoint para obtener los umbrales
@@ -1081,11 +1085,6 @@ async function getUbicacionFromIdent(ident, timestamp) {
     connection.release();
   }
 }
-// Example endpoint to demonstrate CORS configuration
-app.get('/api/example', (req, res) => {
-  res.json({ message: 'CORS is configured correctly' });
-});
-
 // Start the server
 server.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
