@@ -769,7 +769,6 @@ app.get('/api/retrive_MapWithQuadrants_information', async (req, res) => {
 });
 
 
-
 // Endpoint para obtener los umbrales
 app.get('/api/umbrales', async (req, res) => {
   try {

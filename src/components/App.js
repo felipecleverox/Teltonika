@@ -1,3 +1,4 @@
+// App.js
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import LastKnownPosition from '../LastKnownPosition';
@@ -13,6 +14,7 @@ import Presencia from '../Presencia';
 import SmsData from '../SmsData';
 import DoorStatusMatrix from '../DoorStatusMatrix';
 import UserRegistration from '../UserRegistration';
+import UbicacionTiempoRealInteriores from '../UbicacionTiempoRealInteriores'; // Import the new component
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -35,6 +37,7 @@ function App() {
         <Route path="/presencia" element={<PrivateRoute><Presencia /></PrivateRoute>} />
         <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
         <Route path="/register-user" element={<PrivateRoute><UserRegistration /></PrivateRoute>} />
+        <Route path="/ubicacion-tiempo-real-interiores" element={<PrivateRoute><UbicacionTiempoRealInteriores /></PrivateRoute>} /> {/* Add this line */}
       </Routes>
     </Router>
   );

@@ -1,0 +1,33 @@
+/* UbicacionTiempoRealInteriores.css */
+.ubicacion-tiempo-real-interiores {
+    text-align: center;
+  }
+  
+  .personnel-table {
+    width: 90%;
+    margin: 20px auto;
+    border-collapse: collapse;
+  }
+  
+  .personnel-table th,
+  .personnel-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .personnel-table th {
+    background-color: #6b9fd4;
+    color: white;
+  }
+  
+  .personnel-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  
+  .personal-image {
+    width: 15px;
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 50%;
+  }
+  
