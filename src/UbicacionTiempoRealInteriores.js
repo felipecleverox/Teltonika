@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import moment from 'moment-timezone';
 import Header from './Header';
 import './UbicacionTiempoRealInteriores.css';
 
@@ -16,7 +17,6 @@ const imageMap = {
   'Personal 3.png': personal3Image,
   'default.png': defaultImage,
 };
-
 
 // Función auxiliar para obtener el nombre del sector basado en el ID del beacon
 const getSectorName = (beaconId) => {
@@ -37,155 +37,148 @@ const getSectorName = (beaconId) => {
 };
 
 const UbicacionTiempoRealInteriores = () => {
-    const [personnel, setPersonnel] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [beaconLogs, setBeaconLogs] = useState({});
-  
-    const fetchPersonnel = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get('/api/retrive_MapWithQuadrants_information');
-        const personnelData = response.data.personal;
-  
-        // Fetch the most recent GPS data for each device
-        const fetchSectorData = async (device) => {
-          try {
-            const gpsResponse = await axios.get('/api/get-latest-gps-data', { params: { device_name: device.id_dispositivo_asignado } });
-            if (gpsResponse.data.data.length > 0) {
-              const latestData = gpsResponse.data.data[0];
-              const beacons = JSON.parse(latestData.ble_beacons || '[]');
-              const latestTimestamp = latestData.timestamp * 1000;
-              const currentDay = new Date().setHours(0, 0, 0, 0);
-              const dataDay = new Date(latestTimestamp).setHours(0, 0, 0, 0);
-  
-              if (beacons.length > 0) {
-                const sector = getSectorName(beacons[0].id);
-                return {
-                  ...device,
-                  sector,
-                  latestBeaconId: beacons[0].id,
-                  latestTimestamp,
-                  isCurrentDay: currentDay === dataDay,
-                };
-              }
+  const [personnel, setPersonnel] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPersonnel = async () => {
+    console.log('Iniciando fetchPersonnel');
+    setLoading(true);
+    try {
+      const response = await axios.get('/api/retrive_MapWithQuadrants_information');
+      console.log('Datos de personal recibidos:', response.data.personal);
+      const personnelData = response.data.personal;
+
+      // Fetch the most recent GPS data for each device
+      const fetchSectorData = async (device) => {
+        console.log(`Buscando datos para el dispositivo: ${device.id_dispositivo_asignado}`);
+        try {
+          const startOfDay = moment().startOf('day').unix();
+          const endOfDay = moment().endOf('day').unix();
+          
+          const gpsResponse = await axios.get('/api/get-latest-gps-data', { 
+            params: { 
+              device_name: device.id_dispositivo_asignado,
+              startTime: startOfDay,
+              endTime: endOfDay
+            } 
+          });
+          
+          console.log(`Respuesta GPS para ${device.id_dispositivo_asignado}:`, gpsResponse.data);
+
+          if (gpsResponse.data.data.length > 0) {
+            const latestData = gpsResponse.data.data[0];
+            console.log(`Datos más recientes para ${device.id_dispositivo_asignado}:`, latestData);
+            const beacons = JSON.parse(latestData.ble_beacons || '[]');
+            const latestTimestamp = latestData.timestamp * 1000; // Convertir a milisegundos
+            
+            if (beacons.length > 0) {
+              const sector = getSectorName(beacons[0].id);
+              return {
+                ...device,
+                sector,
+                latestBeaconId: beacons[0].id,
+                latestTimestamp,
+                isCurrentDay: true, // Si tenemos datos, es del día actual
+              };
             }
-            return {
-              ...device,
-              sector: 'Sin datos para este día',
-              latestBeaconId: null,
-              latestTimestamp: null,
-              isCurrentDay: false,
-            };
-          } catch (error) {
-            console.error('Error fetching GPS data:', error);
-            return { ...device, sector: 'Error', latestBeaconId: null, latestTimestamp: null, isCurrentDay: false };
           }
-        };
-  
-        // Wait for all sector data to be fetched
-        const updatedPersonnel = await Promise.all(personnelData.map(fetchSectorData));
-  
-        setPersonnel(updatedPersonnel);
-      } catch (error) {
-        console.error('Error fetching personnel data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    const fetchOldestBeaconDetections = useCallback(async (activeBeaconId) => {
-      try {
-        const response = await axios.get('/api/oldest-active-beacon-detections', { params: { activeBeaconId } });
-        return { [activeBeaconId]: response.data[activeBeaconId] };
-      } catch (error) {
-        console.error('Failed to fetch oldest beacon detections:', error);
-        return { [activeBeaconId]: null };
-      }
-    }, []);
-  
-    const fetchActiveBeacons = useCallback(async () => {
-      try {
-        const response = await axios.get('/api/active-beacons');
-        const activeBeaconIds = response.data.activeBeaconIds || [];
-        if (activeBeaconIds.length > 0) {
-          const beaconLogsData = await Promise.all(activeBeaconIds.map(fetchOldestBeaconDetections));
-          setBeaconLogs(beaconLogsData.reduce((acc, data, idx) => {
-            acc[activeBeaconIds[idx]] = data[activeBeaconIds[idx]];
-            return acc;
-          }, {}));
+          console.log(`No se encontraron datos para ${device.id_dispositivo_asignado} en el día actual`);
+          return {
+            ...device,
+            sector: 'Sin datos para este día',
+            latestBeaconId: null,
+            latestTimestamp: null,
+            isCurrentDay: false,
+          };
+        } catch (error) {
+          console.error(`Error al obtener datos para ${device.id_dispositivo_asignado}:`, error);
+          return { ...device, sector: 'Error', latestBeaconId: null, latestTimestamp: null, isCurrentDay: false };
         }
-      } catch (error) {
-        console.error('Failed to fetch active beacons:', error);
-      }
-    }, [fetchOldestBeaconDetections]);
-  
-    useEffect(() => {
-      fetchPersonnel();
-      fetchActiveBeacons();
-    }, [fetchActiveBeacons]);
-  
-    const getFormattedTimestamp = (timestamp) => {
-      if (!timestamp) return 'N/A';
-      const date = new Date(timestamp);
-      return date.toLocaleString([], { hour: '2-digit', minute: '2-digit' });
-    };
-  
-    const getDeviceTimestamp = (deviceName) => {
-      const device = personnel.find(person => person.id_dispositivo_asignado === deviceName);
-      const latestBeaconId = device?.latestBeaconId;
-      if (device?.isCurrentDay) {
-        if (latestBeaconId && beaconLogs[latestBeaconId]) {
-          return getFormattedTimestamp(beaconLogs[latestBeaconId].timestamp);
-        }
-        return 'N/A';
-      }
-      return 'Sin datos para este día';
-    };
-  
-    return (
-      <div className="ubicacion-tiempo-real-interiores">
-        <Header title="Ubicación en Tiempo Real Interiores" />
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <>
-            <table className="personnel-table">
-              <thead>
-                <tr>
-                  <th>Personal</th>
-                  <th>Dispositivo Asignado</th>
-                  <th>Nombre Personal</th>
-                  <th>Sector</th>
-                  <th>Desde Detección</th>
-                  <th>Permanencia</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {personnel.map(person => (
-                  <tr key={person.id_personal}>
-                    <td>
-                      <img 
-                        src={imageMap[person.imagen_asignado] || imageMap['default.png']} 
-                        alt={person.Nombre_Personal} 
-                        className="personal-image" 
-                      />
-                    </td>
-                    <td>{person.device_asignado_personal}</td>
-                    <td>{person.Nombre_Personal}</td>
-                    <td>{person.sector}</td>
-                    <td>{getDeviceTimestamp(person.id_dispositivo_asignado)}</td>
-                    <td>Pending</td>
-                    <td>Pending</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <button onClick={fetchPersonnel} className="refresh-button">Refresh</button>
-          </>
-        )}
-      </div>
-    );
+      };
+
+      // Wait for all sector data to be fetched
+      const updatedPersonnel = await Promise.all(personnelData.map(fetchSectorData));
+      console.log('Personal actualizado:', updatedPersonnel);
+
+      setPersonnel(updatedPersonnel);
+    } catch (error) {
+      console.error('Error al obtener datos de personal:', error);
+    } finally {
+      setLoading(false);
+    }
   };
-  
-  export default UbicacionTiempoRealInteriores;
+
+  useEffect(() => {
+    console.log('Iniciando fetchPersonnel');
+    fetchPersonnel();
+  }, []);
+
+  useEffect(() => {
+    console.log('Estado final de personnel:', personnel);
+  }, [personnel]);
+
+  const getDeviceTimestamp = (deviceName) => {
+    console.log(`Obteniendo timestamp para dispositivo: ${deviceName}`);
+    const device = personnel.find(person => person.id_dispositivo_asignado === deviceName);
+    console.log(`Datos del dispositivo:`, device);
+
+    if (device?.isCurrentDay) {
+      if (device.latestTimestamp) {
+        const formattedTime = moment(device.latestTimestamp).format('HH:mm');
+        console.log(`Timestamp formateado: ${formattedTime}`);
+        return formattedTime;
+      }
+      console.log('latestTimestamp no disponible');
+      return 'N/A';
+    }
+    console.log('No es el día actual');
+    return 'Sin datos para este día';
+  };
+
+  return (
+    <div className="ubicacion-tiempo-real-interiores">
+      <Header title="Ubicación en Tiempo Real Interiores" />
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <>
+          <table className="personnel-table">
+            <thead>
+              <tr>
+                <th>Personal</th>
+                <th>Dispositivo Asignado</th>
+                <th>Nombre Personal</th>
+                <th>Sector</th>
+                <th>Desde Detección</th>
+                <th>Permanencia</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {personnel.map(person => (
+                <tr key={person.id_personal}>
+                  <td>
+                    <img 
+                      src={imageMap[person.imagen_asignado] || imageMap['default.png']} 
+                      alt={person.Nombre_Personal} 
+                      className="personal-image" 
+                    />
+                  </td>
+                  <td>{person.device_asignado_personal}</td>
+                  <td>{person.Nombre_Personal}</td>
+                  <td>{person.sector}</td>
+                  <td>{getDeviceTimestamp(person.id_dispositivo_asignado)}</td>
+                  <td>Pending</td>
+                  <td>Pending</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button onClick={fetchPersonnel} className="refresh-button">Refresh</button>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default UbicacionTiempoRealInteriores;

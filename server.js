@@ -224,18 +224,22 @@ app.post('/gps-data', async (req, res) => {
 });
 // Endpoint para obtener los datos más recientes de GPS para un dispositivo específico
 app.get('/api/get-latest-gps-data', async (req, res) => {
-  const { device_name } = req.query;
+  const { device_name, startTime, endTime } = req.query;
+  
+  console.log(`Buscando datos para ${device_name} entre ${startTime} y ${endTime}`);
   
   try {
     const query = `
       SELECT latitude, longitude, timestamp, ble_beacons
       FROM gps_data
-      WHERE device_name = ?
+      WHERE device_name = ? AND timestamp BETWEEN ? AND ?
       ORDER BY timestamp DESC
       LIMIT 1
     `;
-    const [results] = await pool.query(query, [device_name]);
-
+    const [results] = await pool.query(query, [device_name, startTime, endTime]);
+    
+    console.log(`Resultados para ${device_name}:`, results);
+    
     res.json({ data: results });
   } catch (error) {
     console.error('Error fetching latest GPS data:', error);
