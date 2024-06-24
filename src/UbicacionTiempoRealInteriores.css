@@ -26,8 +26,22 @@
   }
   
   .personal-image {
-    width: 15px;
+    width: 20px;
     height: auto; /* Maintain aspect ratio */
     border-radius: 50%;
+  }
+  
+  .refresh-button {
+    margin: 20px;
+    padding: 10px 20px;
+    background-color: #6b9fd4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .refresh-button:hover {
+    background-color: #558bbd;
   }
   

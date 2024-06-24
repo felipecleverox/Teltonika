@@ -222,6 +222,26 @@ app.post('/gps-data', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+// Endpoint para obtener los datos más recientes de GPS para un dispositivo específico
+app.get('/api/get-latest-gps-data', async (req, res) => {
+  const { device_name } = req.query;
+  
+  try {
+    const query = `
+      SELECT latitude, longitude, timestamp, ble_beacons
+      FROM gps_data
+      WHERE device_name = ?
+      ORDER BY timestamp DESC
+      LIMIT 1
+    `;
+    const [results] = await pool.query(query, [device_name]);
+
+    res.json({ data: results });
+  } catch (error) {
+    console.error('Error fetching latest GPS data:', error);
+    res.status(500).send('Server Error');
+  }
+});
 
 // Definir el endpoint para obtener el estado de las puertas
 app.get('/api/door-status', async (req, res) => {
