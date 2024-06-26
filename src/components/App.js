@@ -27,7 +27,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/select-routine" element={<PrivateRoute><SelectRoutine /></PrivateRoute>} />
-        <Route path="/last-known-position" element={<PrivateRoute><LastKnownPosition /></PrivateRoute>} />
+        <Route path="/ubicacion-tiempo-real-interiores" element={<PrivateRoute><UbicacionTiempoRealInteriores /></PrivateRoute>} />
         <Route path="/ubicaciones-interior" element={<PrivateRoute><MapWithQuadrants /></PrivateRoute>} />
         <Route path="/busqueda-entradas-persona" element={<PrivateRoute><PersonSearch /></PrivateRoute>} />
         <Route path="/consulta-historica-movimientos" element={<PrivateRoute><HistoricalMovementsSearch /></PrivateRoute>} />
@@ -37,7 +37,7 @@ function App() {
         <Route path="/presencia" element={<PrivateRoute><Presencia /></PrivateRoute>} />
         <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
         <Route path="/register-user" element={<PrivateRoute><UserRegistration /></PrivateRoute>} />
-        <Route path="/ubicacion-tiempo-real-interiores" element={<PrivateRoute><UbicacionTiempoRealInteriores /></PrivateRoute>} /> {/* Add this line */}
+
       </Routes>
     </Router>
   );

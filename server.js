@@ -58,7 +58,11 @@ const corsOptions = {
   allowedHeaders: ['Content-Type'],
   credentials: true
 };
-
+// Agregar esta función de ayuda al principio del archivo
+function getCurrentDateStart() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 1000;
+}
 app.use(cors(corsOptions)); // Enable CORS for all routes
 
 // Otros middleware (deben estar después del middleware CORS)
@@ -88,10 +92,11 @@ const getSector = (beaconId) => {
 const convertToLocalTime = (timestamp) => {
   return moment(timestamp * 1000).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss');
 };
+//const moment = require('moment-timezone');
 
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
-  const gpsDatas = req.body;
+  const gpsDatas = Array.isArray(req.body) ? req.body : [req.body];
   console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
 
   try {
@@ -230,7 +235,7 @@ app.get('/api/get-latest-gps-data', async (req, res) => {
   
   try {
     const query = `
-      SELECT latitude, longitude, timestamp, ble_beacons
+      SELECT latitude, longitude, timestamp, ble_beacons, event_enum
       FROM gps_data
       WHERE device_name = ? AND timestamp BETWEEN ? AND ?
       ORDER BY timestamp DESC
@@ -246,7 +251,104 @@ app.get('/api/get-latest-gps-data', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+app.get('/api/latest-sectors', async (req, res) => {
+  try {
+    const [devices] = await pool.query('SELECT id, device_asignado FROM devices');
+    const latestSectors = [];
+    const now = moment().tz('America/Santiago');
+    const startOfDay = now.clone().startOf('day').unix();
 
+    console.log(`Tiempo actual: ${now.format('YYYY-MM-DD HH:mm:ss')}`);
+    console.log(`Inicio del día: ${moment.unix(startOfDay).format('YYYY-MM-DD HH:mm:ss')}`);
+
+    for (const device of devices) {
+      console.log(`\nProcesando dispositivo: ${device.id}`);
+      
+      let tableName;
+      switch (device.id) {
+        case '353201350896384':
+          tableName = 'magic_box_tmt_210_data_353201350896384';
+          break;
+        case '352592573522828':
+          tableName = 'gh_5200_data_352592573522828';
+          break;
+        case '352592576164230':
+          tableName = 'fmb204_data_352592576164230';
+          break;
+        default:
+          console.log(`No se encontró una tabla para el dispositivo ${device.id}`);
+          continue;
+      }
+
+      const query = `
+        SELECT beacon_id, timestamp
+        FROM ${tableName}
+        WHERE timestamp >= ? AND beacon_id IS NOT NULL
+        ORDER BY timestamp DESC
+      `;
+      
+      try {
+        const [results] = await pool.query(query, [startOfDay]);
+        console.log(`Resultados obtenidos: ${results.length}`);
+
+        if (results.length > 0) {
+          let latestBeaconId = results[0].beacon_id;
+          let latestTimestamp = results[0].timestamp;
+          let oldestTimestamp = results[0].timestamp;
+
+          for (let i = 1; i < results.length; i++) {
+            if (results[i].beacon_id !== latestBeaconId) {
+              oldestTimestamp = results[i-1].timestamp;
+              break;
+            }
+            oldestTimestamp = results[i].timestamp;
+          }
+
+          const [sector] = await pool.query('SELECT nombre FROM sectores WHERE id = ?', [latestBeaconId]);
+          const timeDiff = now.unix() - oldestTimestamp;
+          const hours = Math.floor(timeDiff / 3600);
+          const minutes = Math.floor((timeDiff % 3600) / 60);
+
+          console.log(`Beacon más reciente: ${latestBeaconId}`);
+          console.log(`Timestamp más reciente: ${moment.unix(latestTimestamp).format('YYYY-MM-DD HH:mm:ss')}`);
+          console.log(`Timestamp más antiguo del mismo beacon: ${moment.unix(oldestTimestamp).format('YYYY-MM-DD HH:mm:ss')}`);
+          console.log(`Tiempo transcurrido: ${hours} horas y ${minutes} minutos`);
+
+          latestSectors.push({
+            device_id: device.id,
+            sector: sector.length > 0 ? sector[0].nombre : 'Desconocido',
+            timestamp: moment.unix(oldestTimestamp).format('YYYY-MM-DD HH:mm:ss'),
+            timeSinceDetection: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+          });
+        } else {
+          console.log(`No se encontraron datos para el dispositivo ${device.id} en el día actual`);
+          latestSectors.push({
+            device_id: device.id,
+            sector: 'Sin datos para este día',
+            timestamp: null,
+            timeSinceDetection: '-'
+          });
+        }
+      } catch (innerError) {
+        console.error(`Error fetching data for device ${device.id}:`, innerError);
+        latestSectors.push({
+          device_id: device.id,
+          sector: 'Error al obtener datos',
+          timestamp: null,
+          timeSinceDetection: '-'
+        });
+      }
+    }
+
+    console.log('\nDatos finales a enviar:');
+    console.log(JSON.stringify(latestSectors, null, 2));
+
+    res.json(latestSectors);
+  } catch (error) {
+    console.error('Error fetching latest sectors:', error);
+    res.status(500).send('Server Error');
+  }
+});
 // Definir el endpoint para obtener el estado de las puertas
 app.get('/api/door-status', async (req, res) => {
   const { startDate, endDate } = req.query;

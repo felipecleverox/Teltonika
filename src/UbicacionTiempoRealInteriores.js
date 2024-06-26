@@ -1,182 +1,112 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import moment from 'moment-timezone';
-import Header from './Header';
+import moment from 'moment';
 import './UbicacionTiempoRealInteriores.css';
+import Header from './Header';
 
-// Import images statically
-import personal1Image from './assets/images/Personal 1.png';
-import personal2Image from './assets/images/Personal 2.png';
-import personal3Image from './assets/images/Personal 3.png';
-import defaultImage from './assets/images/default.png';
-
-// Create a mapping of image filenames to imports
-const imageMap = {
-  'Personal 1.png': personal1Image,
-  'Personal 2.png': personal2Image,
-  'Personal 3.png': personal3Image,
-  'default.png': defaultImage,
-};
-
-// Función auxiliar para obtener el nombre del sector basado en el ID del beacon
-const getSectorName = (beaconId) => {
-  switch (beaconId) {
-    case '0C403019-61C7-55AA-B7EA-DAC30C720055':
-      return 'E/S Bodega';
-    case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
-      return 'Farmacia';
-    case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
-      return 'Entrada';
-    case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
-      return 'Pasillo Central';
-    case 'F7826DA6-BC5B-71E0-893E-54654370696F':
-      return 'Electro';
-    default:
-      return 'Desconocido';
-  }
-};
+// Importa las imágenes
+import personal1Icon from './assets/images/Personal 1.png';
+import personal2Icon from './assets/images/Personal 2.png';
+import personal3Icon from './assets/images/Personal 3.png';
 
 const UbicacionTiempoRealInteriores = () => {
-  const [personnel, setPersonnel] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [personal, setPersonal] = useState([]);
+  const [sectors, setSectors] = useState([]);
+  const [devices, setDevices] = useState([]);
+  const [latestSectors, setLatestSectors] = useState({});
+  const [currentTime, setCurrentTime] = useState(moment());
 
-  const fetchPersonnel = async () => {
-    console.log('Iniciando fetchPersonnel');
-    setLoading(true);
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
     try {
-      const response = await axios.get('/api/retrive_MapWithQuadrants_information');
-      console.log('Datos de personal recibidos:', response.data.personal);
-      const personnelData = response.data.personal;
-
-      // Fetch the most recent GPS data for each device
-      const fetchSectorData = async (device) => {
-        console.log(`Buscando datos para el dispositivo: ${device.id_dispositivo_asignado}`);
-        try {
-          const startOfDay = moment().startOf('day').unix();
-          const endOfDay = moment().endOf('day').unix();
-          
-          const gpsResponse = await axios.get('/api/get-latest-gps-data', { 
-            params: { 
-              device_name: device.id_dispositivo_asignado,
-              startTime: startOfDay,
-              endTime: endOfDay
-            } 
-          });
-          
-          console.log(`Respuesta GPS para ${device.id_dispositivo_asignado}:`, gpsResponse.data);
-
-          if (gpsResponse.data.data.length > 0) {
-            const latestData = gpsResponse.data.data[0];
-            console.log(`Datos más recientes para ${device.id_dispositivo_asignado}:`, latestData);
-            const beacons = JSON.parse(latestData.ble_beacons || '[]');
-            const latestTimestamp = latestData.timestamp * 1000; // Convertir a milisegundos
-            
-            if (beacons.length > 0) {
-              const sector = getSectorName(beacons[0].id);
-              return {
-                ...device,
-                sector,
-                latestBeaconId: beacons[0].id,
-                latestTimestamp,
-                isCurrentDay: true, // Si tenemos datos, es del día actual
-              };
-            }
-          }
-          console.log(`No se encontraron datos para ${device.id_dispositivo_asignado} en el día actual`);
-          return {
-            ...device,
-            sector: 'Sin datos para este día',
-            latestBeaconId: null,
-            latestTimestamp: null,
-            isCurrentDay: false,
-          };
-        } catch (error) {
-          console.error(`Error al obtener datos para ${device.id_dispositivo_asignado}:`, error);
-          return { ...device, sector: 'Error', latestBeaconId: null, latestTimestamp: null, isCurrentDay: false };
-        }
-      };
-
-      // Wait for all sector data to be fetched
-      const updatedPersonnel = await Promise.all(personnelData.map(fetchSectorData));
-      console.log('Personal actualizado:', updatedPersonnel);
-
-      setPersonnel(updatedPersonnel);
+      const [mapInfo, sectorInfo] = await Promise.all([
+        axios.get('/api/retrive_MapWithQuadrants_information'),
+        axios.get('/api/latest-sectors')
+      ]);
+      
+      setPersonal(mapInfo.data.personal);
+      setSectors(mapInfo.data.sectors);
+      setDevices(mapInfo.data.devices);
+      
+      const sectorMap = sectorInfo.data.reduce((acc, item) => {
+        acc[item.device_id] = item;
+        return acc;
+      }, {});
+      setLatestSectors(sectorMap);
+      setCurrentTime(moment());
     } catch (error) {
-      console.error('Error al obtener datos de personal:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching data:', error);
     }
   };
 
-  useEffect(() => {
-    console.log('Iniciando fetchPersonnel');
-    fetchPersonnel();
-  }, []);
+  const handleRefresh = () => {
+    fetchData();
+  };
 
-  useEffect(() => {
-    console.log('Estado final de personnel:', personnel);
-  }, [personnel]);
-
-  const getDeviceTimestamp = (deviceName) => {
-    console.log(`Obteniendo timestamp para dispositivo: ${deviceName}`);
-    const device = personnel.find(person => person.id_dispositivo_asignado === deviceName);
-    console.log(`Datos del dispositivo:`, device);
-
-    if (device?.isCurrentDay) {
-      if (device.latestTimestamp) {
-        const formattedTime = moment(device.latestTimestamp).format('HH:mm');
-        console.log(`Timestamp formateado: ${formattedTime}`);
-        return formattedTime;
-      }
-      console.log('latestTimestamp no disponible');
-      return 'N/A';
+  // Función para obtener la imagen correspondiente
+  const getPersonalIcon = (imageName) => {
+    switch(imageName) {
+      case 'Personal 1.png':
+        return personal1Icon;
+      case 'Personal 2.png':
+        return personal2Icon;
+      case 'Personal 3.png':
+        return personal3Icon;
+      default:
+        return null;
     }
-    console.log('No es el día actual');
-    return 'Sin datos para este día';
+  };
+
+  // Función para calcular el tiempo de permanencia
+  const calculatePermanencia = (timestamp) => {
+    if (!timestamp) return '-';
+    const oldestTime = moment(timestamp, 'YYYY-MM-DD HH:mm:ss');
+    const duration = moment.duration(currentTime.diff(oldestTime));
+    return `${duration.hours().toString().padStart(2, '0')}:${duration.minutes().toString().padStart(2, '0')}`;
   };
 
   return (
     <div className="ubicacion-tiempo-real-interiores">
-      <Header title="Ubicación en Tiempo Real Interiores" />
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <>
-          <table className="personnel-table">
-            <thead>
-              <tr>
-                <th>Personal</th>
-                <th>Dispositivo Asignado</th>
-                <th>Nombre Personal</th>
-                <th>Sector</th>
-                <th>Desde Detección</th>
-                <th>Permanencia</th>
-                <th>Estado</th>
+      <Header title="Ubicación Tiempo Real Interiores" />
+      <button onClick={handleRefresh} className="refresh-button">Actualizar Datos</button>
+      <table>
+        <thead>
+          <tr>
+            <th>Personal</th>
+            <th>Nombre</th>
+            <th>Sector</th>
+            <th>Hora Entrada</th>
+            <th>Permanencia</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {personal.map((persona) => {
+            const sectorInfo = latestSectors[persona.id_dispositivo_asignado] || {};
+            const horaEntrada = sectorInfo.timestamp ? moment(sectorInfo.timestamp, 'YYYY-MM-DD HH:mm:ss').format('HH:mm') : '-';
+            const permanencia = calculatePermanencia(sectorInfo.timestamp);
+            return (
+              <tr key={persona.id_personal}>
+                <td>
+                  <img 
+                    src={getPersonalIcon(persona.imagen_asignado)}
+                    alt={persona.Nombre_Personal} 
+                    className="personal-icon"
+                  />
+                </td>
+                <td>{persona.Nombre_Personal}</td>
+                <td>{sectorInfo.sector || 'Cargando...'}</td>
+                <td>{horaEntrada}</td>
+                <td>{permanencia}</td>
+                <td>-</td>
               </tr>
-            </thead>
-            <tbody>
-              {personnel.map(person => (
-                <tr key={person.id_personal}>
-                  <td>
-                    <img 
-                      src={imageMap[person.imagen_asignado] || imageMap['default.png']} 
-                      alt={person.Nombre_Personal} 
-                      className="personal-image" 
-                    />
-                  </td>
-                  <td>{person.device_asignado_personal}</td>
-                  <td>{person.Nombre_Personal}</td>
-                  <td>{person.sector}</td>
-                  <td>{getDeviceTimestamp(person.id_dispositivo_asignado)}</td>
-                  <td>Pending</td>
-                  <td>Pending</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button onClick={fetchPersonnel} className="refresh-button">Refresh</button>
-        </>
-      )}
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 };
