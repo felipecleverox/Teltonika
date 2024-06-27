@@ -445,31 +445,31 @@ app.get('/api/get-gps-data', async (req, res) => {
 
 // Endpoint to get the last known position
 app.get('/api/last-known-position', async (req, res) => {
-  // Extract device_id from query parameters
-  const { device_id } = req.query;
+  // Extract ident from query parameters
+  const { ident } = req.query;
   
   try {
-    // Check if device_id is provided
-    if (!device_id) {
-      console.log('Error: device_id is required');
-      return res.status(400).send('device_id is required');
+    // Check if ident is provided
+    if (!ident) {
+      console.log('Error: ident is required');
+      return res.status(400).send('ident is required');
     }
 
-    // Log the received device_id for debugging purposes
-    console.log('Received device_id:', device_id);
+    // Log the received ident for debugging purposes
+    console.log('Received ident:', ident);
 
     // Query to get the last known position of the device
     const [lastKnownPosition] = await pool.query(`
-      SELECT device_id, latitude, longitude, timestamp * 1000 AS unixTimestamp
+      SELECT ident, latitude, longitude, timestamp * 1000 AS unixTimestamp
       FROM gps_data
-      WHERE device_name = ?
+      WHERE ident = ?
       ORDER BY timestamp DESC
       LIMIT 1
-    `, [device_id]);
+    `, [ident]);
 
-    // Check if any data is available for the given device_id
+    // Check if any data is available for the given ident
     if (lastKnownPosition.length === 0) {
-      console.log('Error: No data available for device_name:', device_id);
+      console.log('Error: No data available for ident:', ident);
       return res.status(404).send('No data available');
     }
 
@@ -480,13 +480,13 @@ app.get('/api/last-known-position', async (req, res) => {
     const [lastCoordinateChange] = await pool.query(`
       SELECT timestamp * 1000 AS changeTimestamp
       FROM gps_data
-      WHERE (latitude != ? OR longitude != ?) AND device_name = ?
+      WHERE (latitude != ? OR longitude != ?) AND ident = ?
       ORDER BY timestamp DESC
       LIMIT 1
     `, [
       lastKnownPosition[0].latitude || defaultPosition.lat, 
       lastKnownPosition[0].longitude || defaultPosition.lng, 
-      device_id
+      ident
     ]);
 
     // Log the last coordinate change for debugging purposes
@@ -514,6 +514,30 @@ app.get('/api/last-known-position', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+app.get('/api/previous-valid-position', async (req, res) => {
+  const { ident, timestamp } = req.query;
+
+  try {
+    // Query to get the previous valid position
+    const [previousValidPosition] = await pool.query(`
+      SELECT ident, latitude, longitude, timestamp * 1000 AS unixTimestamp
+      FROM gps_data
+      WHERE ident = ? AND timestamp < ? AND latitude IS NOT NULL AND longitude IS NOT NULL
+      ORDER BY timestamp DESC
+      LIMIT 1
+    `, [ident, timestamp / 1000]);
+
+    if (previousValidPosition.length === 0) {
+      return res.status(404).send('No previous valid position found');
+    }
+
+    res.json(previousValidPosition[0]);
+  } catch (error) {
+    console.error('Error fetching previous valid position:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
 
 
 // Endpoint to get active beacons
