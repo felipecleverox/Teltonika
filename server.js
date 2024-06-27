@@ -350,6 +350,7 @@ app.get('/api/latest-sectors', async (req, res) => {
   }
 });
 // Definir el endpoint para obtener el estado de las puertas
+// Endpoint to get door status history within a specific date range
 app.get('/api/door-status', async (req, res) => {
   const { startDate, endDate } = req.query;
 
@@ -359,9 +360,10 @@ app.get('/api/door-status', async (req, res) => {
 
   try {
     const query = `
-      SELECT sector, magnet_status, temperature, timestamp
-      FROM door_status
-      WHERE timestamp BETWEEN ? AND ?
+      SELECT ds.sector, ds.magnet_status, ds.temperature, ds.timestamp
+      FROM door_status ds
+      JOIN beacons b ON ds.sector = b.ubicacion
+      WHERE ds.timestamp BETWEEN ? AND ? AND b.esPuerta = 1
     `;
     const [rows] = await pool.query(query, [startDate, endDate]);
     res.json(rows);
@@ -370,6 +372,7 @@ app.get('/api/door-status', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 // Endpoint para obtener datos históricos de GPS
 app.get('/api/historical-gps-data', async (req, res) => {
