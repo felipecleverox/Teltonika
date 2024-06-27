@@ -72,7 +72,20 @@ const HistoricalMovementsSearch = () => {
       zoom: 10,
     });
 
-    mapInstance.addControl(new mapboxgl.NavigationControl());
+    const nav = new mapboxgl.NavigationControl();
+    mapInstance.addControl(nav, 'top-right');
+
+    // Estilizar los controles de navegación
+    const navElement = nav._container;
+    navElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // Fondo semi-transparente
+    navElement.querySelectorAll('button').forEach(button => {
+      button.style.color = 'red'; // Cambiar color del texto a blanco
+      button.style.backgroundColor = 'rgba(0, 0, 0, 0.10)'; // Fondo semi-transparente para botones
+      button.style.border = 'white'; // Sin borde para los botones
+    });
+    navElement.querySelectorAll('svg').forEach(svg => {
+      svg.style.fill = 'white'; // Cambiar color del ícono a blanco
+    });
 
     setMap(mapInstance);
 
@@ -103,7 +116,7 @@ const HistoricalMovementsSearch = () => {
             'line-cap': 'round',
           },
           paint: {
-            'line-color': '#0000FF', // Color azul
+            'line-color': '#FF0000', // Cambiar color de la línea a rojo
             'line-width': 6,
           },
         });
