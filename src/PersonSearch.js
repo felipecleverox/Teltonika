@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './PersonSearch.css';
-import personal3Icon from './assets/images/Personal 3.png';
-import planoSectores from './assets/images/plano_sectores.jpg'; // Ensure this path is correct
 import Header from './Header'; // Import the new header component
+
+// Importa las imágenes
+import personal1Icon from './assets/images/Personal 1.png';
+import personal2Icon from './assets/images/Personal 2.png';
+import personal3Icon from './assets/images/Personal 3.png';
+import planoSectores from './assets/images/plano_sectores.jpg'; // Asegúrate de que esta ruta sea correcta
 
 function PersonSearch() {
     const [selectedDay, setSelectedDay] = useState('');
@@ -12,6 +16,7 @@ function PersonSearch() {
     const [searchResults, setSearchResults] = useState([]);
     const [umbrales, setUmbrales] = useState({});
     const [devices, setDevices] = useState([]);
+    const [personal, setPersonal] = useState([]);
     const [selectedDeviceId, setSelectedDeviceId] = useState('');
 
     useEffect(() => {
@@ -34,6 +39,16 @@ function PersonSearch() {
             }
         };
         fetchDevices();
+
+        const fetchPersonal = async () => {
+            try {
+                const response = await axios.get('/api/personal');
+                setPersonal(response.data);
+            } catch (error) {
+                console.error('Error fetching personal:', error);
+            }
+        };
+        fetchPersonal();
     }, []);
 
     const fetchSearchResults = async () => {
@@ -100,6 +115,33 @@ function PersonSearch() {
         return '';
     };
 
+    const getPersonalIcon = (imageName) => {
+        switch(imageName) {
+            case 'Personal 1.png':
+                return personal1Icon;
+            case 'Personal 2.png':
+                return personal2Icon;
+            case 'Personal 3.png':
+                return personal3Icon;
+            default:
+                return null;
+        }
+    };
+
+    const getPersonalInfo = (deviceId) => {
+        const person = personal.find(p => p.id_dispositivo_asignado === deviceId);
+        if (person) {
+            return {
+                name: person.Nombre_Personal,
+                image: getPersonalIcon(person.imagen_asignado)
+            };
+        }
+        return {
+            name: 'Unknown',
+            image: null
+        };
+    };
+
     return (
         <div className="person-search">
             <Header title="Busqueda Histórica Ubicación Interiores" />
@@ -148,7 +190,8 @@ function PersonSearch() {
             <table className="search-results-table">
                 <thead>
                     <tr>
-                        <th>Personal</th>
+                        <th>Imagen</th>
+                        <th>Nombre</th>
                         <th>Sector</th>
                         <th>Desde Detección</th>
                         <th>Permanencia</th>
@@ -161,9 +204,15 @@ function PersonSearch() {
                         const permanence = calculatePermanence(result.entrada, result.salida);
                         const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
                         const semaphoreClass = getSemaphoreClass(permanenceMinutes);
+                        const personalInfo = getPersonalInfo(selectedDeviceId);
                         return (
                             <tr key={index}>
-                                <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
+                                <td className="image-cell">
+                                    {personalInfo.image && (
+                                        <img src={personalInfo.image} alt={personalInfo.name} className="personal-image" />
+                                    )}
+                                </td>
+                                <td>{personalInfo.name}</td>
                                 <td className={sector.className}>{sector.text}</td>
                                 <td>{formatDate(result.entrada)}</td>
                                 <td>{permanence}</td>

@@ -19,6 +19,8 @@
     --sector-pasillo-text: black;
     --sector-electro-bg: #f5ffcb; /* Granate pálido */
     --sector-electro-text: black;
+    --image-max-width: 50px; /* Ancho máximo de la imagen */
+    --image-max-height: 50px; /* Alto máximo de la imagen */
 }
 
 body {
@@ -190,4 +192,23 @@ body {
     margin: 5px;
     padding: 10px;
     font-size: 16px;
+}
+
+/* Estilo para la imagen de personal */
+.personal-image {
+    max-width: var(--image-max-width);
+    max-height: var(--image-max-height);
+    object-fit: contain;
+}
+/* Estilo para la imagen de personal */
+td.image-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.personal-image {
+    max-width: var(--image-max-width);
+    max-height: var(--image-max-height);
+    object-fit: contain;
 }

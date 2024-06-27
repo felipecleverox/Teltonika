@@ -407,6 +407,16 @@ app.get('/api/historical-gps-data', async (req, res) => {
   }
 });
 
+// Endpoint para obtener los datos de personal
+app.get('/api/personal', async (req, res) => {
+  try {
+      const [rows] = await pool.query('SELECT * FROM personal');
+      res.json(rows);
+  } catch (error) {
+      console.error('Error fetching personal:', error);
+      res.status(500).send('Server Error');
+  }
+});
 
 app.get('/api/get-gps-data', async (req, res) => {
   const { startDate, endDate, device_name } = req.query;
@@ -575,88 +585,78 @@ app.get('/api/active-beacons', async (req, res) => {
 
 
 // Endpoint to search for beacon entries and exits for a specific device
+// Endpoint para obtener las entradas y salidas de beacons para un dispositivo específico
 app.get('/api/beacon-entries-exits', async (req, res) => {
-  // Extract startDate, endDate, and device_id from query parameters
   const { startDate, endDate, device_id } = req.query;
 
-  // Log the received search request for debugging purposes
-  console.log("Received search request:", { startDate, endDate, device_id });
+  // Determinar la tabla a utilizar basado en el device_id
+  let tableName;
+  switch (device_id) {
+      case '353201350896384':
+          tableName = 'magic_box_tmt_210_data_353201350896384';
+          break;
+      case '352592573522828':
+          tableName = 'gh_5200_data_352592573522828';
+          break;
+      case '352592576164230':
+          tableName = 'fmb204_data_352592576164230';
+          break;
+      default:
+          return res.status(400).send('Invalid device_id');
+  }
 
-  // Convert startDate and endDate to Unix timestamps (seconds since epoch)
   const startTimestamp = new Date(startDate).getTime() / 1000;
   const endTimestamp = new Date(endDate).getTime() / 1000;
 
-  // Log the converted timestamps for debugging purposes
-  console.log("Converted timestamps:", { startTimestamp, endTimestamp });
-
-  // SQL query to select timestamp and ble_beacons from gps_data table
-  // The query filters records by device_id and timestamp range, and ensures ble_beacons is not empty
   const query = `
-        SELECT timestamp, ble_beacons
-        FROM gps_data
-        WHERE ident = ? AND timestamp BETWEEN ? AND ? AND ble_beacons != "[]"
-        ORDER BY timestamp ASC
-    `;
+      SELECT timestamp, beacon_id
+      FROM ${tableName}
+      WHERE timestamp BETWEEN ? AND ? AND beacon_id IS NOT NULL
+      ORDER BY timestamp ASC
+  `;
 
   try {
-    // Execute the SQL query with the provided parameters
-    const [results] = await pool.query(query, [device_id, startTimestamp, endTimestamp]);
-    // Log the query results for debugging purposes
-    console.log("Query results:", results);
+      const [results] = await pool.query(query, [startTimestamp, endTimestamp]);
+      const processedResults = [];
+      let currentBeacon = null;
+      let entryTimestamp = null;
 
-    // Initialize variables to process the results
-    const processedResults = [];
-    let currentBeacon = null;
-    let entryTimestamp = null;
+      results.forEach(record => {
+          const beacon = { id: record.beacon_id };
+          if (beacon.id) {
+              if (currentBeacon === null || beacon.id !== currentBeacon.id) {
+                  if (currentBeacon !== null) {
+                      processedResults.push({
+                          beaconId: currentBeacon.id,
+                          sector: getSector(currentBeacon.id),
+                          entrada: entryTimestamp,
+                          salida: record.timestamp * 1000,
+                          tiempoPermanencia: record.timestamp * 1000 - entryTimestamp,
+                      });
+                  }
+                  currentBeacon = beacon;
+                  entryTimestamp = record.timestamp * 1000;
+              }
+          }
+      });
 
-    // Iterate over each record in the query results
-    results.forEach(record => {
-      // Parse the ble_beacons JSON string to an array
-      const beacons = JSON.parse(record.ble_beacons || '[]');
-      if (beacons.length > 0) {
-        const beacon = beacons[0];
-        // Check if the current beacon has changed
-        if (currentBeacon === null || beacon.id !== currentBeacon.id) {
-          // If there was a previous beacon, add an exit record for it
-          if (currentBeacon !== null) {
-            processedResults.push({
+      if (currentBeacon !== null) {
+          processedResults.push({
               beaconId: currentBeacon.id,
               sector: getSector(currentBeacon.id),
               entrada: entryTimestamp,
-              salida: record.timestamp * 1000,
-              tiempoPermanencia: record.timestamp * 1000 - entryTimestamp,
-            });
-          }
-          // Update the current beacon and entry timestamp
-          currentBeacon = beacon;
-          entryTimestamp = record.timestamp * 1000;
-        }
+              salida: null,
+              tiempoPermanencia: 'En progreso',
+          });
       }
-    });
 
-    // If there is a current beacon, add an entry record for it
-    if (currentBeacon !== null) {
-      processedResults.push({
-        beaconId: currentBeacon.id,
-        sector: getSector(currentBeacon.id),
-        entrada: entryTimestamp,
-        salida: null,
-        tiempoPermanencia: 'En progreso',
-      });
-    }
-
-    // Log the processed results for debugging purposes
-    console.log("Processed results:", processedResults);
-
-    // Send the processed results as a JSON response
-    res.json(processedResults);
+      res.json(processedResults);
   } catch (error) {
-    // Log any errors that occur during the query execution
-    console.error('Error fetching beacon entries and exits:', error);
-    // Send a 500 Internal Server Error response if an error occurs
-    res.status(500).send('Server Error');
+      console.error('Error fetching beacon entries and exits:', error);
+      res.status(500).send('Server Error');
   }
 });
+
 
 // Endpoint to get the oldest timestamp for a specific active beacon
 app.get('/api/oldest-active-beacon-detections', async (req, res) => {
