@@ -3,8 +3,7 @@ import axios from 'axios';
 import moment from 'moment';
 import './UbicacionTiempoRealInteriores.css';
 import Header from './Header';
-
-// Importa las imágenes
+import planoBase from './assets/images/plano_super.jpg';
 import personal1Icon from './assets/images/Personal 1.png';
 import personal2Icon from './assets/images/Personal 2.png';
 import personal3Icon from './assets/images/Personal 3.png';
@@ -16,9 +15,11 @@ const UbicacionTiempoRealInteriores = () => {
   const [latestSectors, setLatestSectors] = useState({});
   const [umbrales, setUmbrales] = useState(null);
   const [currentTime, setCurrentTime] = useState(moment());
+  const [activeBeacons, setActiveBeacons] = useState([]); // Añadir estado para beacons activos
 
   useEffect(() => {
     fetchData();
+    fetchActiveBeacons(); // Llamar a fetchActiveBeacons al cargar el componente
   }, []);
 
   const fetchData = async () => {
@@ -28,6 +29,10 @@ const UbicacionTiempoRealInteriores = () => {
         axios.get('/api/latest-sectors'),
         axios.get('/api/umbrales')
       ]);
+
+      console.log('Map Info:', mapInfo.data);
+      console.log('Sector Info:', sectorInfo.data);
+      console.log('Umbrales Info:', umbralesInfo.data);
       
       setPersonal(mapInfo.data.personal);
       setSectors(mapInfo.data.sectors);
@@ -45,8 +50,20 @@ const UbicacionTiempoRealInteriores = () => {
     }
   };
 
+  const fetchActiveBeacons = async () => {
+    try {
+      const response = await axios.get('/api/active-beacons');
+      const activeBeaconIds = response.data.activeBeaconIds || [];
+      console.log('Active Beacons:', activeBeaconIds);
+      setActiveBeacons(activeBeaconIds);
+    } catch (error) {
+      console.error('Failed to fetch active beacons:', error);
+    }
+  };
+
   const handleRefresh = () => {
     fetchData();
+    fetchActiveBeacons(); // Llamar a fetchActiveBeacons al actualizar
   };
 
   // Función para obtener la imagen correspondiente
@@ -98,6 +115,37 @@ const UbicacionTiempoRealInteriores = () => {
     return texts[semaphoreClass];
   };
 
+  const sectorPositions = {
+    'E/S Bodega': { bottom: '70%', right: '55%', width: '2%' },
+    'Farmacia': { bottom: '25%', right: '55%', width: '2%' },
+    'Entrada': { bottom: '10%', right: '64%', width: '2%' },
+    'Pasillo Central': { bottom: '41%', right: '34%', width: '2%' },
+    'Electro': { bottom: '68%', right: '35%', width: '2%' }
+  };
+
+  const getSectorPosition = (sectorName) => {
+    return sectorPositions[sectorName] || { bottom: '0%', right: '0%', width: '2%' };
+  };
+
+  const renderPersonnelIcons = () => {
+    return (
+      personal.map((persona) => {
+        const sectorInfo = latestSectors[persona.id_dispositivo_asignado] || {};
+        const sectorPosition = getSectorPosition(sectorInfo.sector);
+        console.log('Rendering persona:', persona.Nombre_Personal, 'Sector:', sectorInfo.sector, 'Position:', sectorPosition);
+        return (
+          <img
+            key={persona.id_personal}
+            src={getPersonalIcon(persona.imagen_asignado)}
+            alt={persona.Nombre_Personal}
+            className="personal-icon"
+            style={{ position: 'absolute', ...sectorPosition }}
+          />
+        );
+      })
+    );
+  };
+
   return (
     <div className="ubicacion-tiempo-real-interiores">
       <Header title="Ubicación Tiempo Real Interiores" />
@@ -109,7 +157,7 @@ const UbicacionTiempoRealInteriores = () => {
             <th>Nombre</th>
             <th>Sector</th>
             <th>Hora Entrada</th>
-            <th>Permanencia</th>
+            <th>Permanencia (hh:mm)</th>
             <th>Estado</th>
           </tr>
         </thead>
@@ -139,6 +187,10 @@ const UbicacionTiempoRealInteriores = () => {
           })}
         </tbody>
       </table>
+      <div className="plano-container" style={{ position: 'relative', width: '100%', height: 'auto' }}>
+        <img src={planoBase} alt="Plano de la Oficina" className="plano-oficina" />
+        {renderPersonnelIcons()}
+      </div>
     </div>
   );
 };

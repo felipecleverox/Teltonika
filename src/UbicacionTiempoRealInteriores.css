@@ -66,3 +66,18 @@
   background-color: #F44336;
   color: white;
 }
+.plano-container {
+  position: relative;
+  width: 60%; /* Ajusta este valor según el tamaño deseado */
+  height: auto;
+  margin: 0 auto;
+}
+
+.plano-oficina {
+  width: 50%; /* Asegura que la imagen se ajuste al contenedor */
+  height: auto;
+}
+
+.personal-icon {
+  width: 2%; /* Ajusta este valor según el tamaño deseado de los iconos */
+}
