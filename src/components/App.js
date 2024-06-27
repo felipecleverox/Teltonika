@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import LastKnownPosition from '../LastKnownPosition';
-import MapWithQuadrants from '../MapWithQuadrants';
+import UbicacionTiempoRealInteriores from '../UbicacionTiempoRealInteriores'; // Import the new component
 import PersonSearch from '../PersonSearch';
 import LandingPage from '../LandingPage';
 import SelectRoutine from '../SelectRoutine';
@@ -14,7 +14,6 @@ import Presencia from '../Presencia';
 import SmsData from '../SmsData';
 import DoorStatusMatrix from '../DoorStatusMatrix';
 import UserRegistration from '../UserRegistration';
-import UbicacionTiempoRealInteriores from '../UbicacionTiempoRealInteriores'; // Import the new component
 
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -28,7 +27,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/select-routine" element={<PrivateRoute><SelectRoutine /></PrivateRoute>} />
         <Route path="/last-known-position" element={<PrivateRoute><LastKnownPosition /></PrivateRoute>} />
-        <Route path="/ubicaciones-interior" element={<PrivateRoute><MapWithQuadrants /></PrivateRoute>} />
+        <Route path="/ubicaciones-interior" element={<PrivateRoute><UbicacionTiempoRealInteriores /></PrivateRoute>} />
         <Route path="/busqueda-entradas-persona" element={<PrivateRoute><PersonSearch /></PrivateRoute>} />
         <Route path="/consulta-historica-movimientos" element={<PrivateRoute><HistoricalMovementsSearch /></PrivateRoute>} />
         <Route path="/door-status-matrix" element={<PrivateRoute><DoorStatusMatrix /></PrivateRoute>} />
@@ -37,7 +36,6 @@ function App() {
         <Route path="/presencia" element={<PrivateRoute><Presencia /></PrivateRoute>} />
         <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
         <Route path="/register-user" element={<PrivateRoute><UserRegistration /></PrivateRoute>} />
-
       </Routes>
     </Router>
   );

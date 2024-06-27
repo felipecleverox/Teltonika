@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import jwt from 'jsonwebtoken';
 import './SelectRoutine.css';
 import Header from './Header';
-import lastKnownPositionImage from './assets/images/last_known_position.png';
+import ubicaciontiemporealinteriorImage from './assets/images/ubicaciontiemporealinterior.png';
 import personSearchImage from './assets/images/person_search.png';
 import interiorLocationsImage from './assets/images/plano_super.png';
 import historicalMovementsImage from './assets/images/historical_movements1.png';
@@ -16,7 +16,7 @@ import doorStatusImage from './assets/images/door_status.png';
 import userRegistrationImage from './assets/images/user_registration.png';
 
 const routines = [
-  { title: "Interior : Ubicación en Tiempo Real", image: lastKnownPositionImage, route: "/ubicacion-tiempo-real-interiores", permission: "view_interior" }, 
+  { title: "Interior : Ubicación en Tiempo Real", image: ubicaciontiemporealinteriorImage, route: "/ubicaciones-interior", permission: "view_interior" }, 
   { title: "Interior : Búsqueda Histórica Ubicación", image: personSearchImage, route: "/busqueda-entradas-persona", permission: "search_interior" },
   { title: "Exterior : Ubicación Tiempo Real", image: interiorLocationsImage, route: "/last-known-position", permission: "view_exterior" },
   { title: "Exterior : Búsqueda Histórica Ubicación", image: historicalMovementsImage, route: "/consulta-historica-movimientos", permission: "search_exterior" },
