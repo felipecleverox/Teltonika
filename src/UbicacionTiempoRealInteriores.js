@@ -123,27 +123,38 @@ const UbicacionTiempoRealInteriores = () => {
     'Electro': { bottom: '68%', right: '35%', width: '2%' }
   };
 
-  const getSectorPosition = (sectorName) => {
-    return sectorPositions[sectorName] || { bottom: '0%', right: '0%', width: '2%' };
+  const getSectorPosition = (sectorName, index) => {
+    const basePosition = sectorPositions[sectorName] || { bottom: '0%', right: '0%', width: '2%' };
+    const offset = 5 * index; // Ajustar el valor de offset según sea necesario
+    return {
+      ...basePosition,
+      bottom: `calc(${basePosition.bottom} - ${offset}px)`,
+      right: `calc(${basePosition.right} - ${offset}px)`
+    };
   };
 
   const renderPersonnelIcons = () => {
-    return (
-      personal.map((persona) => {
-        const sectorInfo = latestSectors[persona.id_dispositivo_asignado] || {};
-        const sectorPosition = getSectorPosition(sectorInfo.sector);
-        console.log('Rendering persona:', persona.Nombre_Personal, 'Sector:', sectorInfo.sector, 'Position:', sectorPosition);
-        return (
-          <img
-            key={persona.id_personal}
-            src={getPersonalIcon(persona.imagen_asignado)}
-            alt={persona.Nombre_Personal}
-            className="personal-icon"
-            style={{ position: 'absolute', ...sectorPosition }}
-          />
-        );
-      })
-    );
+    const sectorCounts = {};
+
+    return personal.map((persona, index) => {
+      const sectorInfo = latestSectors[persona.id_dispositivo_asignado] || {};
+      const sectorName = sectorInfo.sector;
+      if (!sectorCounts[sectorName]) {
+        sectorCounts[sectorName] = 0;
+      }
+      const sectorPosition = getSectorPosition(sectorName, sectorCounts[sectorName]);
+      sectorCounts[sectorName] += 1;
+      console.log('Rendering persona:', persona.Nombre_Personal, 'Sector:', sectorName, 'Position:', sectorPosition);
+      return (
+        <img
+          key={persona.id_personal}
+          src={getPersonalIcon(persona.imagen_asignado)}
+          alt={persona.Nombre_Personal}
+          className="personal-icon"
+          style={{ position: 'absolute', ...sectorPosition }}
+        />
+      );
+    });
   };
 
   return (
