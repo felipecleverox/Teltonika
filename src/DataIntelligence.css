@@ -1,5 +1,3 @@
-/* PersonSearch.css */
-
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 :root {
@@ -19,12 +17,50 @@
   --sector-pasillo-text: black;
   --sector-electro-bg: #f5ffcb; /* Granate pálido */
   --sector-electro-text: black;
+  --image-width: 200px; /* Ancho parametrizable */
+  --image-height: 200px; /* Alto parametrizable */
 }
 
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
+}
+
+.options-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px; /* Espacio entre las columnas */
+  margin: 20px 0;
+}
+
+.option-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  width: var(--image-width);
+  height: var(--image-height);
+}
+
+.option-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.option-card h3 {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 16px;
+}
+
+/* Ajuste para dispositivos móviles */
+@media (max-width: 768px) {
+  .options-container {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 .person-search {

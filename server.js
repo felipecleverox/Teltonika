@@ -10,6 +10,8 @@ const crypto = require('crypto'); // Library for cryptographic functions
 const nodemailer = require('nodemailer'); // Library to send emails
 const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
 
+
+
 // Create an Express application
 const app = express();
 
@@ -98,7 +100,7 @@ const convertToLocalTime = (timestamp) => {
 app.post('/gps-data', async (req, res) => {
   const gpsDatas = Array.isArray(req.body) ? req.body : [req.body];
   console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
-
+  
   try {
     for (const gpsData of gpsDatas) {
       const beacons = gpsData['ble.beacons'] || [];
