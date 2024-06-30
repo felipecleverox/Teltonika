@@ -4,9 +4,6 @@ import './DataIntelligence.css';
 import Header from './Header';
 import interiorSearchImage from './assets/images/interior_search.png';
 import exteriorSearchImage from './assets/images/exterior_search.png';
-import personal1Icon from './assets/images/Personal 1.png';
-import personal2Icon from './assets/images/Personal 2.png';
-import personal3Icon from './assets/images/Personal 3.png';
 
 const searchOptions = [
   { title: "Búsqueda de Datos de Interiores", image: interiorSearchImage, option: 'interior' },
@@ -75,6 +72,26 @@ function DataIntelligence() {
     }
   };
 
+  const fetchOutdoorResults = async () => {
+    const startDateTime = `${selectedDay}T${startTime}:00`;
+    const endDateTime = `${selectedDay}T${endTime}:00`;
+
+    try {
+      const response = await axios.get('/api/historical-gps-data', {
+        params: {
+          device_id: selectedDeviceId,
+          date: selectedDay,
+          startHour: startTime,
+          endHour: endTime
+        }
+      });
+      console.log('Data received:', response.data);
+      setSearchResults(response.data.filter(d => d.latitude !== null && d.longitude !== null));
+    } catch (error) {
+      console.error('Error fetching outdoor search results:', error);
+    }
+  };
+
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
     const date = new Date(timestamp);
@@ -120,20 +137,29 @@ function DataIntelligence() {
   };
 
   const downloadCSV = () => {
-    const headers = ['Personal', 'Sector', 'Desde Detección', 'Permanencia', 'Estado'];
-    const rows = searchResults.map(result => {
-      const sector = getSector(result.beaconId);
-      const permanence = calculatePermanence(result.entrada, result.salida);
-      const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
-      const semaphoreClass = getSemaphoreClass(permanenceMinutes);
-      return [
-        'Personal 3',
-        sector.text,
-        formatDate(result.entrada),
-        permanence,
-        semaphoreClass
-      ];
-    });
+    const headers = selectedOption === 'interior'
+      ? ['Personal', 'Sector', 'Desde Detección', 'Permanencia', 'Estado']
+      : ['Hora', 'Latitud', 'Longitud'];
+
+    const rows = selectedOption === 'interior'
+      ? searchResults.map(result => {
+          const sector = getSector(result.beaconId);
+          const permanence = calculatePermanence(result.entrada, result.salida);
+          const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
+          const semaphoreClass = getSemaphoreClass(permanenceMinutes);
+          return [
+            'Personal 3',
+            sector.text,
+            formatDate(result.entrada),
+            permanence,
+            semaphoreClass
+          ];
+        })
+      : searchResults.map(result => [
+          result.timestamp,
+          result.latitude,
+          result.longitude
+        ]);
 
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
 
@@ -246,11 +272,72 @@ function DataIntelligence() {
             </>
           )}
           {selectedOption === 'exterior' && (
-            // Aquí puedes agregar la lógica para la búsqueda de datos de exteriores
-            <div className="search-container">
-              {/* Aquí puedes agregar los campos de entrada y los componentes necesarios para la búsqueda de datos de exteriores */}
-              <p>Funcionalidad de búsqueda de datos de exteriores aún no implementada.</p>
-            </div>
+            <>
+              <div className="search-container">
+                <div className="device-selection">
+                  <select onChange={(e) => setSelectedDeviceId(e.target.value)}>
+                    <option value="">Seleccionar Dispositivo...</option>
+                    {devices.map(device => (
+                      <option key={device.id} value={device.id}>{device.device_asignado}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="date-time-selection">
+                  <div className="date-time-inputs">
+                    <div className="date-time-input">
+                      <label>Seleccionar Día:</label>
+                      <input
+                        type="date"
+                        value={selectedDay}
+                        onChange={e => setSelectedDay(e.target.value)}
+                      />
+                    </div>
+                    <div className="date-time-input">
+                      <label>Hora Inicio:</label>
+                      <input
+                        type="time"
+                        value={startTime}
+                        onChange={e => setStartTime(e.target.value)}
+                      />
+                    </div>
+                    <div className="date-time-input">
+                      <label>Hora Fin:</label>
+                      <input
+                        type="time"
+                        value={endTime}
+                        onChange={e => setEndTime(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <button onClick={fetchOutdoorResults} className="button">Buscar</button>
+                <button
+                  onClick={downloadCSV}
+                  className={`button ${searchResults.length > 0 ? 'button-active' : ''}`}
+                  disabled={searchResults.length === 0}
+                >
+                  Descargar Resultados
+                </button>
+              </div>
+              <table className="search-results-table">
+                <thead>
+                  <tr>
+                    <th>Hora</th>
+                    <th>Latitud</th>
+                    <th>Longitud</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {searchResults.map((result, index) => (
+                    <tr key={index}>
+                      <td>{result.timestamp}</td>
+                      <td>{result.latitude}</td>
+                      <td>{result.longitude}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
         </div>
       )}
