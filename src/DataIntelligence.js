@@ -181,7 +181,7 @@ function DataIntelligence() {
         {searchOptions.map(option => (
           <div
             key={option.option}
-            className="option-card"
+            className={`option-card ${selectedOption && selectedOption !== option.option ? 'transparent' : 'selected'}`}
             onClick={() => setSelectedOption(option.option)}
           >
             <img src={option.image} alt={option.title} />
@@ -189,6 +189,8 @@ function DataIntelligence() {
           </div>
         ))}
       </div>
+      <br />
+      <div className="separator"><span>Seleccione los argumentos de búsqueda</span></div>
       {selectedOption && (
         <div className="person-search">
           {selectedOption === 'interior' && (
