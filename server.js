@@ -84,9 +84,7 @@ const schemas = {
       'position.speed': Joi.number(),
       'protocol.id': Joi.number().integer(),
       'server.timestamp': Joi.number(),
-      'timestamp': Joi.number()
-    }),
-    typeB: Joi.object({
+      'timestamp': Joi.number(),
       'battery.current': Joi.number(),
       'battery.voltage': Joi.number(),
       'ble.sensor.humidity.1': Joi.number().integer(),
@@ -123,7 +121,7 @@ const schemas = {
       'sleep.mode.enum': Joi.number().integer(),
       'timestamp': Joi.number(),
       'vehicle.mileage': Joi.number()
-    })
+    }).unknown(true)
   },
   507: { // GH5200
     typeA: Joi.object({
@@ -143,9 +141,7 @@ const schemas = {
       'position.speed': Joi.number(),
       'protocol.id': Joi.number().integer(),
       'server.timestamp': Joi.number(),
-      'timestamp': Joi.number()
-    }),
-    typeB: Joi.object({
+      'timestamp': Joi.number(),
       'battery.level': Joi.number().integer(),
       'battery.voltage': Joi.number(),
       'ble.sensor.humidity.1': Joi.number().integer(),
@@ -189,7 +185,7 @@ const schemas = {
       'server.timestamp': Joi.number(),
       'sleep.mode.enum': Joi.number().integer(),
       'timestamp': Joi.number()
-    })
+    }).unknown(true)
   },
   
   508: { // TMT250
@@ -210,9 +206,7 @@ const schemas = {
       'position.speed': Joi.number(),
       'protocol.id': Joi.number().integer(),
       'server.timestamp': Joi.number(),
-      'timestamp': Joi.number()
-    }),
-    typeB: Joi.object({
+      'timestamp': Joi.number(),
       'battery.level': Joi.number().integer(),
       'battery.voltage': Joi.number(),
       'ble.sensor.humidity.1': Joi.number().integer(),
@@ -246,7 +240,7 @@ const schemas = {
       'server.timestamp': Joi.number(),
       'sleep.mode.enum': Joi.number().integer(),
       'timestamp': Joi.number()
-    })
+    }).unknown(true)
   }
 };
 
@@ -305,6 +299,7 @@ async function processGpsData(gpsData) {
   const deviceTypeId = gpsData['device.type.id'];
   const schema = schemas[deviceTypeId];
   
+  
   if (!schema) {
     throw new Error(`Unknown device type: ${deviceTypeId}`);
   }
@@ -312,63 +307,93 @@ async function processGpsData(gpsData) {
   console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
 
   let validatedData;
+  console.log('TypeB validation failed, attempting typeA schema');
   try {
-    console.log('Attempting to validate with typeB schema');
-    validatedData = await schema.typeB.validateAsync(gpsData);
+    validatedData = await schema.typeA.validateAsync(gpsData);
   } catch (err) {
-    console.log('TypeB validation failed, attempting typeA schema');
-    try {
-      validatedData = await schema.typeA.validateAsync(gpsData);
-    } catch (err) {
-      console.error('Validation failed for both schemas:', err);
-      throw err;
-    }
+    console.error('Validation failed for both schemas:', err);
+    throw err;
   }
+  const columns = [
+    'device_id', 'device_name', 'device_type_id', 'event_enum', 'event_priority_enum',
+    'ident', 'peer', 'altitude', 'direction', 'latitude', 'longitude', 'satellites', 'speed',
+    'protocol_id', 'server_timestamp', 'timestamp', 'ble_beacons', 'channel_id', 'codec_id',
+    'battery_level', 'battery_voltage', 'battery_current',
+    'ble_sensor_humidity_1', 'ble_sensor_humidity_2', 'ble_sensor_humidity_3', 'ble_sensor_humidity_4',
+    'ble_sensor_low_battery_status_1', 'ble_sensor_low_battery_status_2',
+    'ble_sensor_magnet_status_1', 'ble_sensor_magnet_status_2',
+    'ble_sensor_magnet_count_1', 'ble_sensor_magnet_count_2',
+    'ble_sensor_temperature_1', 'ble_sensor_temperature_2', 'ble_sensor_temperature_3', 'ble_sensor_temperature_4',
+    'bluetooth_state_enum', 'gnss_state_enum', 'gnss_status',
+    'gsm_mcc', 'gsm_mnc', 'gsm_operator_code', 'gsm_signal_level',
+    'movement_status', 'position_hdop', 'position_pdop', 'position_valid',
+    'position_fix_age', 'sleep_mode_enum', 'custom_param_116', 'vehicle_mileage'
+  ];
+  const query = `INSERT INTO gps_data (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`;
 
-  const query = 'INSERT INTO gps_data SET ?';
-  const params = {
-    device_id: validatedData['device.id'],
-    device_name: validatedData['device.name'],
-    device_type_id: validatedData['device.type.id'],
-    event_enum: validatedData['event.enum'],
-    event_priority_enum: validatedData['event.priority.enum'],
-    ident: validatedData.ident,
-    peer: validatedData.peer,
-    altitude: validatedData['position.altitude'],
-    direction: validatedData['position.direction'],
-    latitude: validatedData['position.latitude'],
-    longitude: validatedData['position.longitude'],
-    satellites: validatedData['position.satellites'],
-    speed: validatedData['position.speed'],
-    protocol_id: validatedData['protocol.id'],
-    server_timestamp: Math.floor(validatedData['server.timestamp']),
-    timestamp: Math.floor(validatedData.timestamp),
-    ble_beacons: JSON.stringify(validatedData['ble.beacons'] || []),
-    channel_id: validatedData['channel.id'],
-    codec_id: validatedData['codec.id'],
-    battery_level: validatedData['battery.level'],
-    battery_voltage: validatedData['battery.voltage'],
-    battery_current: validatedData['battery.current'],
-    ble_sensor_humidity_1: validatedData['ble.sensor.humidity.1'],
-    ble_sensor_magnet_status_1: validatedData['ble.sensor.magnet.status.1'],
-    ble_sensor_temperature_1: validatedData['ble.sensor.temperature.1'],
-    gnss_state_enum: validatedData['gnss.state.enum'],
-    gnss_status: validatedData['gnss.status'],
-    gsm_mcc: validatedData['gsm.mcc'],
-    gsm_mnc: validatedData['gsm.mnc'],
-    gsm_operator_code: validatedData['gsm.operator.code'],
-    gsm_signal_level: validatedData['gsm.signal.level'],
-    movement_status: validatedData['movement.status'],
-    position_hdop: validatedData['position.hdop'],
-    position_pdop: validatedData['position.pdop'],
-    position_valid: validatedData['position.valid'],
-    sleep_mode_enum: validatedData['sleep.mode.enum'],
-    engine_ignition_status: validatedData['engine.ignition.status'],
-    external_powersource_voltage: validatedData['external.powersource.voltage'],
-    vehicle_mileage: validatedData['vehicle.mileage']
-  };
+  
+  const params = [
+    validatedData['device.id'],
+    validatedData['device.name'],
+    validatedData['device.type.id'],
+    validatedData['event.enum'],
+    validatedData['event.priority.enum'],
+    validatedData.ident,
+    validatedData.peer,
+    validatedData['position.altitude'],
+    validatedData['position.direction'],
+    validatedData['position.latitude'],
+    validatedData['position.longitude'],
+    validatedData['position.satellites'],
+    validatedData['position.speed'],
+    validatedData['protocol.id'],
+    Math.floor(validatedData['server.timestamp']),
+    Math.floor(validatedData.timestamp),
+    JSON.stringify(validatedData['ble.beacons'] || []),
+    validatedData['channel.id']|| -1,
+    validatedData['codec.id']|| -1,
+    validatedData['battery.level'] || -1,
+    validatedData['battery.voltage'] || -1,
+    validatedData['battery.current'] || -1,
+    validatedData['ble.sensor.humidity.1'] || -1,
+    validatedData['ble.sensor.humidity.2'] || -1,
+    validatedData['ble.sensor.humidity.3'] || -1,
+    validatedData['ble.sensor.humidity.4'] || -1,
+    validatedData['ble.sensor.low.battery.status.1'] || -1,
+    validatedData['ble.sensor.low.battery.status.2'] || -1,
+    validatedData['ble.sensor.magnet.status.1'] || -1,
+    validatedData['ble.sensor.magnet.status.2'] || -1,
+    validatedData['ble.sensor.magnet.count.1'] || -1,
+    validatedData['ble.sensor.magnet.count.2'] || -1,
+    validatedData['ble.sensor.temperature.1'] || -1,
+    validatedData['ble.sensor.temperature.2'] || -1,
+    validatedData['ble.sensor.temperature.3'] || -1,
+    validatedData['ble.sensor.temperature.4'] || -1,
+    validatedData['bluetooth.state.enum'] || -1,
+    validatedData['gnss.state.enum'] || -1,
+    validatedData['gnss.status'] || -1,
+    validatedData['gsm.mcc'] || -1,
+    validatedData['gsm.mnc'] || -1,
+    validatedData['gsm.operator.code'] || '.',
+    validatedData['gsm.signal.level'] || -1,
+    validatedData['movement.status'] || -1,
+    validatedData['position.hdop'] || -1,
+    validatedData['position.pdop'] || -1,
+    validatedData['position.valid'] || -1,
+    validatedData['position.fix.age'] || -1,
+    validatedData['sleep.mode.enum'] || -1,
+    validatedData['custom.param.116'] || -1,
+    validatedData['vehicle.mileage'] || -1
+  ];
 
-  await pool.query(query, params);
+  try {
+    await pool.query(query, params);
+  } catch (error) {
+    console.error('SQL Error:', error);
+    console.error('Query:', query);
+    console.error('Params:', params);
+    throw error;
+  }
 
   // If it's sensor data, also update the door_status table
   if (validatedData['ble.sensor.magnet.status.1'] !== null && validatedData['ble.sensor.temperature.1'] !== null) {
@@ -451,7 +476,8 @@ app.get('/api/latest-sectors', async (req, res) => {
       const query = `
         SELECT beacon_id, timestamp
         FROM ${tableName}
-        WHERE timestamp >= ? AND beacon_id IS NOT NULL
+        WHERE timestamp >= ? AND beacon_id IS NOT NULL AND  beacon_id != 'no encontrado: NULL'
+
         ORDER BY timestamp DESC
       `;
       
@@ -782,7 +808,7 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
   const query = `
       SELECT timestamp, beacon_id
       FROM ${tableName}
-      WHERE timestamp BETWEEN ? AND ? AND beacon_id IS NOT NULL
+      WHERE timestamp BETWEEN ? AND ? AND beacon_id IS NOT NULL AND beacon_id != 'no encontrado: NULL'
       ORDER BY timestamp ASC
   `;
 
