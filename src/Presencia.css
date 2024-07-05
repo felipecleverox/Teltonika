@@ -28,8 +28,8 @@ th {
 }
 
 th .rotate {
-  -webkit-transform: rotate(-90deg); /* Safari */
-  -ms-transform: rotate(-90deg); /* IE 9 */
+  -webkit-transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
   transform: rotate(-90deg);
   white-space: nowrap;
   display: inline-block;
@@ -48,8 +48,8 @@ tbody tr {
 }
 
 .status-bar-wrapper {
-  display: -webkit-box; /* Safari */
-  display: -ms-flexbox; /* IE 10 */
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -148,7 +148,36 @@ tbody tr {
   background-color: rgb(39, 38, 38);
 }
 
-/* Media Queries para hacer la tabla y la leyenda responsivas */
+.pie-charts-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+.pie-chart {
+  width: calc(33.33% - 20px);
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.chart-container {
+  height: 200px;
+  position: relative;
+}
+
+.pie-chart h2 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+@media (max-width: 1200px) {
+  .pie-chart {
+    width: calc(50% - 20px);
+  }
+}
+
 @media (max-width: 768px) {
   .presencia {
     padding: 10px;
@@ -178,6 +207,14 @@ tbody tr {
   .color-box {
     width: 15px;
     height: 15px;
+  }
+
+  .pie-chart {
+    width: 100%;
+  }
+  
+  .chart-container {
+    height: 250px;
   }
 }
 
@@ -211,4 +248,26 @@ tbody tr {
     width: 10px;
     height: 10px;
   }
+
+  .chart-container {
+    height: 200px;
+  }
+  
+  .pie-chart h2 {
+    font-size: 14px;
+  }
+}
+.summary-pie-chart {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 30px auto;
+}
+
+.summary-pie-chart h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.summary-pie-chart .chart-container {
+  height: 300px;
 }

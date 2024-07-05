@@ -3,7 +3,7 @@ DELIMITER //
 DROP EVENT IF EXISTS `actualizar_beacon_status` //
 
 CREATE EVENT `actualizar_beacon_status` 
-ON SCHEDULE EVERY 30 MINUTE STARTS '2023-07-04 16:00:00' 
+ON SCHEDULE EVERY 30 MINUTE STARTS '2024-07-01 00:00:00' 
 ON COMPLETION NOT PRESERVE ENABLE 
 DO
 BEGIN
@@ -58,7 +58,7 @@ BEGIN
     WHERE 
         beacons.lugar = CONCAT('Sector ', sector_num)
         AND gps_data.ident IN (SELECT id_dispositivo_asignado FROM personal)
-        AND gps_data.timescalcular_diferencia_minutostamp > ((SELECT timestamp FROM gps_data ORDER BY id DESC LIMIT 1) - 1800);
+        AND gps_data.timestamp  > ((SELECT timestamp FROM gps_data ORDER BY id DESC LIMIT 1) - 1800);
     
     
 	CALL calcular_diferencia_minutos(inicio, fin, minutos_diferencia);
