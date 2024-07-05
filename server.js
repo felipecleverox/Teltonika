@@ -394,32 +394,8 @@ async function processGpsData(gpsData) {
     console.error('Params:', params);
     throw error;
   }
-
-  // If it's sensor data, also update the door_status table
-  if (validatedData['ble.sensor.magnet.status.1'] !== null && validatedData['ble.sensor.temperature.1'] !== null) {
-    await updateDoorStatus(validatedData);
-  }
 }
 
-async function updateDoorStatus(gpsData) {
-  const [lastBeaconRecord] = await pool.query(`
-    SELECT ubicacion 
-    FROM beacons 
-    WHERE id LIKE CONCAT('%', 
-        JSON_UNQUOTE(JSON_EXTRACT(?, '$[0].id')), 
-        '%')
-  `, [JSON.stringify(gpsData['ble.beacons'])]);
-
-  const sector = lastBeaconRecord.length > 0 ? lastBeaconRecord[0].ubicacion : 'Desconocido';
-  const magnetStatus = gpsData['ble.sensor.magnet.status.1'];
-  const temperature = gpsData['ble.sensor.temperature.1'];
-  const timestamp = convertToLocalTime(gpsData.timestamp);
-
-  await pool.query(`
-    INSERT INTO door_status (sector, magnet_status, temperature, timestamp)
-    VALUES (?, ?, ?, ?)
-  `, [sector, magnetStatus, temperature, timestamp]);
-}
 // Endpoint para obtener los datos más recientes de GPS para un dispositivo específico
 app.get('/api/get-latest-gps-data', async (req, res) => {
   const { device_name, startTime, endTime } = req.query;
