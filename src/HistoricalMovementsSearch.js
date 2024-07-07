@@ -9,18 +9,19 @@ mapboxgl.accessToken = 'pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZ
 
 const HistoricalMovementsSearch = () => {
   const [devices, setDevices] = useState([]);
-  const [selectedDeviceId, setSelectedDeviceId] = useState('');
-  const [selectedDay, setSelectedDay] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [device, setDevice] = useState('');
+  const [date, setDate] = useState('');
+  const [startHour, setStartHour] = useState('');
+  const [endHour, setEndHour] = useState('');
   const [data, setData] = useState([]);
   const [map, setMap] = useState(null);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(''); // Variable de estado para el mensaje de error
 
   useEffect(() => {
     const fetchDevices = async () => {
       try {
         const result = await axios.get('/api/devices');
+        console.log('Fetched devices:', result.data);
         setDevices(result.data);
       } catch (error) {
         console.error('Error fetching devices:', error);
@@ -30,81 +31,170 @@ const HistoricalMovementsSearch = () => {
     fetchDevices();
   }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log('Submitting form with values:', { device, date, startHour, endHour });
     try {
       const result = await axios.get('/api/historical-gps-data', {
         params: {
-          device_id: selectedDeviceId,
-          date: selectedDay,
-          startHour: startTime,
-          endHour: endTime,
+          device_id: device,
+          date,
+          startHour,
+          endHour,
         },
       });
-      const validData = result.data.filter(d => d.latitude !== null && d.longitude !== null);
+      console.log('Response data:', result.data);
+      const validData = result.data.filter(d => d.latitude !== null && d.longitude !== null); // Filtrar datos válidos
       setData(validData);
       if (validData.length > 0) {
-        setErrorMessage('');
+        setErrorMessage(''); // Limpiar el mensaje de error
         plotRoute(validData);
       } else {
         setErrorMessage('Sin Datos para esa Búsqueda');
       }
     } catch (error) {
       console.error('Error fetching historical GPS data:', error);
-      setErrorMessage('Error al buscar los datos GPS históricos');
+      setErrorMessage('Error al buscar los datos GPS históricos'); // Mensaje de error en caso de fallo en la búsqueda
     }
   };
 
-  // ... (mantener el resto del código igual, incluyendo plotRoute y createCustomMarker)
+  const plotRoute = (gpsData) => {
+    console.log('Plotting route with GPS data:', gpsData);
+
+    if (map) {
+      map.remove();
+    }
+
+    const mapInstance = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [-70.6693, -33.4489],
+      zoom: 10,
+    });
+
+    const nav = new mapboxgl.NavigationControl();
+    mapInstance.addControl(nav, 'top-right');
+
+    // Estilizar los controles de navegación
+    const navElement = nav._container;
+    navElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // Fondo semi-transparente
+    navElement.querySelectorAll('button').forEach(button => {
+      button.style.color = 'red'; // Cambiar color del texto a blanco
+      button.style.backgroundColor = 'rgba(0, 0, 0, 0.10)'; // Fondo semi-transparente para botones
+      button.style.border = 'white'; // Sin borde para los botones
+    });
+    navElement.querySelectorAll('svg').forEach(svg => {
+      svg.style.fill = 'white'; // Cambiar color del ícono a blanco
+    });
+
+    setMap(mapInstance);
+
+    const coordinates = gpsData.map((data) => [parseFloat(data.longitude), parseFloat(data.latitude)]);
+
+    console.log('Coordinates:', coordinates);
+
+    if (coordinates.length > 0) {
+      mapInstance.on('load', () => {
+        mapInstance.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates,
+            },
+          },
+        });
+
+        mapInstance.addLayer({
+          id: 'route',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': '#FF0000', // Cambiar color de la línea a rojo
+            'line-width': 6,
+          },
+        });
+
+        coordinates.forEach(coord => {
+          new mapboxgl.Marker({ element: createCustomMarker() })
+            .setLngLat(coord)
+            .addTo(mapInstance);
+        });
+
+        // Adjust the map view to the bounds of the coordinates
+        const bounds = coordinates.reduce((bounds, coord) => {
+          return bounds.extend(coord);
+        }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+
+        mapInstance.fitBounds(bounds, { padding: 50 });
+      });
+    } else {
+      console.log('No coordinates to plot.');
+    }
+  };
+
+  const createCustomMarker = () => {
+    const marker = document.createElement('div');
+    marker.style.backgroundImage = `url(${markerIcon})`;
+    marker.style.width = '20px';  // Ajusta el ancho
+    marker.style.height = '24px'; // Ajusta la altura
+    marker.style.backgroundSize = '100%';
+    return marker;
+  };
 
   return (
     <div className="historical-movements-search">
-      <Header title="Búsqueda Histórica Ubicación Exteriores" />
-      <div className="search-container">
-        <div className="device-selection">
-          <select 
-            value={selectedDeviceId} 
-            onChange={(e) => setSelectedDeviceId(e.target.value)}
-          >
-            <option value="">Seleccionar Dispositivo...</option>
-            {devices.map(device => (
-              <option key={device.id} value={device.id}>{device.device_asignado}</option>
-            ))}
-          </select>
-        </div>
-        <div className="date-time-selection">
-          <div className="date-input">
-            <label>Seleccionar Día:</label>
+      <Header title="Ubicación Exteriores Tiempo Real" />
+      <form onSubmit={handleSubmit}>
+        <div className="form-row">
+          <label>
+            Dispositivo:
+            <select value={device} onChange={(e) => setDevice(e.target.value)}>
+              <option value="">Seleccione un dispositivo</option>
+              {devices.map((device) => (
+                <option key={device.id} value={device.id}>
+                  {device.device_asignado}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Fecha:
             <input
               type="date"
-              value={selectedDay}
-              onChange={e => setSelectedDay(e.target.value)}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
             />
-          </div>
-          <div className="time-inputs">
-            <div className="time-input">
-              <label>Hora Inicio:</label>
-              <input
-                type="time"
-                value={startTime}
-                onChange={e => setStartTime(e.target.value)}
-              />
-            </div>
-            <div className="time-input">
-              <label>Hora Fin:</label>
-              <input
-                type="time"
-                value={endTime}
-                onChange={e => setEndTime(e.target.value)}
-              />
-            </div>
-          </div>
+          </label>
+          <label>
+            Hora de inicio:
+            <input
+              type="time"
+              value={startHour}
+              onChange={(e) => setStartHour(e.target.value)}
+            />
+          </label>
+          <label>
+            Hora de fin:
+            <input
+              type="time"
+              value={endHour}
+              onChange={(e) => setEndHour(e.target.value)}
+            />
+          </label>
+          <button type="submit">Buscar</button>
         </div>
-        <button onClick={handleSubmit}>Buscar</button>
-      </div>
-      {errorMessage && <p className="error-message">{errorMessage}</p>}
+      </form>
+      {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Mostrar mensaje de error */}
       <div id="map" className="map"></div>
       {data.length > 0 && (
-        <table className="search-results-table">
+        <table>
           <thead>
             <tr>
               <th>Hora</th>
