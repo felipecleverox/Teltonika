@@ -151,46 +151,50 @@ const HistoricalMovementsSearch = () => {
   return (
     <div className="historical-movements-search">
       <Header title="Ubicación Exteriores Tiempo Real" />
-      <form onSubmit={handleSubmit}>
-        <div className="form-row">
-          <label>
-            Dispositivo:
-            <select value={device} onChange={(e) => setDevice(e.target.value)}>
-              <option value="">Seleccione un dispositivo</option>
-              {devices.map((device) => (
-                <option key={device.id} value={device.id}>
-                  {device.device_asignado}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Fecha:
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </label>
-          <label>
-            Hora de inicio:
-            <input
-              type="time"
-              value={startHour}
-              onChange={(e) => setStartHour(e.target.value)}
-            />
-          </label>
-          <label>
-            Hora de fin:
-            <input
-              type="time"
-              value={endHour}
-              onChange={(e) => setEndHour(e.target.value)}
-            />
-          </label>
-          <button type="submit">Buscar</button>
-        </div>
-      </form>
+      <form onSubmit={handleSubmit} className="search-container">
+  <div className="device-selection">
+    <select value={device} onChange={(e) => setDevice(e.target.value)}>
+      <option value="">Seleccione un dispositivo</option>
+      {devices.map((device) => (
+        <option key={device.id} value={device.id}>
+          {device.device_asignado}
+        </option>
+      ))}
+    </select>
+  </div>
+  <div className="date-time-selection">
+    <div className="date-input">
+      <label htmlFor="date-picker">Fecha:</label>
+      <input
+        id="date-picker"
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+      />
+    </div>
+    <div className="time-inputs">
+      <div className="time-input">
+        <label htmlFor="start-time">Hora de inicio:</label>
+        <input
+          id="start-time"
+          type="time"
+          value={startHour}
+          onChange={(e) => setStartHour(e.target.value)}
+        />
+      </div>
+      <div className="time-input">
+        <label htmlFor="end-time">Hora de fin:</label>
+        <input
+          id="end-time"
+          type="time"
+          value={endHour}
+          onChange={(e) => setEndHour(e.target.value)}
+        />
+      </div>
+    </div>
+  </div>
+  <button type="submit">Buscar</button>
+</form>
       {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Mostrar mensaje de error */}
       <div id="map" className="map"></div>
       {data.length > 0 && (
