@@ -70,6 +70,19 @@ function PersonSearch() {
         }
     };
 
+    const clearSearchResults = () => {
+        setSearchResults([]);
+    };
+
+    const handleDeviceChange = (e) => {
+        setSelectedDeviceId(e.target.value);
+        clearSearchResults();
+    };
+
+    const handleSearch = () => {
+        fetchSearchResults();
+    };
+
     const formatDate = (timestamp) => {
         if (!timestamp) return 'N/A';
         const date = new Date(timestamp);
@@ -150,7 +163,7 @@ function PersonSearch() {
             </div>
             <div className="search-container">
                 <div className="device-selection">
-                    <select onChange={(e) => setSelectedDeviceId(e.target.value)}>
+                    <select onChange={handleDeviceChange}>
                         <option value="">Seleccionar Dispositivo...</option>
                         {devices.map(device => (
                             <option key={device.id} value={device.id}>{device.device_asignado}</option>
@@ -185,7 +198,7 @@ function PersonSearch() {
                         </div>
                     </div>
                 </div>
-                <button onClick={fetchSearchResults}>Buscar</button>
+                <button onClick={handleSearch}>Buscar</button>
             </div>
             <table className="search-results-table">
                 <thead>
