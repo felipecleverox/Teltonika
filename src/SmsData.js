@@ -34,18 +34,18 @@ const SmsData = () => {
   };
 
   const extractAlertMessage = (message) => {
-    if (message.includes('Hombre Caido') || message.includes('ManDown')) {
+    if (message.toLowerCase().includes('hombre caido') || message.toLowerCase().includes('mandown')) {
       return 'Hombre Caído';
-    } else if (message.includes('Necesito ayuda')) {
+    } else if (message.toLowerCase().includes('necesito ayuda')) {
       return 'Necesito Ayuda';
     }
     return '';
   };
 
   const getAlertStyle = (message) => {
-    if (message.includes('Hombre Caido') || message.includes('ManDown')) {
+    if (message.toLowerCase().includes('hombre caido') || message.toLowerCase().includes('mandown')) {
       return { backgroundColor: 'rgba(255, 0, 0, 0.5)', color: 'white' };
-    } else if (message.includes('Necesito ayuda')) {
+    } else if (message.toLowerCase().includes('necesito ayuda')) {
       return { backgroundColor: 'rgba(255, 255, 0, 0.5)', color: 'black' };
     }
     return {};
