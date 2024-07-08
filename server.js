@@ -645,7 +645,7 @@ app.get('/api/last-known-position', async (req, res) => {
     const [lastKnownPosition] = await pool.query(`
       SELECT ident, latitude, longitude, timestamp * 1000 AS unixTimestamp
       FROM gps_data
-      WHERE ident = ?
+      WHERE ident = ? AND latitude IS NOT NULL AND longitude IS NOT NULL
       ORDER BY timestamp DESC
       LIMIT 1
     `, [ident]);
@@ -659,7 +659,7 @@ app.get('/api/last-known-position', async (req, res) => {
     // Log the last known position for debugging purposes
     console.log('Last known position:', lastKnownPosition);
 
-    // Query to get the last coordinate change of the device
+    /* Query to get the last coordinate change of the device
     const [lastCoordinateChange] = await pool.query(`
       SELECT timestamp * 1000 AS changeTimestamp
       FROM gps_data
@@ -673,12 +673,13 @@ app.get('/api/last-known-position', async (req, res) => {
     ]);
 
     // Log the last coordinate change for debugging purposes
-    console.log('Last coordinate change:', lastCoordinateChange);
+    console.log('Last coordinate change:', lastCoordinateChange);*/
 
     // Construct the response object
     const response = {
-      ...lastKnownPosition[0],
-      changeTimestamp: lastCoordinateChange.length > 0 ? lastCoordinateChange[0].changeTimestamp : null
+      ...lastKnownPosition[0]
+      //,
+      //changeTimestamp: lastCoordinateChange.length > 0 ? lastCoordinateChange[0].changeTimestamp : null
     };
 
     // Set default coordinates if latitude or longitude is null
@@ -1135,35 +1136,6 @@ app.post('/api/umbrales', async (req, res) => {
   }
 });
 
-// Endpoint for user registration
-app.post('/api/register', async (req, res) => {
-  const { userId, username, password, email, permissions } = req.body;
-  const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
-
-  try {
-    if (userId) {
-      // Update existing user
-      await pool.query(
-        'UPDATE users SET username = ?, email = ?, permissions = ? WHERE id = ?',
-        [username, email, permissions, userId]
-      );
-      res.sendStatus(200);
-    } else {
-      // Create new user
-      const [existingUser] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-      if (existingUser.length > 0) {
-        return res.status(400).send('Username already exists');
-      }
-
-      await pool.query('INSERT INTO users (username, password, email, permissions) VALUES (?, ?, ?, ?)', [username, hashedPassword, email, permissions]);
-      res.sendStatus(201);
-    }
-  } catch (error) {
-    console.error('Error registering or updating user:', error);
-    res.status(500).send('Server Error');
-  }
-});
-
 // Endpoint for user login
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
@@ -1197,29 +1169,85 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-
-// Endpoint for resetting the password
-app.post('/api/reset-password', async (req, res) => {
-  const { token, newPassword } = req.body;
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
+// Endpoint for user registration
+app.post('/api/register', async (req, res) => {
+  const { userId, username, password, email, permissions } = req.body;
+  const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
   try {
-    // Fetch the user by reset token and ensure the token is not expired
-    const [user] = await pool.query('SELECT * FROM users WHERE resetToken = ? AND resetTokenExpiry > ?', [token, Date.now()]);
-    if (user.length === 0) {
-      return res.status(400).send('Invalid or expired token');
+    if (userId) {
+      // Update existing user
+      await pool.query(
+        'UPDATE users SET username = ?, email = ?, permissions = ? WHERE id = ?',
+        [username, email, permissions, userId]
+      );
+      res.sendStatus(200);
+    } else {
+      // Create new user
+      const [existingUser] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+      if (existingUser.length > 0) {
+        return res.status(400).send('Username already exists');
+      }
+
+      await pool.query('INSERT INTO users (username, password, email, permissions) VALUES (?, ?, ?, ?)', [username, hashedPassword, email, permissions]);
+      res.sendStatus(201);
     }
-
-    // Update the user's password and clear the reset token and expiry time
-    await pool.query('UPDATE users SET password = ?, resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?', [hashedPassword, user[0].id]);
-
-    res.send('Password reset successful');
   } catch (error) {
-    console.error('Error resetting password:', error);
+    console.error('Error registering or updating user:', error);
     res.status(500).send('Server Error');
   }
 });
+// Endpoint for resetting the password
+app.post('/api/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body;
+  
+  try {
+    // Verificar que el token sea válido y no haya expirado
+    const [user] = await pool.query('SELECT * FROM users WHERE resetToken = ? AND resetTokenExpiry > ?', [token, Date.now()]);
+    if (user.length === 0) {
+      return res.status(400).send('Token inválido o expirado');
+    }
 
+    // Hash de la nueva contraseña
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Actualizar la contraseña y limpiar el token de restablecimiento
+    await pool.query('UPDATE users SET password = ?, resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?', [hashedPassword, user[0].id]);
+
+    res.send('Contraseña restablecida con éxito');
+  } catch (error) {
+    console.error('Error al restablecer la contraseña:', error);
+    res.status(500).send('Error del servidor');
+  }
+});
+// Endpoint for requesting a password reset
+app.post('/api/request-password-reset', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Verificar si el usuario existe
+    const [user] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    if (user.length === 0) {
+      return res.status(404).send('Usuario no encontrado');
+    }
+
+    // Generar token de restablecimiento
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hora de validez
+
+    // Guardar el token en la base de datos
+    await pool.query('UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE id = ?', [resetToken, resetTokenExpiry, user[0].id]);
+
+    // Enviar email con el enlace de restablecimiento
+    // Aquí deberías implementar el envío de email. Por ahora, solo simularemos esto.
+    console.log(`Enlace de restablecimiento: http://tuapp.com/reset-password?token=${resetToken}`);
+
+    res.send('Se ha enviado un enlace de restablecimiento a su email');
+  } catch (error) {
+    console.error('Error al solicitar restablecimiento de contraseña:', error);
+    res.status(500).send('Error del servidor');
+  }
+});
 // Helper function to format timestamp
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
