@@ -8,7 +8,8 @@ module.exports = {
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js'
+    filename: 'bundle.js',
+    publicPath: '/'
   },
   module: {
     rules: [
@@ -56,6 +57,7 @@ module.exports = {
     port: 3000,
     host: '0.0.0.0', // Permite conexiones desde cualquier host
     allowedHosts: ['localhost', 'thenext.ddns.net'], // Permite estos hosts
+    historyApiFallback: true,
     proxy: [
       {
         context: ['/api'],

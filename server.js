@@ -10,8 +10,11 @@ const crypto = require('crypto'); // Library for cryptographic functions
 const nodemailer = require('nodemailer'); // Library to send emails
 const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
 const Joi = require('joi'); // New import for schema validation
+const sgMail = require('@sendgrid/mail');
 
-
+// Configurar SendGrid
+const SENDGRID_API_KEY = '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';
+sgMail.setApiKey(SENDGRID_API_KEY);
 
 // Create an Express application
 const app = express();
@@ -244,6 +247,14 @@ const schemas = {
   }
 };
 
+// Nodemailer configuration
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'felipe@thenextsecurity.cl',
+    pass: '9516npth8913tqm.'
+  }
+});
 // Agregar esta función de ayuda al principio del archivo
 function getCurrentDateStart() {
   const now = new Date();
@@ -255,7 +266,7 @@ app.use(cors(corsOptions)); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: false })); // Parse URL-encoded request bodies
 
-// Helper function to get sector name based on beacon ID
+
 // Helper function to get sector name based on beacon ID
 const getSector = (beaconId) => {
   switch (beaconId) {
@@ -1197,21 +1208,48 @@ app.post('/api/register', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+// Endpoint for requesting a password reset
+app.post('/api/request-password-reset', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const [user] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    if (user.length === 0) {
+      return res.status(404).send('Usuario no encontrado');
+    }
+
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hora de validez
+
+    await pool.query('UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE id = ?', [resetToken, resetTokenExpiry, user[0].id]);
+
+    const resetUrl = `http://thenext.ddns.net:3000/reset-password/${resetToken}`;
+    const msg = {
+      to: email,
+      from: 'felipe@thenextsecurity.cl', // Usa el correo que hayas verificado con SendGrid
+      subject: 'Restablecimiento de Contraseña',
+      text: `Para restablecer tu contraseña, haz clic en el siguiente enlace: ${resetUrl}`,
+    };
+
+    await sgMail.send(msg);
+    res.send('Se ha enviado un enlace de restablecimiento a su email');
+  } catch (error) {
+    console.error('Error al solicitar restablecimiento de contraseña:', error);
+    res.status(500).send('Error del servidor');
+  }
+});
+
 // Endpoint for resetting the password
 app.post('/api/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
   
   try {
-    // Verificar que el token sea válido y no haya expirado
     const [user] = await pool.query('SELECT * FROM users WHERE resetToken = ? AND resetTokenExpiry > ?', [token, Date.now()]);
     if (user.length === 0) {
       return res.status(400).send('Token inválido o expirado');
     }
 
-    // Hash de la nueva contraseña
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Actualizar la contraseña y limpiar el token de restablecimiento
     await pool.query('UPDATE users SET password = ?, resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?', [hashedPassword, user[0].id]);
 
     res.send('Contraseña restablecida con éxito');
@@ -1220,34 +1258,7 @@ app.post('/api/reset-password', async (req, res) => {
     res.status(500).send('Error del servidor');
   }
 });
-// Endpoint for requesting a password reset
-app.post('/api/request-password-reset', async (req, res) => {
-  const { email } = req.body;
 
-  try {
-    // Verificar si el usuario existe
-    const [user] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (user.length === 0) {
-      return res.status(404).send('Usuario no encontrado');
-    }
-
-    // Generar token de restablecimiento
-    const resetToken = crypto.randomBytes(20).toString('hex');
-    const resetTokenExpiry = Date.now() + 3600000; // 1 hora de validez
-
-    // Guardar el token en la base de datos
-    await pool.query('UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE id = ?', [resetToken, resetTokenExpiry, user[0].id]);
-
-    // Enviar email con el enlace de restablecimiento
-    // Aquí deberías implementar el envío de email. Por ahora, solo simularemos esto.
-    console.log(`Enlace de restablecimiento: http://tuapp.com/reset-password?token=${resetToken}`);
-
-    res.send('Se ha enviado un enlace de restablecimiento a su email');
-  } catch (error) {
-    console.error('Error al solicitar restablecimiento de contraseña:', error);
-    res.status(500).send('Error del servidor');
-  }
-});
 // Helper function to format timestamp
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
@@ -1408,7 +1419,7 @@ async function getUbicacionFromIdent(ident, timestamp) {
   const connection = await pool.getConnection();
   try {
     const [latestRecord] = await connection.query(`
-      SELECT ble_beacons FROM gps_data
+      SELECT id, ble_beacons , event_enum FROM gps_data
       WHERE ident = ? AND timestamp <= ? and ble_beacons != "[]"
       ORDER BY timestamp DESC limit 1
     `, [ident, timestamp]);
@@ -1422,6 +1433,12 @@ async function getUbicacionFromIdent(ident, timestamp) {
 
       const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE id = ?`, [activeBeaconIds[0]]);
       console.log('Ubicación:', location);
+      if(latestRecord[0].event_enum == 385){
+        console.log("Este es el event_enum = 385 con id"+latestRecord[0].id)
+      }
+      if(latestRecord[0].event_enum == 11317){
+        console.log("Este es el event_enum = 11317 con id"+latestRecord[0].id)
+      }
 
       return location.length > 0 ? location[0].ubicacion : null;
     } else {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import jwt from 'jsonwebtoken';
 import './LandingPage.css';
 import mapImage from './assets/images/map-of-a-map.jpeg';
 import centerImage from './assets/images/TNS Track White.png';
@@ -67,6 +68,7 @@ const LandingPage = () => {
                     <button type="submit">Login</button>
                 </form>
                 {error && <p className="error">{error}</p>}
+                <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
             </div>
             <div className="footer-images">
                 <img src={rightImage} alt="Right Image" className="right-image" />
