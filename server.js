@@ -1436,7 +1436,7 @@ async function getUbicacionFromIdent(ident, timestamp) {
         console.log("Registro con mac.address:", record);
         const activeBeaconMacAdrress = beaconsData.map(beacon => beacon.mac.addres);
         console.log('Active Beacon IDs:', activeBeaconMacAdrress);
-        const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE id = ?`, [activeBeaconMacAdrress[0]]);
+        const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE mac = ?`, [activeBeaconMacAdrress[0]]);
         console.log('Ubicación:', location);
         return location.length > 0 ? location[0].ubicacion : null;
       } else {
