@@ -1434,7 +1434,7 @@ async function getUbicacionFromIdent(ident, timestamp) {
       // caso regsitro EYE
       if (record.hasOwnProperty("mac.address")) {
         console.log("Registro con mac.address:", record);
-        const activeBeaconMacAdrress = beaconsData.map(beacon => beacon.id);
+        const activeBeaconMacAdrress = beaconsData.map(beacon => beacon.mac.addres);
         console.log('Active Beacon IDs:', activeBeaconMacAdrress);
         const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE id = ?`, [activeBeaconMacAdrress[0]]);
         console.log('Ubicación:', location);
