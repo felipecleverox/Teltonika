@@ -1434,7 +1434,12 @@ async function getUbicacionFromIdent(ident, timestamp) {
       // caso regsitro EYE
       if (record.hasOwnProperty("mac.address")) {
         console.log("Registro con mac.address:", record);
-        const activeBeaconMacAdrress = beaconsData.map(beacon => beacon.mac.address);
+        const beaconsData = latestRecord[0].ble_beacons ? JSON.parse(latestRecord[0].ble_beacons) : []; // Asegurar que beaconsData no es undefined
+        const activeBeaconMacAdrress = beaconsData.map(beacon => {
+          // Verificar si beacon.mac existe y tiene la propiedad address
+          return beacon["mac.address"] || null; // Obtener el valor de mac.address o null si no existe
+        }).filter(mac => mac !== null); // Filtrar los valores nulos
+      
         console.log('Active Beacon IDs:', activeBeaconMacAdrress);
         const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE mac = ?`, [activeBeaconMacAdrress[0]]);
         console.log('Ubicación:', location);
