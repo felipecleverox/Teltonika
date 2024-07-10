@@ -294,7 +294,7 @@ const convertToLocalTime = (timestamp) => {
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
   const gpsDatas = Array.isArray(req.body) ? req.body : [req.body];
-  console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
+  // console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
   
   try {
     for (const gpsData of gpsDatas) {
@@ -314,11 +314,11 @@ async function processGpsData(gpsData) {
   if (!schema) {
     throw new Error(`Unknown device type: ${deviceTypeId}`);
   }
-  console.log('Validating data for device type:', deviceTypeId);
-  console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
+  //console.log('Validating data for device type:', deviceTypeId);
+  //console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
 
   let validatedData;
-  console.log('TypeB validation failed, attempting typeA schema');
+  //console.log('TypeB validation failed, attempting typeA schema');
   try {
     validatedData = await schema.typeA.validateAsync(gpsData);
   } catch (err) {
@@ -1419,7 +1419,7 @@ async function getUbicacionFromIdent(ident, timestamp) {
   const connection = await pool.getConnection();
   try {
     const [latestRecord] = await connection.query(`
-      SELECT id, ble_beacons , event_enum FROM gps_data
+      SELECT ble_beacons FROM gps_data
       WHERE ident = ? AND timestamp <= ? and ble_beacons != "[]"
       ORDER BY timestamp DESC limit 1
     `, [ident, timestamp]);
@@ -1428,19 +1428,31 @@ async function getUbicacionFromIdent(ident, timestamp) {
 
     if (latestRecord.length > 0 && latestRecord[0].ble_beacons && latestRecord[0].ble_beacons !== '[]') {
       const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
-      const activeBeaconIds = beaconsData.map(beacon => beacon.id);
-      console.log('Active Beacon IDs:', activeBeaconIds);
+      
 
-      const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE id = ?`, [activeBeaconIds[0]]);
-      console.log('Ubicación:', location);
-      if(latestRecord[0].event_enum == 385){
-        console.log("Este es el event_enum = 385 con id"+latestRecord[0].id)
-      }
-      if(latestRecord[0].event_enum == 11317){
-        console.log("Este es el event_enum = 11317 con id"+latestRecord[0].id)
+      const record = JSON.parse(latestRecord[0].ble_beacons)[0]; // Analizar el primer elemento del array JSON
+      // caso regsitro EYE
+      if (record.hasOwnProperty("mac.address")) {
+        console.log("Registro con mac.address:", record);
+        const beaconsData = latestRecord[0].ble_beacons ? JSON.parse(latestRecord[0].ble_beacons) : []; // Asegurar que beaconsData no es undefined
+        const activeBeaconMacAdrress = beaconsData.map(beacon => {
+          // Verificar si beacon.mac existe y tiene la propiedad address
+          return beacon["mac.address"] || null; // Obtener el valor de mac.address o null si no existe
+        }).filter(mac => mac !== null); // Filtrar los valores nulos
+      
+        console.log('Active Beacon IDs:', activeBeaconMacAdrress);
+        const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE mac = ?`, [activeBeaconMacAdrress[0]]);
+        console.log('Ubicación:', location);
+        return location.length > 0 ? location[0].ubicacion : null;
+      } else {
+        const activeBeaconIds = beaconsData.map(beacon => beacon.id);
+        console.log('Active Beacon IDs:', activeBeaconIds);
+        const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE id = ?`, [activeBeaconIds[0]]);
+        console.log('Ubicación:', location);
+        return location.length > 0 ? location[0].ubicacion : null;
       }
 
-      return location.length > 0 ? location[0].ubicacion : null;
+
     } else {
       console.log('No active beacons found.');
       return null;
