@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import './utils/backButtonHandler.js'; // Importa el archivo backButtonHandler
+
 import LastKnownPosition from '../LastKnownPosition';
 import UbicacionTiempoRealInteriores from '../UbicacionTiempoRealInteriores';
 import PersonSearch from '../PersonSearch';
@@ -15,12 +18,24 @@ import UserRegistration from '../UserRegistration';
 import ForgotPassword from '../ForgotPassword';
 import ResetPassword from '../ResetPassword';
 
+
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
     return token ? children : <Navigate to="/" />;
 };
 
 function App() {
+  useEffect(() => {
+    // Llama a la función handleBackButton del backButtonHandler
+    handleBackButton(); 
+
+    // Limpieza (opcional, si es necesario)
+    return () => {
+      // Remueve event listeners si los agregaste en backButtonHandler
+      window.removeEventListener('popstate');
+    };
+  }, []); // El arreglo de dependencias vacío asegura que se ejecute solo una vez al montar
+
   return (
     <Router>
       <Routes>
