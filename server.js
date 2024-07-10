@@ -15,8 +15,7 @@ const config = require('../config/config.json');
 
 
 // Configurar SendGrid
-const SENDGRID_API_KEY = config.email.SENDGRID_API_KEY;
-sgMail.setApiKey(SENDGRID_API_KEY);
+sgMail.setApiKey(config.email.SENDGRID_API_KEY);
 
 // Create an Express application
 const app = express();
@@ -1213,7 +1212,7 @@ app.post('/api/register', async (req, res) => {
 // Endpoint for requesting a password reset
 app.post('/api/request-password-reset', async (req, res) => {
   const { email } = req.body;
-
+  console
   try {
     const [user] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     if (user.length === 0) {
@@ -1233,7 +1232,12 @@ app.post('/api/request-password-reset', async (req, res) => {
       text: `Para restablecer tu contraseña, haz clic en el siguiente enlace: ${resetUrl}`,
     };
 
-    await sgMail.send(msg);
+    await sgMail.send(msg).then(() => {
+      console.log('Email sent');
+    })
+    .catch((error) => {
+      console.error(error);
+    });
     res.send('Se ha enviado un enlace de restablecimiento a su email');
   } catch (error) {
     console.error('Error al solicitar restablecimiento de contraseña:', error);
