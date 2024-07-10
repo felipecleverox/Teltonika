@@ -5,7 +5,9 @@ import './HistoricalMovementsSearch.css';
 import markerIcon from './assets/images/pinazul.png';
 import Header from './Header';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZDgybHB2OTh4dmo3Z2EifQ.bpZlTBTa56pF4cPhE3aSzg';
+//api keys
+const config = require('./config/config.json');
+mapboxgl.accessToken = config.maps.api_key;
 
 const HistoricalMovementsSearch = () => {
   const [devices, setDevices] = useState([]);

@@ -11,9 +11,11 @@ const nodemailer = require('nodemailer'); // Library to send emails
 const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
 const Joi = require('joi'); // New import for schema validation
 const sgMail = require('@sendgrid/mail');
+const config = require('./config/config.json');
+
 
 // Configurar SendGrid
-const SENDGRID_API_KEY = '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';
+const SENDGRID_API_KEY = config.email.SENDGRID_API_KEY;
 sgMail.setApiKey(SENDGRID_API_KEY);
 
 // Create an Express application
