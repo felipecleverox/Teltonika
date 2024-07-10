@@ -1,4 +1,4 @@
-function handleBackButton() {
+export function handleBackButton() {
     window.onpopstate = function(event) {
       // Aquí puedes agregar la lógica que deseas ejecutar cuando el usuario haga clic en "Atrás"
       // Por ejemplo, puedes redirigir a otra página, actualizar el estado de tu aplicación, etc.
@@ -13,5 +13,3 @@ function handleBackButton() {
       // Puedes agregar aquí tu propia lógica de navegación
     });
   }
-// Llama al método para inicializar el manejo del botón "Atrás"
-handleBackButton();

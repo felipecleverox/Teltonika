@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import '../utils/backButtonHandler.js'; // Importa el archivo backButtonHandler
+import { handleBackButton } from  '../utils/backButtonHandler.js'; // Importa el archivo backButtonHandler
 
 import LastKnownPosition from '../LastKnownPosition';
 import UbicacionTiempoRealInteriores from '../UbicacionTiempoRealInteriores';
