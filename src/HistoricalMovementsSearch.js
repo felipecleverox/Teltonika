@@ -6,7 +6,7 @@ import markerIcon from './assets/images/pinazul.png';
 import Header from './Header';
 
 //api keys
-const config = require('./config/config.json');
+const config = require('../config/config.json');
 mapboxgl.accessToken = config.maps.api_key;
 
 const HistoricalMovementsSearch = () => {
