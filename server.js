@@ -11,7 +11,7 @@ const nodemailer = require('nodemailer'); // Library to send emails
 const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
 const Joi = require('joi'); // New import for schema validation
 const sgMail = require('@sendgrid/mail');
-const config = require('../config/config.json');
+const config = require('./config/config.json');
 
 
 // Configurar SendGrid
