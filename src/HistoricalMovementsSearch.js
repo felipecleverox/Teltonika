@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState,useRef, useEffect } from 'react';
 import axios from 'axios';
 import mapboxgl from 'mapbox-gl';
 import './HistoricalMovementsSearch.css';
@@ -18,6 +18,7 @@ const HistoricalMovementsSearch = () => {
   const [data, setData] = useState([]);
   const [map, setMap] = useState(null);
   const [errorMessage, setErrorMessage] = useState(''); // Variable de estado para el mensaje de error
+  const tableRef = useRef(null);
 
   useEffect(() => {
     const fetchDevices = async () => {
@@ -31,6 +32,12 @@ const HistoricalMovementsSearch = () => {
     };
 
     fetchDevices();
+    return () => {
+      if (tableRef.current) { // Verifica si el componente está montado
+        ReactDOM.unmountComponentAtNode(tableRef.current); // Desmonta el componente
+        setTableExists(false); // Actualiza el estado después de desmontar
+      }
+    };
   }, []);
 
   const handleSubmit = async (e) => {
