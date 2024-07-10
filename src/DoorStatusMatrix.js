@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
+import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import "react-datepicker/dist/react-datepicker.css";
 import './DoorStatusMatrix.css';
 import Header from './Header';
@@ -10,6 +11,7 @@ const DoorStatusMatrix = () => {
   const [data, setData] = useState([]);
   const [sectors, setSectors] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [pieChartData, setPieChartData] = useState([]);
 
   useEffect(() => {
     fetchDataForSelectedDate(selectedDate);
@@ -25,13 +27,24 @@ const DoorStatusMatrix = () => {
       });
       const fetchedData = response.data;
 
-      // Obtener los sectores únicos
       const uniqueSectors = [...new Set(fetchedData.map(item => item.sector))];
       setSectors(uniqueSectors);
       setData(fetchedData);
+
+      processChartData(fetchedData);
     } catch (error) {
       console.error('Error fetching door status:', error);
     }
+  };
+
+  const processChartData = (fetchedData) => {
+    const openCount = fetchedData.filter(d => d.magnet_status === 0).length;
+    const closedCount = fetchedData.filter(d => d.magnet_status === 1).length;
+    const total = openCount + closedCount;
+    setPieChartData([
+      { name: 'Abierto', value: openCount, percentage: ((openCount / total) * 100).toFixed(2) },
+      { name: 'Cerrado', value: closedCount, percentage: ((closedCount / total) * 100).toFixed(2) }
+    ]);
   };
 
   const handleDateChange = (date) => {
@@ -39,11 +52,11 @@ const DoorStatusMatrix = () => {
   };
 
   const getColorClass = (status) => {
-    return status === 1 ? 'closed' : 'open'; // Ajustado para usar las clases 'closed' y 'open'
+    return status === 1 ? 'closed' : 'open';
   };
 
   const createMatrix = () => {
-    const hours = Array.from({ length: 16 }, (_, i) => 8 + i); // Horas de 8 a 23
+    const hours = Array.from({ length: 16 }, (_, i) => 8 + i);
     return sectors.map(sector => {
       const sectorData = data.filter(d => d.sector === sector);
       const rows = hours.map(hour => {
@@ -72,6 +85,8 @@ const DoorStatusMatrix = () => {
   };
 
   const matrix = createMatrix();
+
+  const COLORS = ['#26b43bcf', '#af4c4f'];
 
   return (
     <div className="door-status-matrix">
@@ -126,6 +141,29 @@ const DoorStatusMatrix = () => {
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="charts-container">
+        <div className="chart">
+          <h2>Resumen de Estados (Porcentaje)</h2>
+          <PieChart width={400} height={300}>
+            <Pie
+              data={pieChartData}
+              cx={200}
+              cy={150}
+              labelLine={false}
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="value"
+              label={({ name, percentage }) => `${name}: ${percentage}%`}
+            >
+              {pieChartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
+        </div>
       </div>
     </div>
   );

@@ -39,23 +39,24 @@
 }
 
 .open {
-  background-color: #26b43bcf; /* Rojo */
+  background-color: #26b43bcf; /* Verde */
   color: white;
 }
 
 .closed {
-  background-color: #af4c4f; /* Verde */
+  background-color: #af4c4f; /* Rojo */
   color: white;
 }
 
 .door-status-matrix table {
   width: 80%;
   border-collapse: collapse;
+  margin: 0 auto;
 }
 
 .door-status-matrix th {
   background-color: #6b9fd4;
-  font-size: 16px; /* Ajusta este valor según sea necesario */
+  font-size: 16px;
 }
 
 .door-status-matrix th,
@@ -66,12 +67,12 @@
 }
 
 .col-width {
-  width: 40px; /* Ajusta este valor según sea necesario */
+  width: 40px;
 }
 
 .minute-labels td,
 .minute-label {
-  font-size: 12px; /* Ajusta este valor según sea necesario */
+  font-size: 12px;
 }
 
 .minute-labels {
@@ -79,15 +80,58 @@
 }
 
 .minute-labels td {
-  padding:8px 15px;
-  vertical-align: middle; /* Asegura la alineación vertical */
+  padding: 8px 15px;
+  vertical-align: middle;
 }
 
 .minute-label {
-  color: inherit; /* Mismo color que el texto del sector */
+  color: inherit;
 }
 
-/* Clase específica para la temperatura */
 .temperature {
-  font-size: 12px; /* Ajusta este valor según sea necesario */
+  font-size: 12px;
+}
+
+/* Estilos para el gráfico */
+.charts-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.chart {
+  width: 400px;
+}
+
+.chart h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.pie-labels {
+  margin-top: 20px;
+}
+
+.pie-label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+@media (max-width: 900px) {
+  .door-status-matrix table {
+    width: 95%;
+  }
+  
+  .chart {
+    width: 100%;
+  }
 }
