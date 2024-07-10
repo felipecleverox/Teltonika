@@ -26,15 +26,12 @@ const PrivateRoute = ({ children }) => {
 
 function App() {
   useEffect(() => {
-    // Llama a la función handleBackButton del backButtonHandler
-    handleBackButton(); 
+    // Llamamos a handleBackButton y guardamos la función de limpieza
+    const cleanup = handleBackButton();
 
-    // Limpieza (opcional, si es necesario)
-    return () => {
-      // Remueve event listeners si los agregaste en backButtonHandler
-      window.removeEventListener('popstate');
-    };
-  }, []); // El arreglo de dependencias vacío asegura que se ejecute solo una vez al montar
+    // Devolvemos la función de limpieza para que se ejecute al desmontar
+    return cleanup;
+  }, []);  // El arreglo de dependencias vacío asegura que se ejecute solo una vez al montar
 
   return (
     <Router>
