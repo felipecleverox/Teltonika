@@ -13,6 +13,7 @@ const Dashboard = () => {
   const [doorStatusData, setDoorStatusData] = useState(null);
   const [doorChangeData, setDoorChangeData] = useState(null);
   const [currentDoorStatus, setCurrentDoorStatus] = useState(null);
+  const [lastStatusTime, setLastStatusTime] = useState(null);
 
   useEffect(() => {
     fetchPresenceData(selectedDate);
@@ -121,20 +122,23 @@ const Dashboard = () => {
       let changeCount = 0;
       let lastStatus = null;
       let currentStatus = null;
+      let lastStatusTime = null;
 
       data.forEach((entry, index) => {
         if (index === 0) {
           lastStatus = entry.magnet_status;
+          lastStatusTime = entry.timestamp;
         } else {
           if (entry.magnet_status !== lastStatus) {
             changeCount++;
             lastStatus = entry.magnet_status;
+            lastStatusTime = entry.timestamp;
           }
         }
         currentStatus = entry.magnet_status;
       });
 
-      return { changeCount, currentStatus };
+      return { changeCount, currentStatus, lastStatusTime };
     };
 
     const currentResult = processData(dataCurrent);
@@ -143,7 +147,11 @@ const Dashboard = () => {
     const statusLabelCurrent = currentResult.currentStatus === 0 ? "Status: Abierta" : "Status: Cerrada";
     const statusColorCurrent = currentResult.currentStatus === 0 ? "#4CAF50" : "#F44336";
 
-    setCurrentDoorStatus(currentResult.currentStatus);
+    setCurrentDoorStatus({
+      current: currentResult.currentStatus,
+      previous: previousResult.currentStatus
+    });
+    setLastStatusTime(currentResult.lastStatusTime);
 
     setDoorChangeData([
       {
@@ -179,7 +187,7 @@ const Dashboard = () => {
     const { x, y, width, value, statusLabel, statusColor } = props;
     return (
       <g>
-        <text x={x + width / 2} y={y - 5} fill="#000000" textAnchor="middle" dominantBaseline="middle">
+        <text x={x + width / 2} y={y - 10} fill="#000000" textAnchor="middle" dominantBaseline="middle">
           {value}
         </text>
         {statusLabel && (
@@ -261,23 +269,26 @@ const Dashboard = () => {
         </div>
         <div className="chart-section">
           <h2>Frecuencia de Cambios de Estado de Puertas</h2>
-          {currentDoorStatus !== null && (
-            <div className="current-status-label" style={{
-              backgroundColor: 'black',
-              color: currentDoorStatus === 0 ? '#4CAF50' : '#F44336',
-              padding: '5px 10px',
-              borderRadius: '5px',
-              marginBottom: '10px',
-              display: 'inline-block'
-            }}>
-              Status Actual: {currentDoorStatus === 0 ? 'Abierta' : 'Cerrada'}
-            </div>
-          )}
+          <div style={{ marginBottom: '30px' }}>
+            {currentDoorStatus && lastStatusTime && (
+              <div className="current-status-label" style={{
+                backgroundColor: 'black',
+                color: currentDoorStatus.current === 0 ? '#4CAF50' : '#F44336',
+                padding: '5px 10px',
+                borderRadius: '5px',
+                marginBottom: '10px',
+                display: 'inline-block'
+              }}>
+                Status Actual: {currentDoorStatus.current === 0 ? 'Abierta' : 'Cerrada'} 
+                (Último cambio: {dayjs(lastStatusTime).format('HH:mm:ss')})
+              </div>
+            )}
+          </div>
           {doorChangeData ? (
             <BarChart width={400} height={300} data={doorChangeData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
-              <YAxis />
+              <YAxis tickFormatter={(value) => Math.round(value)} />
               <Tooltip />
               <Bar dataKey="count">
                 {doorChangeData.map((entry, index) => (
