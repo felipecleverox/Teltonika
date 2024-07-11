@@ -295,7 +295,7 @@ const convertToLocalTime = (timestamp) => {
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
   const gpsDatas = Array.isArray(req.body) ? req.body : [req.body];
-  // console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
+  console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
   
   try {
     for (const gpsData of gpsDatas) {
@@ -315,11 +315,11 @@ async function processGpsData(gpsData) {
   if (!schema) {
     throw new Error(`Unknown device type: ${deviceTypeId}`);
   }
-  //console.log('Validating data for device type:', deviceTypeId);
-  //console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
+  console.log('Validating data for device type:', deviceTypeId);
+  console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
 
   let validatedData;
-  //console.log('TypeB validation failed, attempting typeA schema');
+  console.log('TypeB validation failed, attempting typeA schema');
   try {
     validatedData = await schema.typeA.validateAsync(gpsData);
   } catch (err) {
