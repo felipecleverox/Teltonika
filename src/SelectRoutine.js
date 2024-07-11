@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import jwt from 'jsonwebtoken';
 import './SelectRoutine.css';
 import Header from './Header';
+import dashboardImage from './assets/images/dashboard.png';
 import ubicaciontiemporealinteriorImage from './assets/images/ubicaciontiemporealinterior.png';
 import personSearchImage from './assets/images/person_search.png';
 import interiorLocationsImage from './assets/images/plano_super.png';
@@ -16,6 +17,7 @@ import doorStatusImage from './assets/images/door_status.png';
 import userRegistrationImage from './assets/images/user_registration.png';
 
 const routines = [
+  { title: "Dashboard", image: dashboardImage, route: "/dashboard", permission: "view_dashboard" },
   { title: "Interior : Ubicación en Tiempo Real", image: ubicaciontiemporealinteriorImage, route: "/ubicaciones-interior", permission: "view_interior" }, 
   { title: "Interior : Búsqueda Histórica Ubicación", image: personSearchImage, route: "/busqueda-entradas-persona", permission: "search_interior" },
   { title: "Exterior : Ubicación Tiempo Real", image: interiorLocationsImage, route: "/last-known-position", permission: "view_exterior" },
@@ -26,7 +28,6 @@ const routines = [
   { title: "Datos : Análisis Forense", image: dataIntelligenceImage, route: "/inteligencia-de-datos", permission: "view_data_intelligence" },
   { title: "Parametrización", image: configurationImage, route: "/configuracion", permission: "view_configuration" },
   { title: "Registrar Usuario", image: userRegistrationImage, route: "/register-user", permission: "create_users" }
-
 ];
 
 const SelectRoutine = () => {
