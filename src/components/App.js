@@ -1,6 +1,4 @@
-// App.js
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import LastKnownPosition from '../LastKnownPosition';
 import UbicacionTiempoRealInteriores from '../UbicacionTiempoRealInteriores';
 import PersonSearch from '../PersonSearch';
@@ -17,6 +15,7 @@ import ForgotPassword from '../ForgotPassword';
 import ResetPassword from '../ResetPassword';
 import Dashboard from '../Dashboard';
 import Temperatura from '../Temperatura'; // Import the new component
+
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('token');
