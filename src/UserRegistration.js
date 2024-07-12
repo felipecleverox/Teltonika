@@ -64,6 +64,7 @@ const UserRegistration = () => {
 
   const availablePermissions = [
     { label: 'Crear Usuarios', value: 'create_users' },
+    { label: 'Ver Dashboard', value: 'view_dashboard' }, // Nuevo permiso
     { label: 'Ubicación en Interiores Tiempo Real', value: 'view_interior' },
     { label: 'Búsqueda Histórica en Interiores', value: 'search_interior' },
     { label: 'Presencia Personal por Interiores', value: 'view_presence' },

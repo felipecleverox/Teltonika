@@ -17,6 +17,7 @@ import DoorStatusMatrix from '../DoorStatusMatrix';
 import UserRegistration from '../UserRegistration';
 import ForgotPassword from '../ForgotPassword';
 import ResetPassword from '../ResetPassword';
+import Dashboard from '../Dashboard'; // Importar el nuevo componente Dashboard
 
 
 const PrivateRoute = ({ children }) => {
@@ -50,6 +51,7 @@ function App() {
         <Route path="/presencia" element={<PrivateRoute><Presencia /></PrivateRoute>} />
         <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
         <Route path="/register-user" element={<PrivateRoute><UserRegistration /></PrivateRoute>} />
+        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} /> {/* Nueva ruta para Dashboard */}
         
         {/* Ruta para manejar rutas no encontradas */}
         <Route path="*" element={<Navigate to="/" />} />
