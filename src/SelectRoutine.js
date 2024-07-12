@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import './SelectRoutine.css';
 import Header from './Header';
 import dashboardImage from './assets/images/dashboard.png';
+import temperaturaImage from './assets/images/temperatura.png'; 
 import ubicaciontiemporealinteriorImage from './assets/images/ubicaciontiemporealinterior.png';
 import personSearchImage from './assets/images/person_search.png';
 import interiorLocationsImage from './assets/images/plano_super.png';
@@ -27,7 +28,8 @@ const routines = [
   { title: "Puertas : Status Cierre / Apertura", image: doorStatusImage, route: "/door-status-matrix", permission: "view_door_status" },
   { title: "Datos : Análisis Forense", image: dataIntelligenceImage, route: "/inteligencia-de-datos", permission: "view_data_intelligence" },
   { title: "Parametrización", image: configurationImage, route: "/configuracion", permission: "view_configuration" },
-  { title: "Registrar Usuario", image: userRegistrationImage, route: "/register-user", permission: "create_users" }
+  { title: "Registrar Usuario", image: userRegistrationImage, route: "/register-user", permission: "create_users" },
+  { title: "Temperatura", image: temperaturaImage, route: "/temperatura", permission: "view_temperature" }
 ];
 
 const SelectRoutine = () => {

@@ -1470,6 +1470,39 @@ async function getUbicacionFromIdent(ident, timestamp) {
     connection.release();
   }
 }
+// En server.js, modifica el endpoint /api/temperature-data
+app.get('/api/temperature-data', async (req, res) => {
+  try {
+    const query = `
+      SELECT rt.beacon_id, rt.temperatura, rt.timestamp, b.lugar, b.ubicacion
+      FROM registro_temperaturas rt
+      JOIN beacons b ON rt.beacon_id = b.id
+      WHERE rt.temperatura IS NOT NULL
+      ORDER BY rt.timestamp ASC
+    `;
+    const [rows] = await pool.query(query);
+
+    const data = rows.reduce((acc, row) => {
+      if (!acc[row.beacon_id]) {
+        acc[row.beacon_id] = {
+          beacon_id: row.beacon_id,
+          location: `Cámara de Frío: ${row.lugar}`,
+          ubicacion: row.ubicacion,
+          temperatures: [],
+          timestamps: []
+        };
+      }
+      acc[row.beacon_id].temperatures.push(row.temperatura);
+      acc[row.beacon_id].timestamps.push(row.timestamp);
+      return acc;
+    }, {});
+
+    res.json(Object.values(data));
+  } catch (error) {
+    console.error('Error fetching temperature data:', error);
+    res.status(500).send('Server Error');
+  }
+});
 // Start the server
 server.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);

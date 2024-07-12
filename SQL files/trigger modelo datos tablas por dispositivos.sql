@@ -1,4 +1,8 @@
-CREATE DEFINER=`root`@`localhost` TRIGGER `trigger_nuevo_dato_GPS_data_table` AFTER INSERT ON `gps_data` FOR EACH ROW BEGIN
+DELIMITER //
+CREATE TRIGGER `trigger_nuevo_dato_GPS_data_table` 
+AFTER INSERT ON `gps_data` 
+FOR EACH ROW
+BEGIN
     -- Variables utilizadas en el trigger
     -- Variables a ser utilizadas en el caso 11317
     DECLARE EYE_battery_low TINYINT DEFAULT NULL;
@@ -34,9 +38,6 @@ CREATE DEFINER=`root`@`localhost` TRIGGER `trigger_nuevo_dato_GPS_data_table` AF
     SET json_data = NEW.ble_beacons;
     
 
-    -- Log the initial JSON data
-    INSERT INTO process_log(message, timestamp) 
-    VALUES (CONCAT('json_data: ', json_data), CURRENT_TIMESTAMP);
 
     -- INICIO CASO EVENT.ENUM = 385
     IF NEW.event_enum = 385 THEN
@@ -104,9 +105,7 @@ CREATE DEFINER=`root`@`localhost` TRIGGER `trigger_nuevo_dato_GPS_data_table` AF
         
         CALL ObtenerValorString(texto_original_ble_beacon, 'mac.address', EYE_mac_address);
 
-        -- Log EYE_mac_address
-        INSERT INTO process_log(message, timestamp) 
-        VALUES (CONCAT('EYE_mac_address: ', IFNULL(EYE_mac_address, 'NULL')), CURRENT_TIMESTAMP);
+
         
         IF EYE_mac_address IS NOT NULL AND EYE_mac_address <> '' THEN
             SELECT id INTO temp_beacon_id FROM beacons WHERE mac = EYE_mac_address;
@@ -114,9 +113,7 @@ CREATE DEFINER=`root`@`localhost` TRIGGER `trigger_nuevo_dato_GPS_data_table` AF
             SET temp_beacon_id = CONCAT('no encontrado: ', IFNULL(EYE_mac_address, 'NULL'));
         END IF;
 
-        -- Log temp_beacon_id
-        INSERT INTO process_log(message, timestamp) 
-        VALUES (CONCAT('temp_beacon_id: ', IFNULL(temp_beacon_id, 'NULL')), CURRENT_TIMESTAMP);
+
         
         CALL ObtenerValorString(texto_original_ble_beacon, 'battery.low', EYE_battery_low);
         CALL ObtenerValorString(texto_original_ble_beacon, 'humidity', EYE_humidity);
@@ -129,23 +126,6 @@ CREATE DEFINER=`root`@`localhost` TRIGGER `trigger_nuevo_dato_GPS_data_table` AF
         CALL ObtenerValorString(texto_original_ble_beacon, 'type', EYE_type);
         
         
-        -- Log all extracted values
-        INSERT INTO process_log(message, timestamp) 
-        VALUES (
-            CONCAT(
-                'EYE_mac_address: ', IFNULL(EYE_mac_address, 'NULL'), ', ',
-                'EYE_battery_low: ', IFNULL(EYE_battery_low, 'NULL'), ', ',
-                'EYE_humidity: ', IFNULL(EYE_humidity, 'NULL'), ', ',
-                'EYE_id: ', IFNULL(EYE_id, 'NULL'), ', ',
-                'EYE_magnet: ', IFNULL(EYE_magnet, 'NULL'), ', ',
-                'EYE_magnet_count: ', IFNULL(EYE_magnet_count, 'NULL'), ', ',
-                'EYE_movement: ', IFNULL(EYE_movement, 'NULL'), ', ',
-                'EYE_movement_count: ', IFNULL(EYE_movement_count, 'NULL'), ', ',
-                'EYE_temperature: ', IFNULL(EYE_temperature, 'NULL'), ', ',
-                'EYE_type: ', IFNULL(EYE_type, 'NULL')
-            ), 
-            CURRENT_TIMESTAMP
-        );
 
         -- Insertar datos en la tabla adecuada según el device ident
         IF NEW.ident = '352592573522828' THEN
@@ -194,3 +174,5 @@ CREATE DEFINER=`root`@`localhost` TRIGGER `trigger_nuevo_dato_GPS_data_table` AF
         END IF;
     END IF;
 END
+//
+DELIMITER ;

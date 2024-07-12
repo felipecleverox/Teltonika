@@ -1,8 +1,6 @@
-import React, { useEffect } from 'react';
-
+// App.js
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { handleBackButton } from  '../utils/backButtonHandler.js'; // Importa el archivo backButtonHandler
-
 import LastKnownPosition from '../LastKnownPosition';
 import UbicacionTiempoRealInteriores from '../UbicacionTiempoRealInteriores';
 import PersonSearch from '../PersonSearch';
@@ -17,23 +15,15 @@ import DoorStatusMatrix from '../DoorStatusMatrix';
 import UserRegistration from '../UserRegistration';
 import ForgotPassword from '../ForgotPassword';
 import ResetPassword from '../ResetPassword';
-import Dashboard from '../Dashboard'; // Importar el nuevo componente Dashboard
-
+import Dashboard from '../Dashboard';
+import Temperatura from '../Temperatura'; // Import the new component
 
 const PrivateRoute = ({ children }) => {
-    const token = localStorage.getItem('token');
-    return token ? children : <Navigate to="/" />;
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/" />;
 };
 
 function App() {
-  useEffect(() => {
-    // Llamamos a handleBackButton y guardamos la función de limpieza
-    const cleanup = handleBackButton();
-
-    // Devolvemos la función de limpieza para que se ejecute al desmontar
-    return cleanup;
-  }, []);  // El arreglo de dependencias vacío asegura que se ejecute solo una vez al montar
-
   return (
     <Router>
       <Routes>
@@ -51,9 +41,8 @@ function App() {
         <Route path="/presencia" element={<PrivateRoute><Presencia /></PrivateRoute>} />
         <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
         <Route path="/register-user" element={<PrivateRoute><UserRegistration /></PrivateRoute>} />
-        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} /> {/* Nueva ruta para Dashboard */}
-        
-        {/* Ruta para manejar rutas no encontradas */}
+        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/temperatura" element={<PrivateRoute><Temperatura /></PrivateRoute>} /> {/* New route */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

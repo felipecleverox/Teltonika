@@ -1,3 +1,4 @@
+// UserRegistration.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -64,7 +65,7 @@ const UserRegistration = () => {
 
   const availablePermissions = [
     { label: 'Crear Usuarios', value: 'create_users' },
-    { label: 'Ver Dashboard', value: 'view_dashboard' }, // Nuevo permiso
+    { label: 'Ver Dashboard', value: 'view_dashboard' },
     { label: 'Ubicación en Interiores Tiempo Real', value: 'view_interior' },
     { label: 'Búsqueda Histórica en Interiores', value: 'search_interior' },
     { label: 'Presencia Personal por Interiores', value: 'view_presence' },
@@ -74,6 +75,7 @@ const UserRegistration = () => {
     { label: 'Estado de Puertas por Sector', value: 'view_door_status' },
     { label: 'Inteligencia de Datos', value: 'view_data_intelligence' },
     { label: 'Configuración', value: 'view_configuration' },
+    { label: 'Ver Temperatura', value: 'view_temperature' } // Nuevo permiso
   ];
 
   return (
