@@ -1,0 +1,15 @@
+{
+    "testing":{
+        "apiKey1": "tu_primera_api_key",
+        "apiKey2": "tu_segunda_api_key"
+    },
+    "email":{
+        "SENDGRID_API_KEY":"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"
+    },
+    "maps":{
+        "api_key":"pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZDgybHB2OTh4dmo3Z2EifQ.bpZlTBTa56pF4cPhE3aSzg"
+    }
+    
+    
+  }
+  

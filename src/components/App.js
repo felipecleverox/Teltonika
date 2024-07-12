@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { handleBackButton } from  '../utils/backButtonHandler.js'; // Importa el archivo backButtonHandler
+
 import LastKnownPosition from '../LastKnownPosition';
 import UbicacionTiempoRealInteriores from '../UbicacionTiempoRealInteriores';
 import PersonSearch from '../PersonSearch';
@@ -16,12 +19,21 @@ import ForgotPassword from '../ForgotPassword';
 import ResetPassword from '../ResetPassword';
 import Dashboard from '../Dashboard'; // Importar el nuevo componente Dashboard
 
+
 const PrivateRoute = ({ children }) => {
     const token = localStorage.getItem('token');
     return token ? children : <Navigate to="/" />;
 };
 
 function App() {
+  useEffect(() => {
+    // Llamamos a handleBackButton y guardamos la función de limpieza
+    const cleanup = handleBackButton();
+
+    // Devolvemos la función de limpieza para que se ejecute al desmontar
+    return cleanup;
+  }, []);  // El arreglo de dependencias vacío asegura que se ejecute solo una vez al montar
+
   return (
     <Router>
       <Routes>
