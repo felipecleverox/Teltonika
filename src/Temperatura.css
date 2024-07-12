@@ -12,11 +12,30 @@
   }
   
   .chart-container {
-    height: 300px;
+    height: 450px;
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     padding: 15px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chart-container h3 {
+    color: #666;
+    margin-bottom: 5px;
+  }
+  
+  .chart-container .temp-legend {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  
+  .chart-container canvas {
+    flex-grow: 1;
+    width: 100% !important;
+    height: auto !important;
   }
   
   h1 {
@@ -24,13 +43,28 @@
     margin-bottom: 20px;
   }
   
-  h3 {
-    color: #666;
-    margin-bottom: 10px;
+  .date-picker {
+    margin-bottom: 20px;
+    padding: 8px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+  
+  .max-temp {
+    color: #ff6b6b;
+  }
+  
+  .min-temp {
+    color: #4ecdc4;
   }
   
   @media (max-width: 768px) {
     .charts-grid {
       grid-template-columns: 1fr;
+    }
+    
+    .chart-container {
+      height: 350px;
     }
   }

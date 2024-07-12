@@ -1473,21 +1473,28 @@ async function getUbicacionFromIdent(ident, timestamp) {
 // En server.js, modifica el endpoint /api/temperature-data
 app.get('/api/temperature-data', async (req, res) => {
   try {
+    const { date } = req.query;
+    console.log('Fecha recibida:', date); // Para depuración
+
+    // Asumiendo que la fecha viene en formato 'YYYY-MM-DD'
     const query = `
       SELECT rt.beacon_id, rt.temperatura, rt.timestamp, b.lugar, b.ubicacion
       FROM registro_temperaturas rt
       JOIN beacons b ON rt.beacon_id = b.id
-      WHERE rt.temperatura IS NOT NULL
+      WHERE DATE(rt.timestamp) = ?
       ORDER BY rt.timestamp ASC
     `;
-    const [rows] = await pool.query(query);
+    
+    const [rows] = await pool.query(query, [date]);
+
+    console.log('Filas recuperadas:', rows.length); // Para depuración
 
     const data = rows.reduce((acc, row) => {
       if (!acc[row.beacon_id]) {
         acc[row.beacon_id] = {
           beacon_id: row.beacon_id,
-          location: `Cámara de Frío: ${row.lugar}`,
-          ubicacion: row.ubicacion,
+          location: `Cámara de Frío: ${row.lugar || 'Desconocido'}`,
+          ubicacion: row.ubicacion || 'Desconocido',
           temperatures: [],
           timestamps: []
         };
