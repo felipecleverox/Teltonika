@@ -25,11 +25,11 @@ const routines = [
   { title: "Exterior : Búsqueda Histórica Ubicación", image: historicalMovementsImage, route: "/consulta-historica-movimientos", permission: "search_exterior" },
   { title: "Sectores : Presencia Personal", image: presenciaImage, route: "/presencia", permission: "view_presence" },
   { title: "Mensajes SOS : Visualización por Ubicación", image: smsDataImage, route: "/sms-data", permission: "view_sms" },
+  { title: "Temperatura", image: temperaturaImage, route: "/temperatura", permission: "view_temperature" },
   { title: "Puertas : Status Cierre / Apertura", image: doorStatusImage, route: "/door-status-matrix", permission: "view_door_status" },
   { title: "Datos : Análisis Forense", image: dataIntelligenceImage, route: "/inteligencia-de-datos", permission: "view_data_intelligence" },
   { title: "Parametrización", image: configurationImage, route: "/configuracion", permission: "view_configuration" },
-  { title: "Registrar Usuario", image: userRegistrationImage, route: "/register-user", permission: "create_users" },
-  { title: "Temperatura", image: temperaturaImage, route: "/temperatura", permission: "view_temperature" }
+  { title: "Registrar Usuario", image: userRegistrationImage, route: "/register-user", permission: "create_users" }
 ];
 
 const SelectRoutine = () => {

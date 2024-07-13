@@ -25,9 +25,17 @@
   justify-content: space-around;
 }
 
+.chart-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ccc;
+}
+
 .chart-section {
   width: 45%;
-  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -38,8 +46,14 @@
   margin-bottom: 10px;
 }
 
+.chart-divider {
+  width: 1px;
+  background-color: #ccc;
+  margin: 0 10px;
+}
+
 @media (max-width: 768px) {
-  .charts-container {
+  .chart-row {
     flex-direction: column;
     align-items: center;
   }
@@ -48,4 +62,54 @@
     width: 100%;
     margin-bottom: 20px;
   }
+
+  .chart-divider {
+    width: 100%;
+    height: 1px;
+    margin: 20px 0;
+  }
+}
+
+.current-status-label {
+  background-color: black;
+  color: #4CAF50;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  display: inline-block;
+}
+
+.temperature-gauges {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.thermometer-container {
+  text-align: center;
+  margin: 10px;
+  position: relative;
+}
+
+.thermometer-container h3 {
+  margin-bottom: 10px;
+}
+
+.temperature-value {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  background-color: rgba(47, 45, 45, 0.587);
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.temperature-time {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #666;
 }
