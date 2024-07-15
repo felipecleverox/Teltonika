@@ -26,23 +26,22 @@ function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleBackButton = () => {
-      window.onpopstate = () => {
-        console.log("El usuario hizo clic en el botón Atrás");
-      };
-
-      window.addEventListener('popstate', function(event) {
-        event.preventDefault(); // Prevenir la recarga de la página anterior
-        navigate('/select-routine'); // Redireccionar a SelectRoutine
-      });
+    const onPopState = () => {
+      console.log("El usuario hizo clic en el botón Atrás");
     };
 
-    handleBackButton();
+    const popStateHandler = (event) => {
+      event.preventDefault(); // Prevenir la recarga de la página anterior
+      navigate('/select-routine'); // Redireccionar a SelectRoutine
+    };
+
+    window.onpopstate = onPopState;
+    window.addEventListener('popstate', popStateHandler);
 
     return () => {
-      window.removeEventListener('popstate', handleBackButton);
+      window.removeEventListener('popstate', popStateHandler);
     };
-  }, [navigate]); 
+  }, [navigate]);
 
   return (
     <Router>
@@ -64,7 +63,7 @@ function App() {
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/temperatura" element={<PrivateRoute><Temperatura /></PrivateRoute>} /> 
         <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+        </Routes>
     </Router>
   );
 }
