@@ -1,6 +1,5 @@
-// App.js
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import LastKnownPosition from '../LastKnownPosition';
 import UbicacionTiempoRealInteriores from '../UbicacionTiempoRealInteriores';
 import PersonSearch from '../PersonSearch';
@@ -16,7 +15,7 @@ import UserRegistration from '../UserRegistration';
 import ForgotPassword from '../ForgotPassword';
 import ResetPassword from '../ResetPassword';
 import Dashboard from '../Dashboard';
-import Temperatura from '../Temperatura'; // Import the new component
+import Temperatura from '../Temperatura'; 
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -24,6 +23,27 @@ const PrivateRoute = ({ children }) => {
 };
 
 function App() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleBackButton = () => {
+      window.onpopstate = () => {
+        console.log("El usuario hizo clic en el botón Atrás");
+      };
+
+      window.addEventListener('popstate', function(event) {
+        event.preventDefault(); // Prevenir la recarga de la página anterior
+        navigate('/select-routine'); // Redireccionar a SelectRoutine
+      });
+    };
+
+    handleBackButton();
+
+    return () => {
+      window.removeEventListener('popstate', handleBackButton);
+    };
+  }, [navigate]); 
+
   return (
     <Router>
       <Routes>
@@ -42,7 +62,7 @@ function App() {
         <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
         <Route path="/register-user" element={<PrivateRoute><UserRegistration /></PrivateRoute>} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/temperatura" element={<PrivateRoute><Temperatura /></PrivateRoute>} /> {/* New route */}
+        <Route path="/temperatura" element={<PrivateRoute><Temperatura /></PrivateRoute>} /> 
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
