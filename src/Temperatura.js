@@ -5,10 +5,12 @@ import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, TimeScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { es } from 'date-fns/locale';
-import DatePicker from 'react-datepicker';
+import DatePicker, { registerLocale } from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import './Temperatura.css';
 import Header from './Header';
+
+registerLocale('es', es);
 
 ChartJS.register(
   TimeScale,
@@ -53,6 +55,10 @@ const Temperatura = () => {
     setLoading(true);
   };
 
+  const formatDate = (date) => {
+    return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
   if (loading) {
     return <div>Cargando datos...</div>;
   }
@@ -69,8 +75,9 @@ const Temperatura = () => {
         <DatePicker 
           selected={selectedDate} 
           onChange={handleDateChange} 
-          dateFormat="yyyy-MM-dd"
+          dateFormat="dd-MM-yyyy"
           className="date-picker"
+          locale="es"
         />
         <p>No hay datos disponibles para la fecha seleccionada.</p>
       </div>
@@ -97,14 +104,26 @@ const Temperatura = () => {
         title: {
           display: true,
           text: 'Hora'
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+        ticks: {
+          padding: 5
         }
       },
       y: {
-        min: 0,
-        max: 50,
+        min: -5,
+        max: 40,
         title: {
           display: true,
           text: 'Temperatura (°C)'
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+        ticks: {
+          padding: 5
         }
       }
     },
@@ -113,19 +132,39 @@ const Temperatura = () => {
         display: false
       },
       tooltip: {
+        mode: 'index',
+        intersect: false,
         callbacks: {
           title: (context) => {
             return new Date(context[0].parsed.x).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+          },
+          label: (context) => {
+            return `Temperatura: ${context.parsed.y.toFixed(1)}°C`;
           }
         }
       }
     },
     elements: {
       line: {
-        tension: 0.4
+        tension: 0.4,
+        borderWidth: 2
       },
       point: {
-        radius: 0
+        radius: 0,
+        hitRadius: 10,
+        hoverRadius: 5
+      }
+    },
+    hover: {
+      mode: 'nearest',
+      intersect: true
+    },
+    layout: {
+      padding: {
+        left: 10,
+        right: 10,
+        top: 10,
+        bottom: 10
       }
     }
   };
@@ -137,8 +176,9 @@ const Temperatura = () => {
       <DatePicker 
         selected={selectedDate} 
         onChange={handleDateChange} 
-        dateFormat="yyyy-MM-dd"
+        dateFormat="dd-MM-yyyy"
         className="date-picker"
+        locale="es"
       />
       <div className="charts-grid">
         {data.map((beaconData) => {
@@ -165,10 +205,10 @@ const Temperatura = () => {
 
           return (
             <div key={beaconData.beacon_id} className="chart-container">
-              <h3>{`${beaconData.location} - ${beaconData.ubicacion}`}</h3>
+              <h3>{`Cámara de Frío: ${beaconData.location} - ${beaconData.ubicacion}`}</h3>
               <div className="temp-legend">
-                <span className="max-temp">Max: {maxTemp.toFixed(1)}°C</span>
-                <span className="min-temp">Min: {minTemp.toFixed(1)}°C</span>
+                <span className="max-temp">Máx: {maxTemp.toFixed(1)}°C</span>
+                <span className="min-temp">Mín: {minTemp.toFixed(1)}°C</span>
               </div>
               <Line data={chartData} options={chartOptions} />
             </div>
