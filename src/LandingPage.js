@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import jwt from 'jsonwebtoken';
 import './LandingPage.css';
-import mapImage from './assets/images/map-of-a-map.jpeg';
+import mapImage from './assets/images/map-of-a-map.jpg';
 import centerImage from './assets/images/TNS Track White.png';
 import rightImage from './assets/images/tns_logo_blanco.png';
 

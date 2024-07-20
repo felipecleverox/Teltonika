@@ -1,5 +1,4 @@
 // webpack.config.js
-
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
@@ -54,16 +53,15 @@ module.exports = {
       directory: path.join(__dirname, 'dist')
     },
     compress: true,
-    port: 3000,
-    host: '0.0.0.0', // Permite conexiones desde cualquier host
-    allowedHosts: ['localhost', 'thenext.ddns.net'], // Permite estos hosts
+    port: 4000,
+    host: '0.0.0.0', // Permite conexiones desde cualquier IP
+    allowedHosts: ['localhost', 'tnstrack.ddns.net'], // Permite estos hosts
     historyApiFallback: true,
-    proxy: [
-      {
-        context: ['/api'],
-        target: process.env.API_URL || 'http://localhost:1337',
-        changeOrigin: true, 
-      },
-    ], 
+    proxy: [{
+      context: ['/api'],
+      target: 'http://tnstrack.ddns.net:1337', // Actualizado para usar el dominio DDNS
+      changeOrigin: true,
+      secure: false
+    }]
   }
 };
