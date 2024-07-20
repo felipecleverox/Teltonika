@@ -1,31 +1,17 @@
-// LandingPage.js
-
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import jwt from 'jsonwebtoken';
 import './LandingPage.css';
 import mapImage from './assets/images/map-of-a-map.jpeg';
 import centerImage from './assets/images/TNS Track White.png';
 import rightImage from './assets/images/tns_logo_blanco.png';
 
 const LandingPage = () => {
+    const [currentTime, setCurrentTime] = useState(new Date());
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [message, setMessage] = useState('');
-    const [currentTime, setCurrentTime] = useState(new Date());
+    const [error, setError] = useState('');
     const navigate = useNavigate();
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        try {
-            const response = await axios.post('/api/login', { username, password });
-            localStorage.setItem('token', response.data.token);
-            navigate('/select-routine');
-        } catch (error) {
-            setMessage('Error: ' + (error.response?.data || error.message));
-        }
-    };
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -34,9 +20,26 @@ const LandingPage = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const handleForgotPassword = () => {
-        // Lógica para recuperación de contraseña
-        navigate('/forgot-password');
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Login failed');
+            }
+
+            const data = await response.json();
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('permissions', data.permissions);
+            navigate('/select-routine');
+        } catch (error) {
+            setError('Invalid username or password');
+        }
     };
 
     return (
@@ -46,30 +49,26 @@ const LandingPage = () => {
                 <img src={centerImage} alt="Center Image" className="center-image" />
             </div>
             <div className="form-container">
-                <h2>Login</h2>
-                <form onSubmit={handleSubmit}>
-                    <div>
-                        <label>Username:</label>
-                        <input
-                            type="text"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label>Password:</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
+                <h2>Welcome</h2>
+                <form onSubmit={handleLogin}>
+                    <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Username"
+                        required
+                    />
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Password"
+                        required
+                    />
                     <button type="submit">Login</button>
-                    <p onClick={handleForgotPassword}>Forgot password?</p>
                 </form>
-                {message && <p>{message}</p>}
+                {error && <p className="error">{error}</p>}
+                <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
             </div>
             <div className="footer-images">
                 <img src={rightImage} alt="Right Image" className="right-image" />

@@ -16,7 +16,7 @@ const Header = ({ title }) => {
   const routineImage = state?.image;
 
   useEffect(() => {
-    const socket = io('http://localhost:1337'); // Conectar al servidor de Socket.IO
+    const socket = io('http://thenext.ddns.net:1337'); // Conectar al servidor de Socket.IO
     socket.on('new_sms', (data) => {
       console.log("Nuevo SMS recibido:", data);
       setNewSms(true); // Mostrar el GIF cuando se reciba un nuevo SMS

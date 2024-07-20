@@ -1,0 +1,198 @@
+/* App.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 0;
+}
+
+.App {
+  text-align: center;
+}
+
+.App-header {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Centrar el contenido horizontalmente */
+  background-color: #6b9fd4;
+  color: white;
+  padding: 20px;
+  position: relative;
+}
+
+.App-logo {
+  height: 60px;
+  position: absolute;
+  left: 20px;
+}
+
+.clock {
+  position: absolute;
+  right: 20px;
+}
+
+.header h1 {
+  flex: 1;
+  margin: 0;
+}
+
+.map-container {
+  margin: 20px;
+  width: 100%; /* Ajustar ancho para ocupar todo el espacio */
+}
+
+.query-section {
+  background-color: #e7e7e7;
+  padding: 20px;
+  margin: 20px;
+  width: 100%; /* Ajustar ancho para ocupar todo el espacio */
+}
+
+.data-table-container {
+  margin: 20px;
+  width: 100%; /* Ajustar ancho para ocupar todo el espacio */
+}
+
+button {
+  background-color: #6b9fd4;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 10px 2px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #6b9fd4;
+}
+
+input[type="datetime-local"] {
+  padding: 10px;
+  margin: 10px 0;
+  box-sizing: border-box;
+  width: 100%; /* Ajustar ancho para ocupar todo el espacio */
+}
+
+table {
+  width: 100%; /* Todas las tablas a ancho completo */
+  border-collapse: collapse; /* Colapsar bordes para un look limpio */
+}
+
+th, td {
+  padding: 8px 16px; /* Espacio adecuado dentro de las celdas */
+  text-align: left; /* Alineación de texto */
+  border: 1px solid #ddd; /* Bordes sutiles */
+}
+
+th {
+  background-color: #6b9fd4; /* Fondo uniforme para los encabezados */
+  color: white; /* Texto en blanco para contraste */
+}
+
+tr:nth-child(odd) {
+  background-color: #f2f2f2; /* Filas zebra para tablas */
+}
+
+/* Agrega esto a tu archivo App.css */
+
+.icon-legend {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  font-family: 'Roboto', sans-serif;
+  color: #D3DDE6;
+}
+
+.icon-items {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap; /* Permite que los elementos se envuelvan */
+}
+
+.icon-item {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+  margin-bottom: 10px; /* Agrega espacio entre íconos en dispositivos móviles */
+}
+
+.icon-item img {
+  height: 30px; /* Ajusta la altura según sea necesario */
+  margin-right: 10px;
+}
+
+.icon-item span {
+  font-size: 14px; /* Ajusta el tamaño de fuente según sea necesario */
+}
+
+/* Opcional: Elimina el margen derecho del último ícono para una mejor apariencia */
+.icon-item:last-child {
+  margin-right: 0;
+}
+
+/* Media query for tablet-sized screens */
+@media (max-width: 768px) {
+  .map-container {
+    width: 100%; /* Make maps full width */
+    margin: 10px 0; /* Adjust margins */
+  }
+
+  .query-section,
+  .data-table-container {
+    width: 95%; /* Adjust width for tables and forms */
+    margin: 10px auto; /* Center content */
+  }
+
+  .icon-legend {
+    flex-direction: column; /* Stack icons vertically */
+    align-items: flex-start; /* Align icons to the left */
+  }
+
+  .icon-items {
+    flex-direction: column; /* Stack icons vertically */
+    align-items: flex-start; /* Align icons to the left */
+  }
+
+  .icon-item {
+    margin-bottom: 10px; /* Add space between stacked icons */
+  }
+}
+
+.content {
+  padding: 20px;
+  margin-top: 20px; /* Para asegurar que el contenido no esté cubierto por el header */
+}
+
+/* Media query for mobile-sized screens */
+@media (max-width: 480px) {
+  .App-header {
+    flex-direction: column; /* Stack header elements vertically */
+  }
+
+  .App-logo {
+    position: static; /* Remove absolute positioning */
+    margin-bottom: 10px; /* Add space below logo */
+  }
+
+  .clock {
+    position: static; /* Remove absolute positioning */
+  }
+
+  .map-container {
+    height: 300px; /* Reduce map height for smaller screens */
+  }
+
+  .query-section input[type="datetime-local"],
+  .query-section button {
+    width: 100%; /* Make inputs and buttons full width */
+    box-sizing: border-box; /* Include padding and border in width */
+  }
+}

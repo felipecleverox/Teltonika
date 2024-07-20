@@ -76,3 +76,10 @@
 .back-button:hover {
   background-color: #5a6268;
 }
+.routine-title-break {
+  display: inline-block;
+}
+
+.routine-title-break .line-1 {
+  display: block;
+}

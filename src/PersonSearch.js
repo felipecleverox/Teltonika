@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './PersonSearch.css';
-import personal3Icon from 'C:/Users/cleve/source/repos/Teltonika/Teltonika/src/assets/images/Personal 3.png';
-import planoSectores from './assets/images/plano_sectores.jpg'; // Ensure this path is correct
 import Header from './Header'; // Import the new header component
+
+// Importa las imágenes
+import personal1Icon from './assets/images/Personal 1.png';
+import personal2Icon from './assets/images/Personal 2.png';
+import personal3Icon from './assets/images/Personal 3.png';
+import planoSectores from './assets/images/plano_sectores.jpg'; // Asegúrate de que esta ruta sea correcta
 
 function PersonSearch() {
     const [selectedDay, setSelectedDay] = useState('');
-    const [startHour, setStartHour] = useState('');
-    const [startMinute, setStartMinute] = useState('');
-    const [endHour, setEndHour] = useState('');
-    const [endMinute, setEndMinute] = useState('');
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [umbrales, setUmbrales] = useState({});
     const [devices, setDevices] = useState([]);
+    const [personal, setPersonal] = useState([]);
     const [selectedDeviceId, setSelectedDeviceId] = useState('');
 
     useEffect(() => {
@@ -29,24 +32,34 @@ function PersonSearch() {
         
         const fetchDevices = async () => {
             try {
-                const response = await axios.get('http://thenext.ddns.net:1337/api/devices');
+                const response = await axios.get('/api/devices');
                 setDevices(response.data);
             } catch (error) {
                 console.error('Error fetching devices:', error);
             }
         };
         fetchDevices();
+
+        const fetchPersonal = async () => {
+            try {
+                const response = await axios.get('/api/personal');
+                setPersonal(response.data);
+            } catch (error) {
+                console.error('Error fetching personal:', error);
+            }
+        };
+        fetchPersonal();
     }, []);
 
     const fetchSearchResults = async () => {
-        const startDate = `${selectedDay}T${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}:00`;
-        const endDate = `${selectedDay}T${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}:00`;
+        const startDateTime = `${selectedDay}T${startTime}:00`;
+        const endDateTime = `${selectedDay}T${endTime}:00`;
 
         try {
-            const response = await axios.get('http://thenext.ddns.net:1337/api/beacon-entries-exits', {
+            const response = await axios.get('/api/beacon-entries-exits', {
                 params: {
-                    startDate,
-                    endDate,
+                    startDate: startDateTime,
+                    endDate: endDateTime,
                     device_id: selectedDeviceId // Use device ID
                 }
             });
@@ -55,6 +68,19 @@ function PersonSearch() {
         } catch (error) {
             console.error('Error fetching search results:', error);
         }
+    };
+
+    const clearSearchResults = () => {
+        setSearchResults([]);
+    };
+
+    const handleDeviceChange = (e) => {
+        setSelectedDeviceId(e.target.value);
+        clearSearchResults();
+    };
+
+    const handleSearch = () => {
+        fetchSearchResults();
     };
 
     const formatDate = (timestamp) => {
@@ -102,33 +128,31 @@ function PersonSearch() {
         return '';
     };
 
-    const downloadCSV = () => {
-        const headers = ['Personal', 'Sector', 'Desde Detección', 'Permanencia', 'Estado'];
-        const rows = searchResults.map(result => {
-            const sector = getSector(result.beaconId);
-            const permanence = calculatePermanence(result.entrada, result.salida);
-            const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
-            const semaphoreClass = getSemaphoreClass(permanenceMinutes);
-            return [
-                'Personal 3', // Assuming the icon represents "Personal 3"
-                sector.text,
-                formatDate(result.entrada),
-                permanence,
-                semaphoreClass
-            ];
-        });
+    const getPersonalIcon = (imageName) => {
+        switch(imageName) {
+            case 'Personal 1.png':
+                return personal1Icon;
+            case 'Personal 2.png':
+                return personal2Icon;
+            case 'Personal 3.png':
+                return personal3Icon;
+            default:
+                return null;
+        }
+    };
 
-        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `historical_movements_${selectedDay}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const getPersonalInfo = (deviceId) => {
+        const person = personal.find(p => p.id_dispositivo_asignado === deviceId);
+        if (person) {
+            return {
+                name: person.Nombre_Personal,
+                image: getPersonalIcon(person.imagen_asignado)
+            };
+        }
+        return {
+            name: 'Unknown',
+            image: null
+        };
     };
 
     return (
@@ -139,65 +163,48 @@ function PersonSearch() {
             </div>
             <div className="search-container">
                 <div className="device-selection">
-                    <select onChange={(e) => setSelectedDeviceId(e.target.value)}>
+                    <select onChange={handleDeviceChange}>
                         <option value="">Seleccionar Dispositivo...</option>
                         {devices.map(device => (
                             <option key={device.id} value={device.id}>{device.device_asignado}</option>
                         ))}
                     </select>
                 </div>
-                <div className="date-selection">
-                    <h3>Seleccionar Día</h3>
-                    <input
-                        type="date"
-                        value={selectedDay}
-                        onChange={e => setSelectedDay(e.target.value)}
-                    />
+                <div className="date-time-selection">
+                    <div className="date-time-inputs">
+                        <div className="date-time-input">
+                            <label>Seleccionar Día:</label>
+                            <input
+                                type="date"
+                                value={selectedDay}
+                                onChange={e => setSelectedDay(e.target.value)}
+                            />
+                        </div>
+                        <div className="date-time-input">
+                            <label>Hora Inicio:</label>
+                            <input
+                                type="time"
+                                value={startTime}
+                                onChange={e => setStartTime(e.target.value)}
+                            />
+                        </div>
+                        <div className="date-time-input">
+                            <label>Hora Fin:</label>
+                            <input
+                                type="time"
+                                value={endTime}
+                                onChange={e => setEndTime(e.target.value)}
+                            />
+                        </div>
+                    </div>
                 </div>
-                <div className="time-selection">
-                    <h3>Seleccionar Rango de Horas y Minutos</h3>
-                    <label>Hora Inicio:</label>
-                    <input
-                        type="number"
-                        value={startHour}
-                        onChange={e => setStartHour(e.target.value)}
-                        placeholder="HH"
-                        min="0"
-                        max="23"
-                    />
-                    <input
-                        type="number"
-                        value={startMinute}
-                        onChange={e => setStartMinute(e.target.value)}
-                        placeholder="MM"
-                        min="0"
-                        max="59"
-                    />
-                    <label>Hora Fin:</label>
-                    <input
-                        type="number"
-                        value={endHour}
-                        onChange={e => setEndHour(e.target.value)}
-                        placeholder="HH"
-                        min="0"
-                        max="23"
-                    />
-                    <input
-                        type="number"
-                        value={endMinute}
-                        onChange={e => setEndMinute(e.target.value)}
-                        placeholder="MM"
-                        min="0"
-                        max="59"
-                    />
-                </div>
-                <button onClick={fetchSearchResults}>Buscar</button>
-                <button onClick={downloadCSV}>Descargar Resultados</button>
+                <button onClick={handleSearch}>Buscar</button>
             </div>
             <table className="search-results-table">
                 <thead>
                     <tr>
-                        <th>Personal</th>
+                        <th>Imagen</th>
+                        <th>Nombre</th>
                         <th>Sector</th>
                         <th>Desde Detección</th>
                         <th>Permanencia</th>
@@ -210,9 +217,15 @@ function PersonSearch() {
                         const permanence = calculatePermanence(result.entrada, result.salida);
                         const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
                         const semaphoreClass = getSemaphoreClass(permanenceMinutes);
+                        const personalInfo = getPersonalInfo(selectedDeviceId);
                         return (
                             <tr key={index}>
-                                <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
+                                <td className="image-cell">
+                                    {personalInfo.image && (
+                                        <img src={personalInfo.image} alt={personalInfo.name} className="personal-image" />
+                                    )}
+                                </td>
+                                <td>{personalInfo.name}</td>
                                 <td className={sector.className}>{sector.text}</td>
                                 <td>{formatDate(result.entrada)}</td>
                                 <td>{permanence}</td>
