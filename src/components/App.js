@@ -16,7 +16,9 @@ import UserRegistration from '../UserRegistration';
 import ForgotPassword from '../ForgotPassword';
 import ResetPassword from '../ResetPassword';
 import Dashboard from '../Dashboard';
-import Temperatura from '../Temperatura'; // Import the new component
+import Temperatura from '../Temperatura';
+import GlobalStyle from '../GlobalStyle';
+import './App.css';
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -26,6 +28,7 @@ const PrivateRoute = ({ children }) => {
 function App() {
   return (
     <Router>
+      <GlobalStyle />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -42,7 +45,7 @@ function App() {
         <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
         <Route path="/register-user" element={<PrivateRoute><UserRegistration /></PrivateRoute>} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/temperatura" element={<PrivateRoute><Temperatura /></PrivateRoute>} /> {/* New route */}
+        <Route path="/temperatura" element={<PrivateRoute><Temperatura /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

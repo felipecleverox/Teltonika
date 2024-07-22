@@ -7,6 +7,7 @@ import Header from './Header';
 import dayjs from 'dayjs';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { obtenerEquivalenciaSector } from './utils/sectorEquivalencias';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -146,7 +147,7 @@ const Presencia = () => {
 
   const getChartTitle = (sector) => {
     const beacon = beacons.find(b => b.lugar === sector.replace('_', ' '));
-    return beacon ? beacon.ubicacion : sector;
+    return beacon ? obtenerEquivalenciaSector(beacon.ubicacion) : obtenerEquivalenciaSector(sector);
   };
 
   const chartOptions = {
@@ -245,7 +246,7 @@ const Presencia = () => {
           <tbody>
             {beacons.map(beacon => (
               <tr key={beacon.id}>
-                <td>{beacon.ubicacion}</td>
+                <td>{obtenerEquivalenciaSector(beacon.ubicacion)}</td>
                 {data.map((entry, index) => (
                   <td key={index}>
                     <div className="status-bar-wrapper">

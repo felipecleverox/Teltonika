@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './PersonSearch.css';
-import Header from './Header'; // Import the new header component
+import Header from './Header';
 
-// Importa las imágenes
-import personal1Icon from './assets/images/Personal 1.png';
-import personal2Icon from './assets/images/Personal 2.png';
-import personal3Icon from './assets/images/Personal 3.png';
-import planoSectores from './assets/images/plano_sectores.jpg'; // Asegúrate de que esta ruta sea correcta
+import planoSectores from './assets/images/storage_mapa_1.jpg';
+import { obtenerEquivalenciaSector } from './utils/sectorEquivalencias';
+import { obtenerEquivalenciaImagen } from './utils/imagenEquivalencias';
 
 function PersonSearch() {
     const [selectedDay, setSelectedDay] = useState('');
@@ -60,7 +58,7 @@ function PersonSearch() {
                 params: {
                     startDate: startDateTime,
                     endDate: endDateTime,
-                    device_id: selectedDeviceId // Use device ID
+                    device_id: selectedDeviceId
                 }
             });
             console.log('Data received:', response.data);
@@ -90,25 +88,31 @@ function PersonSearch() {
     };
 
     const getSector = (beaconId) => {
+        let sectorInfo = { text: 'Unknown', className: '' };
         switch (beaconId) {
             case '0C403019-61C7-55AA-B7EA-DAC30C720055':
-                return { text: 'E/S Bodega', className: 'sector-bodega' };
+                sectorInfo = { text: 'E/S Bodega', className: 'sector-bodega' };
+                break;
             case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
-                return { text: 'Farmacia', className: 'sector-farmacia' };
+                sectorInfo = { text: 'Farmacia', className: 'sector-farmacia' };
+                break;
             case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
-                return { text: 'Entrada', className: 'sector-entrada' };
+                sectorInfo = { text: 'Entrada', className: 'sector-entrada' };
+                break;
             case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
-                return { text: 'Pasillo Central', className: 'sector-pasillo' };
+                sectorInfo = { text: 'Pasillo Central', className: 'sector-pasillo' };
+                break;
             case 'F7826DA6-BC5B-71E0-893E-54654370696F':
-                return { text: 'Electro', className: 'sector-electro' };
-            default:
-                return { text: 'Unknown', className: '' };
+                sectorInfo = { text: 'Electro', className: 'sector-electro' };
+                break;
         }
+        sectorInfo.text = obtenerEquivalenciaSector(sectorInfo.text);
+        return sectorInfo;
     };
 
     const calculatePermanence = (entrada, salida) => {
         const start = new Date(entrada);
-        const end = salida ? new Date(salida) : new Date(); // Usa la fecha actual si no hay salida
+        const end = salida ? new Date(salida) : new Date();
         const duration = end - start;
 
         const hours = Math.floor(duration / (1000 * 60 * 60));
@@ -129,16 +133,7 @@ function PersonSearch() {
     };
 
     const getPersonalIcon = (imageName) => {
-        switch(imageName) {
-            case 'Personal 1.png':
-                return personal1Icon;
-            case 'Personal 2.png':
-                return personal2Icon;
-            case 'Personal 3.png':
-                return personal3Icon;
-            default:
-                return null;
-        }
+        return obtenerEquivalenciaImagen(imageName);
     };
 
     const getPersonalInfo = (deviceId) => {

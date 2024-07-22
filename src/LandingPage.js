@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import jwt from 'jsonwebtoken';
 import './LandingPage.css';
 import mapImage from './assets/images/map-of-a-map.jpg';
-import centerImage from './assets/images/TNS Track White.png';
+import centerImage from './assets/images/storage.png';
+import bottomLeftImage from './assets/images/TNS Track White.png';
 import rightImage from './assets/images/tns_logo_blanco.png';
 
 const LandingPage = () => {
@@ -48,29 +49,30 @@ const LandingPage = () => {
                 <img src={mapImage} alt="Map Image" className="map-image" />
                 <img src={centerImage} alt="Center Image" className="center-image" />
             </div>
-            <div className="form-container">
-                <h2>Welcome</h2>
-                <form onSubmit={handleLogin}>
-                    <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="Username"
-                        required
-                    />
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Password"
-                        required
-                    />
-                    <button type="submit">Login</button>
-                </form>
-                {error && <p className="error">{error}</p>}
-                <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
-            </div>
-            <div className="footer-images">
+            <div className="content-wrapper">
+                <img src={bottomLeftImage} alt="Bottom Left Image" className="bottom-left-image" />
+                <div className="form-container">
+                    <h2>Welcome</h2>
+                    <form onSubmit={handleLogin}>
+                        <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="Username"
+                            required
+                        />
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Password"
+                            required
+                        />
+                        <button type="submit">Login</button>
+                    </form>
+                    {error && <p className="error">{error}</p>}
+                    <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
+                </div>
                 <img src={rightImage} alt="Right Image" className="right-image" />
             </div>
             <footer className="footer">

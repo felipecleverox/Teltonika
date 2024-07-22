@@ -3,10 +3,9 @@ import axios from 'axios';
 import moment from 'moment';
 import './UbicacionTiempoRealInteriores.css';
 import Header from './Header';
-import planoBase from './assets/images/plano_super.jpg';
-import personal1Icon from './assets/images/Personal 1.png';
-import personal2Icon from './assets/images/Personal 2.png';
-import personal3Icon from './assets/images/Personal 3.png';
+import planoBase from './assets/images/storage_mapa.jpg';
+import { obtenerEquivalenciaSector } from './utils/sectorEquivalencias';
+import { obtenerEquivalenciaImagen } from './utils/imagenEquivalencias';
 
 const UbicacionTiempoRealInteriores = () => {
   const [personal, setPersonal] = useState([]);
@@ -15,11 +14,11 @@ const UbicacionTiempoRealInteriores = () => {
   const [latestSectors, setLatestSectors] = useState({});
   const [umbrales, setUmbrales] = useState(null);
   const [currentTime, setCurrentTime] = useState(moment());
-  const [activeBeacons, setActiveBeacons] = useState([]); // Añadir estado para beacons activos
+  const [activeBeacons, setActiveBeacons] = useState([]);
 
   useEffect(() => {
     fetchData();
-    fetchActiveBeacons(); // Llamar a fetchActiveBeacons al cargar el componente
+    fetchActiveBeacons();
   }, []);
 
   const fetchData = async () => {
@@ -63,24 +62,13 @@ const UbicacionTiempoRealInteriores = () => {
 
   const handleRefresh = () => {
     fetchData();
-    fetchActiveBeacons(); // Llamar a fetchActiveBeacons al actualizar
+    fetchActiveBeacons();
   };
 
-  // Función para obtener la imagen correspondiente
   const getPersonalIcon = (imageName) => {
-    switch(imageName) {
-      case 'Personal 1.png':
-        return personal1Icon;
-      case 'Personal 2.png':
-        return personal2Icon;
-      case 'Personal 3.png':
-        return personal3Icon;
-      default:
-        return null;
-    }
+    return obtenerEquivalenciaImagen(imageName);
   };
 
-  // Función para calcular el tiempo de permanencia
   const calculatePermanencia = (timestamp) => {
     if (!timestamp) return '-';
     const oldestTime = moment(timestamp, 'YYYY-MM-DD HH:mm:ss');
@@ -88,7 +76,6 @@ const UbicacionTiempoRealInteriores = () => {
     return `${duration.hours().toString().padStart(2, '0')}:${duration.minutes().toString().padStart(2, '0')}`;
   };
 
-  // Función para obtener la clase del semáforo
   const getSemaphoreClass = useCallback((beacon_id, timestamp) => {
     if (!timestamp || !umbrales) return '';
     const start = moment(timestamp, 'YYYY-MM-DD HH:mm:ss');
@@ -104,7 +91,6 @@ const UbicacionTiempoRealInteriores = () => {
     return '';
   }, [umbrales, currentTime]);
 
-  // Función para obtener el texto del semáforo
   const getSemaphoreText = (semaphoreClass) => {
     const texts = {
       green: 'On Time',
@@ -116,16 +102,16 @@ const UbicacionTiempoRealInteriores = () => {
   };
 
   const sectorPositions = {
-    'E/S Bodega': { bottom: '70%', right: '55%', width: '2%' },
-    'Farmacia': { bottom: '25%', right: '55%', width: '2%' },
-    'Entrada': { bottom: '10%', right: '64%', width: '2%' },
-    'Pasillo Central': { bottom: '41%', right: '34%', width: '2%' },
-    'Electro': { bottom: '68%', right: '35%', width: '2%' }
+    'Frio 1': { bottom: '78%', right: '58%', width: '2%' },
+    'Maquila 1': { bottom: '65%', right: '45%', width: '4%' },
+    'Entrada Principal': { bottom: '3%', right: '40%', width: '4%' },
+    'Bodega 7': { bottom: '43%', right: '55%', width: '4%' },
+    'Bodega 15': { bottom: '29%', right: '55%', width: '4%' }
   };
 
   const getSectorPosition = (sectorName, index) => {
     const basePosition = sectorPositions[sectorName] || { bottom: '0%', right: '0%', width: '2%' };
-    const offset = 5 * index; // Ajustar el valor de offset según sea necesario
+    const offset = 5 * index;
     return {
       ...basePosition,
       bottom: `calc(${basePosition.bottom} - ${offset}px)`,
@@ -138,7 +124,7 @@ const UbicacionTiempoRealInteriores = () => {
 
     return personal.map((persona, index) => {
       const sectorInfo = latestSectors[persona.id_dispositivo_asignado] || {};
-      const sectorName = sectorInfo.sector;
+      const sectorName = obtenerEquivalenciaSector(sectorInfo.sector);
       if (!sectorCounts[sectorName]) {
         sectorCounts[sectorName] = 0;
       }
@@ -189,7 +175,7 @@ const UbicacionTiempoRealInteriores = () => {
                   />
                 </td>
                 <td>{persona.Nombre_Personal}</td>
-                <td>{sectorInfo.sector || 'Cargando...'}</td>
+                <td>{obtenerEquivalenciaSector(sectorInfo.sector) || 'Cargando...'}</td>
                 <td>{horaEntrada}</td>
                 <td>{permanencia}</td>
                 <td><span className={`semaphore ${semaphoreClass}`}>{semaphoreText}</span></td>

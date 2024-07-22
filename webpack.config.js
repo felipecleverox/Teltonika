@@ -59,7 +59,7 @@ module.exports = {
     historyApiFallback: true,
     proxy: [{
       context: ['/api'],
-      target: 'http://tnstrack.ddns.net:1337', // Actualizado para usar el dominio DDNS
+      target: 'http://thenext.ddns.net:1337', // Actualizado para usar el dominio DDNS
       changeOrigin: true,
       secure: false
     }]
