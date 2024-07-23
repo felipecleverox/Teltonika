@@ -4,7 +4,6 @@ import mapboxgl from 'mapbox-gl';
 import './HistoricalMovementsSearch.css';
 import markerIcon from './assets/images/pinazul.png';
 import Header from './Header';
-import './utils/backButtonHandler.js';
 
 //api keys
 const config = require('../config/config.json');
