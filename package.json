@@ -26,6 +26,8 @@
     "css-loader": "^7.1.2",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.11",
+    "fbjs": "^3.0.5",
+    "isomorphic-fetch": "^3.0.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "mapbox-gl": "^3.4.0",

@@ -159,7 +159,7 @@ const Presencia = () => {
         labels: {
           boxWidth: 12,
           font: {
-            size: 10
+            size: 12
           }
         }
       },
@@ -256,7 +256,7 @@ const Presencia = () => {
                       <div className="tooltip">
                         <span className="tooltiptext">{entry.status_timestamp}</span>
                       </div>
-                    </div>
+                      </div>
                   </td>
                 ))}
               </tr>
