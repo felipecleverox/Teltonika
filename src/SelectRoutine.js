@@ -1,6 +1,6 @@
 // SelectRoutine.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import jwt from 'jsonwebtoken';
 import './SelectRoutine.css';
 import Header from './Header';
@@ -34,15 +34,34 @@ const routines = [
 
 const SelectRoutine = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [userPermissions, setUserPermissions] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      const decodedToken = jwt.decode(token);
-      setUserPermissions(decodedToken.permissions.split(','));
+      try {
+        const decodedToken = jwt.decode(token);
+        if (decodedToken && decodedToken.permissions) {
+          setUserPermissions(decodedToken.permissions.split(','));
+        } else {
+          // Si el token no es válido o no tiene permisos, redirige al usuario a la página de inicio de sesión
+          navigate('/', { replace: true });
+        }
+      } catch (error) {
+        console.error('Error decoding token:', error);
+        navigate('/', { replace: true });
+      }
+    } else {
+      // Si no hay token, redirige al usuario a la página de inicio de sesión
+      navigate('/', { replace: true });
     }
-  }, []);
+
+    // Limpieza al desmontar el componente
+    return () => {
+      // Realizar cualquier limpieza necesaria aquí
+    };
+  }, [navigate]);
 
   const handleCardClick = (routine) => {
     if (userPermissions.includes(routine.permission)) {
@@ -50,6 +69,11 @@ const SelectRoutine = () => {
     } else {
       alert("No tienes permiso para acceder a esta rutina");
     }
+  };
+
+  const handleBackClick = () => {
+    // Usa replace: true para evitar que se agregue una nueva entrada al historial
+    navigate('/', { replace: true });
   };
 
   return (
@@ -69,7 +93,7 @@ const SelectRoutine = () => {
           </div>
         ))}
       </div>
-      <button className="back-button" onClick={() => navigate('/')}>Volver a la Página Principal</button>
+      <button className="back-button" onClick={handleBackClick}>Volver a la Página Principal</button>
     </div>
   );
 };

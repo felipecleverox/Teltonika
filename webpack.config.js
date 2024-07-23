@@ -53,7 +53,7 @@ module.exports = {
       directory: path.join(__dirname, 'dist')
     },
     compress: true,
-    port: 4000,
+    port: 3001,
     host: '0.0.0.0', // Permite conexiones desde cualquier IP
     allowedHosts: ['localhost', 'tnstrack.ddns.net'], // Permite estos hosts
     historyApiFallback: true,
