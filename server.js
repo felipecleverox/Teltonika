@@ -26,7 +26,7 @@ const server = http.createServer(app); // Create HTTP server with Express app
 const { Server } = require('socket.io'); // Import Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: ["http://thenext.ddns.net:3000", "http://localhost:3000","http://tnstrack.ddns.net:4000", "http://localhost:4000"], // Allow both origins
+    origin: ["http://tnstrack.ddns.net:3000", "http://localhost:3000","http://tnstrack.ddns.net:3001", "http://localhost:3001"], // Allow both origins
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true
@@ -60,7 +60,7 @@ const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Coordinates for San
 
 // Middleware CORS (debe estar antes de otros middleware o rutas)
 const corsOptions = {
-  origin: ['http://thenext.ddns.net:3000', 'http://localhost:3000','http://thenext.ddns.net:3000', 'http://localhost:3000'],
+  origin: ['http://tnstrack.ddns.net:3000', 'http://localhost:3000','http://tnstrack.ddns.net:3001', 'http://localhost:3001'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
   credentials: true
