@@ -59,7 +59,8 @@ function PersonSearch() {
                     startDate: startDateTime,
                     endDate: endDateTime,
                     device_id: selectedDeviceId
-                }
+                },
+                withCredentials: true
             });
             console.log('Data received:', response.data);
             setSearchResults(response.data);

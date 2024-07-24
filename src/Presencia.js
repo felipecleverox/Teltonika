@@ -42,7 +42,8 @@ const Presencia = () => {
       params: {
         startDate: startDate,
         endDate: endDate
-      }
+      },
+      withCredentials: true
     })
     .then(response => {
       console.log('Beacon detection status data:', response.data);

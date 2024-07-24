@@ -24,9 +24,9 @@ const UbicacionTiempoRealInteriores = () => {
   const fetchData = async () => {
     try {
       const [mapInfo, sectorInfo, umbralesInfo] = await Promise.all([
-        axios.get('/api/retrive_MapWithQuadrants_information'),
-        axios.get('/api/latest-sectors'),
-        axios.get('/api/umbrales')
+        axios.get('/api/retrive_MapWithQuadrants_information', { withCredentials: true }),
+        axios.get('/api/latest-sectors', { withCredentials: true }),
+        axios.get('/api/umbrales', { withCredentials: true })
       ]);
 
       console.log('Map Info:', mapInfo.data);
@@ -51,7 +51,7 @@ const UbicacionTiempoRealInteriores = () => {
 
   const fetchActiveBeacons = async () => {
     try {
-      const response = await axios.get('/api/active-beacons');
+      const response = await axios.get('/api/active-beacons', { withCredentials: true });
       const activeBeaconIds = response.data.activeBeaconIds || [];
       console.log('Active Beacons:', activeBeaconIds);
       setActiveBeacons(activeBeaconIds);

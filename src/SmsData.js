@@ -14,6 +14,7 @@ const SmsData = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get('http://thenext.ddns.net:1337/api/sms-data');
+        withCredentials: true
         const sortedData = response.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         setSmsData(sortedData);
       } catch (error) {

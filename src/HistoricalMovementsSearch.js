@@ -22,7 +22,8 @@ const HistoricalMovementsSearch = () => {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const result = await axios.get('/api/devices');
+        const result = await axios.get('/api/devices', { withCredentials: true });
+        withCredentials: true
         console.log('Fetched devices:', result.data);
         setDevices(result.data);
       } catch (error) {
@@ -44,6 +45,7 @@ const HistoricalMovementsSearch = () => {
           startHour,
           endHour,
         },
+        withCredentials: true
       });
       console.log('Response data:', result.data);
       const validData = result.data.filter(d => d.latitude !== null && d.longitude !== null); // Filtrar datos válidos

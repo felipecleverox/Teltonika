@@ -37,7 +37,8 @@ const Temperatura = () => {
       const formattedDate = date.toISOString().split('T')[0];
       console.log('Fetching data for date:', formattedDate);
       const response = await axios.get('/api/temperature-data', {
-        params: { date: formattedDate }
+        params: { date: formattedDate },
+        withCredentials: true
       });
       console.log('Datos recibidos:', response.data);
       setData(response.data);
