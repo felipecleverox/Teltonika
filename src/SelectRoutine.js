@@ -1,5 +1,4 @@
-// SelectRoutine.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import jwt from 'jsonwebtoken';
 import './SelectRoutine.css';
@@ -37,7 +36,7 @@ const SelectRoutine = () => {
   const location = useLocation();
   const [userPermissions, setUserPermissions] = useState([]);
 
-  useEffect(() => {
+  const checkToken = useCallback(() => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
@@ -45,7 +44,6 @@ const SelectRoutine = () => {
         if (decodedToken && decodedToken.permissions) {
           setUserPermissions(decodedToken.permissions.split(','));
         } else {
-          // Si el token no es válido o no tiene permisos, redirige al usuario a la página de inicio de sesión
           navigate('/', { replace: true });
         }
       } catch (error) {
@@ -53,15 +51,17 @@ const SelectRoutine = () => {
         navigate('/', { replace: true });
       }
     } else {
-      // Si no hay token, redirige al usuario a la página de inicio de sesión
       navigate('/', { replace: true });
     }
-
-    // Limpieza al desmontar el componente
-    return () => {
-      // Realizar cualquier limpieza necesaria aquí
-    };
   }, [navigate]);
+
+  useEffect(() => {
+    checkToken();
+    return () => {
+      // Cleanup function
+      setUserPermissions([]);
+    };
+  }, [checkToken]);
 
   const handleCardClick = (routine) => {
     if (userPermissions.includes(routine.permission)) {
@@ -72,7 +72,6 @@ const SelectRoutine = () => {
   };
 
   const handleBackClick = () => {
-    // Usa replace: true para evitar que se agregue una nueva entrada al historial
     navigate('/', { replace: true });
   };
 

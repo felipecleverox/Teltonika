@@ -30,23 +30,23 @@ function App() {
     <Router>
       <GlobalStyle />
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/select-routine" element={<PrivateRoute><SelectRoutine /></PrivateRoute>} />
-        <Route path="/last-known-position" element={<PrivateRoute><LastKnownPosition /></PrivateRoute>} />
-        <Route path="/ubicaciones-interior" element={<PrivateRoute><UbicacionTiempoRealInteriores /></PrivateRoute>} />
-        <Route path="/busqueda-entradas-persona" element={<PrivateRoute><PersonSearch /></PrivateRoute>} />
-        <Route path="/consulta-historica-movimientos" element={<PrivateRoute><HistoricalMovementsSearch /></PrivateRoute>} />
-        <Route path="/door-status-matrix" element={<PrivateRoute><DoorStatusMatrix /></PrivateRoute>} />
-        <Route path="/inteligencia-de-datos" element={<PrivateRoute><DataIntelligence /></PrivateRoute>} />
-        <Route path="/sms-data" element={<PrivateRoute><SmsData /></PrivateRoute>} />
-        <Route path="/presencia" element={<PrivateRoute><Presencia /></PrivateRoute>} />
-        <Route path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
-        <Route path="/register-user" element={<PrivateRoute><UserRegistration /></PrivateRoute>} />
-        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/temperatura" element={<PrivateRoute><Temperatura /></PrivateRoute>} />
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route key="landing" path="/" element={<LandingPage />} />
+        <Route key="forgot-password" path="/forgot-password" element={<ForgotPassword />} />
+        <Route key="reset-password" path="/reset-password/:token" element={<ResetPassword />} />
+        <Route key="select-routine" path="/select-routine" element={<PrivateRoute><SelectRoutine /></PrivateRoute>} />
+        <Route key="last-known-position" path="/last-known-position" element={<PrivateRoute><LastKnownPosition /></PrivateRoute>} />
+        <Route key="ubicaciones-interior" path="/ubicaciones-interior" element={<PrivateRoute><UbicacionTiempoRealInteriores /></PrivateRoute>} />
+        <Route key="busqueda-entradas-persona" path="/busqueda-entradas-persona" element={<PrivateRoute><PersonSearch /></PrivateRoute>} />
+        <Route key="consulta-historica-movimientos" path="/consulta-historica-movimientos" element={<PrivateRoute><HistoricalMovementsSearch /></PrivateRoute>} />
+        <Route key="door-status-matrix" path="/door-status-matrix" element={<PrivateRoute><DoorStatusMatrix /></PrivateRoute>} />
+        <Route key="inteligencia-de-datos" path="/inteligencia-de-datos" element={<PrivateRoute><DataIntelligence /></PrivateRoute>} />
+        <Route key="sms-data" path="/sms-data" element={<PrivateRoute><SmsData /></PrivateRoute>} />
+        <Route key="presencia" path="/presencia" element={<PrivateRoute><Presencia /></PrivateRoute>} />
+        <Route key="configuracion" path="/configuracion" element={<PrivateRoute><Configuration /></PrivateRoute>} />
+        <Route key="register-user" path="/register-user" element={<PrivateRoute><UserRegistration /></PrivateRoute>} />
+        <Route key="dashboard" path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route key="temperatura" path="/temperatura" element={<PrivateRoute><Temperatura /></PrivateRoute>} />
+        <Route key="catch-all" path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
   );
