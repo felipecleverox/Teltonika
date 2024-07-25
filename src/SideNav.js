@@ -1,5 +1,5 @@
 // SideNav.js
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './SideNav.css';
 
@@ -36,15 +36,45 @@ const routines = [
 
 const SideNav = ({ userPermissions }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
   const location = useLocation();
 
-  const filteredRoutines = routines.filter(routine => 
-    userPermissions.includes(routine.permission)
-  );
+  const loadSideNav = useCallback(() => {
+    setIsLoading(true);
+    // Simula una carga asíncrona
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+  }, []);
+
+  useEffect(() => {
+    loadSideNav();
+  }, [loadSideNav]);
+
+  const filteredRoutines = userPermissions
+    ? routines.filter(routine => userPermissions.includes(routine.permission))
+    : [];
+
+  useEffect(() => {
+    if (!isLoading && filteredRoutines.length === 0 && retryCount < 3) {
+      // Si no hay rutinas filtradas, intenta cargar de nuevo
+      setRetryCount(prev => prev + 1);
+      loadSideNav();
+    }
+  }, [isLoading, filteredRoutines.length, retryCount, loadSideNav]);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
   };
+
+  if (isLoading) {
+    return <div className="side-nav-loading">Cargando...</div>;
+  }
+
+  if (filteredRoutines.length === 0) {
+    return <div className="side-nav-error">No se pudo cargar el menú</div>;
+  }
 
   return (
     <nav className={`side-nav ${isExpanded ? 'expanded' : ''}`}>
@@ -58,7 +88,7 @@ const SideNav = ({ userPermissions }) => {
           className={`side-nav-item ${location.pathname === routine.route ? 'active' : ''}`}
           title={routine.title}
         >
-          <img src={routine.image} alt={routine.title} className="side-nav-icon" />
+          <img src={routine.image} alt={routine.title} className="side-nav-icon" loading="lazy" />
           {isExpanded && <span className="side-nav-title">{routine.title}</span>}
         </Link>
       ))}

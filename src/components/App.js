@@ -20,8 +20,6 @@ import Dashboard from '../Dashboard';
 import Temperatura from '../Temperatura';
 import GlobalStyle from '../GlobalStyle';
 import SideNav from '../SideNav';
-import 'core-js/stable';
-import 'regenerator-runtime/runtime';
 import './App.css';
 
 const PrivateRoute = ({ children, userPermissions }) => {

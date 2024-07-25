@@ -220,8 +220,3 @@ tr:nth-child(odd) {
     margin-bottom: 5px;
   }
 }
-.side-nav {
-  -webkit-transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  -webkit-perspective: 1000;
-}
