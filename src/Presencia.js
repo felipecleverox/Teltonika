@@ -245,6 +245,7 @@ const Presencia = () => {
           <tbody>
             {beacons.map(beacon => (
               <tr key={beacon.id}>
+                <td>{beacon.ubicacion}</td>
                 {data.map((entry, index) => (
                   <td key={index}>
                     <div className="status-bar-wrapper">
@@ -254,7 +255,7 @@ const Presencia = () => {
                       <div className="tooltip">
                         <span className="tooltiptext">{entry.status_timestamp}</span>
                       </div>
-                      </div>
+                    </div>
                   </td>
                 ))}
               </tr>

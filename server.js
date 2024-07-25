@@ -533,6 +533,7 @@ app.get('/api/latest-sectors', async (req, res) => {
 });
 // Definir el endpoint para obtener el estado de las puertas
 // Endpoint to get door status history within a specific date range
+// Endpoint to get door status history within a specific date range
 app.get('/api/door-status', async (req, res) => {
   const { startDate, endDate } = req.query;
 
@@ -546,6 +547,7 @@ app.get('/api/door-status', async (req, res) => {
       FROM door_status ds
       JOIN beacons b ON ds.sector = b.ubicacion
       WHERE ds.timestamp BETWEEN ? AND ? AND b.esPuerta = 1
+      ORDER BY ds.timestamp ASC
     `;
     const [rows] = await pool.query(query, [startDate, endDate]);
     res.json(rows);
