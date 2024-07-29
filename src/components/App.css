@@ -12,6 +12,7 @@ body, html {
 .app-container {
   display: flex;
   min-height: 100vh;
+  transition: background-color 0.3s ease;
 }
 
 .App {
@@ -22,24 +23,31 @@ body, html {
   flex-grow: 1;
   transition: margin-left 0.3s ease;
   width: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  margin: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .main-content.with-side-nav {
-  margin-left: 50px; /* Ancho de la barra lateral cuando está contraída */
+  margin-left: 70px; /* Ancho de la barra lateral cuando está contraída + 20px de margen */
 }
 
 .main-content.with-expanded-nav {
-  margin-left: 200px; /* Ancho de la barra lateral cuando está expandida */
+  margin-left: 220px; /* Ancho de la barra lateral cuando está expandida + 20px de margen */
 }
 
 .App-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #6b9fd4;
+  background-color: rgba(107, 159, 212, 0.9);
   color: white;
   padding: 20px;
   position: relative;
+  margin: -20px -20px 20px -20px;
+  border-radius: 10px 10px 0 0;
 }
 
 .App-logo {
@@ -89,7 +97,7 @@ button {
 }
 
 button:hover {
-  background-color: #6b9fd4;
+  background-color: #5a8ec3;
 }
 
 input[type="datetime-local"] {
@@ -155,8 +163,12 @@ tr:nth-child(odd) {
 }
 
 .content {
-  padding: 20px;
-  margin-top: 20px;
+  padding: 30px;
+  margin-top: 0;
+}
+
+body, input, button, select {
+  color: #333;
 }
 
 @media (max-width: 768px) {

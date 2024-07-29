@@ -35,6 +35,7 @@ const PrivateRoute = ({ children, userPermissions }) => {
 function AppContent() {
   const [userPermissions, setUserPermissions] = useState([]);
   const [isNavExpanded, setIsNavExpanded] = useState(false);
+  const [backgroundColor, setBackgroundColor] = useState('#E1E9F2'); // Default light gray
   const location = useLocation();
 
   useEffect(() => {
@@ -49,6 +50,12 @@ function AppContent() {
         console.error('Error decoding token:', error);
       }
     }
+
+    // Load background color from localStorage or use default
+    const savedColor = localStorage.getItem('appBackgroundColor');
+    if (savedColor) {
+      setBackgroundColor(savedColor);
+    }
   }, []);
 
   const routesWithoutSideNav = ['/'];
@@ -58,8 +65,13 @@ function AppContent() {
     setIsNavExpanded(expanded);
   };
 
+  const changeBackgroundColor = (color) => {
+    setBackgroundColor(color);
+    localStorage.setItem('appBackgroundColor', color);
+  };
+
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ backgroundColor }}>
       {shouldShowSideNav && <SideNav userPermissions={userPermissions} onExpandChange={handleNavExpand} />}
       <div className={`main-content ${shouldShowSideNav ? (isNavExpanded ? 'with-expanded-nav' : 'with-side-nav') : ''}`}>
         <Routes>
