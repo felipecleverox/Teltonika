@@ -113,8 +113,8 @@ const Temperatura = () => {
         }
       },
       y: {
-        min: -5,
-        max: 40,
+        min: -25,
+        max: 35,
         title: {
           display: true,
           text: 'Temperatura (°C)'
