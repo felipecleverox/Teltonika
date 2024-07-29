@@ -1476,11 +1476,10 @@ async function getUbicacionFromIdent(ident, timestamp) {
 app.get('/api/temperature-data', async (req, res) => {
   try {
     const { date } = req.query;
-    console.log('Fecha recibida:', date); // Para depuración
-
-    // Asumiendo que la fecha viene en formato 'YYYY-MM-DD'
     const query = `
-      SELECT rt.beacon_id, rt.temperatura, rt.timestamp, b.lugar, b.ubicacion
+      SELECT rt.beacon_id, rt.temperatura, rt.timestamp, b.lugar, b.ubicacion,
+             (SELECT minimo FROM parametrizaciones WHERE param_id = 6) AS minimo,
+             (SELECT maximo FROM parametrizaciones WHERE param_id = 6) AS maximo
       FROM registro_temperaturas rt
       JOIN beacons b ON rt.beacon_id = b.id
       WHERE DATE(rt.timestamp) = ?
@@ -1489,8 +1488,6 @@ app.get('/api/temperature-data', async (req, res) => {
     
     const [rows] = await pool.query(query, [date]);
 
-    console.log('Filas recuperadas:', rows.length); // Para depuración
-
     const data = rows.reduce((acc, row) => {
       if (!acc[row.beacon_id]) {
         acc[row.beacon_id] = {
@@ -1498,7 +1495,9 @@ app.get('/api/temperature-data', async (req, res) => {
           location: `Cámara de Frío: ${row.lugar || 'Desconocido'}`,
           ubicacion: row.ubicacion || 'Desconocido',
           temperatures: [],
-          timestamps: []
+          timestamps: [],
+          minimo: row.minimo,
+          maximo: row.maximo
         };
       }
       acc[row.beacon_id].temperatures.push(row.temperatura);

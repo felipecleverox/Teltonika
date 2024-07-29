@@ -344,17 +344,19 @@ const Dashboard = () => {
             <div className="chart-container">
               <h2>Temperaturas Actuales</h2>
               <div className="temperature-gauges">
-                  {temperatureData.slice(0, 3).map((data, index) => (
-                    <TemperatureGauge 
-                      key={index}
-                      temperature={data.temperatures[data.temperatures.length - 1]}
-                      location={data.location}
-                      timestamp={data.timestamps[data.timestamps.length - 1]}
-                      width={150}  // Increase from 200 to 250
-                      height={150} // Increase from 200 to 250
-                    />
-                  ))}
-                </div>
+                {temperatureData.slice(0, 3).map((data, index) => (
+                  <TemperatureGauge 
+                    key={index}
+                    temperature={data.temperatures[data.temperatures.length - 1]}
+                    location={data.location}
+                    timestamp={data.timestamps[data.timestamps.length - 1]}
+                    width={150}
+                    height={150}
+                    minimo={data.minimo}
+                    maximo={data.maximo}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
