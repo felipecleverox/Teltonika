@@ -4,6 +4,9 @@ import './DataIntelligence.css';
 import Header from './Header';
 import interiorSearchImage from './assets/images/interior_search.png';
 import exteriorSearchImage from './assets/images/exterior_search.png';
+import personal1Icon from './assets/images/Personal 1.png';
+import personal2Icon from './assets/images/Personal 2.png';
+import personal3Icon from './assets/images/Personal 3.png';
 
 const searchOptions = [
   { title: "Búsqueda de Datos de Interiores", image: interiorSearchImage, option: 'interior' },
@@ -136,6 +139,33 @@ function DataIntelligence() {
     return '';
   };
 
+  const getPersonalIcon = (imageName) => {
+    switch(imageName) {
+      case 'Personal 1.png':
+        return personal1Icon;
+      case 'Personal 2.png':
+        return personal2Icon;
+      case 'Personal 3.png':
+        return personal3Icon;
+      default:
+        return null;
+    }
+  };
+
+  const getPersonalInfo = (deviceId) => {
+    const person = personal.find(p => p.id_dispositivo_asignado === deviceId);
+    if (person) {
+      return {
+        name: person.Nombre_Personal,
+        image: getPersonalIcon(person.imagen_asignado)
+      };
+    }
+    return {
+      name: 'Unknown',
+      image: null
+    };
+  };
+
   const downloadCSV = () => {
     const headers = selectedOption === 'interior'
       ? ['Personal', 'Sector', 'Desde Detección', 'Permanencia', 'Estado']
@@ -147,8 +177,9 @@ function DataIntelligence() {
           const permanence = calculatePermanence(result.entrada, result.salida);
           const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
           const semaphoreClass = getSemaphoreClass(permanenceMinutes);
+          const personalInfo = getPersonalInfo(selectedDeviceId);
           return [
-            'Personal 3',
+            personalInfo.name,
             sector.text,
             formatDate(result.entrada),
             permanence,
@@ -244,7 +275,8 @@ function DataIntelligence() {
               <table className="search-results-table">
                 <thead>
                   <tr>
-                    <th>Personal</th>
+                    <th>Imagen</th>
+                    <th>Nombre</th>
                     <th>Sector</th>
                     <th>Desde Detección</th>
                     <th>Permanencia</th>
@@ -257,9 +289,15 @@ function DataIntelligence() {
                     const permanence = calculatePermanence(result.entrada, result.salida);
                     const permanenceMinutes = (new Date(result.salida ? result.salida : new Date()) - new Date(result.entrada)) / (1000 * 60);
                     const semaphoreClass = getSemaphoreClass(permanenceMinutes);
+                    const personalInfo = getPersonalInfo(selectedDeviceId);
                     return (
                       <tr key={index}>
-                        <td><img src={personal3Icon} alt="Personal 3" style={{ width: '10px' }} /></td>
+                        <td className="image-cell">
+                          {personalInfo.image && (
+                            <img src={personalInfo.image} alt={personalInfo.name} className="personal-image" />
+                          )}
+                        </td>
+                        <td>{personalInfo.name}</td>
                         <td className={sector.className}>{sector.text}</td>
                         <td>{formatDate(result.entrada)}</td>
                         <td>{permanence}</td>
