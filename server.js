@@ -26,7 +26,7 @@ const server = http.createServer(app); // Create HTTP server with Express app
 const { Server } = require('socket.io'); // Import Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: ["http://thenext.ddns.net:3000", "http://localhost:3000"], // Allow both origins
+    origin: ["http://tnstrack.ddns.net:3000", "http://localhost:3000","http://tnstrack.ddns.net:3001", "http://localhost:3001"], // Allow both origins
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true
@@ -60,7 +60,7 @@ const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Coordinates for San
 
 // Middleware CORS (debe estar antes de otros middleware o rutas)
 const corsOptions = {
-  origin: ['http://thenext.ddns.net:3000', 'http://localhost:3000'],
+  origin: ['http://tnstrack.ddns.net:3000', 'http://localhost:3000','http://tnstrack.ddns.net:3001', 'http://localhost:3001'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
   credentials: true
@@ -533,6 +533,7 @@ app.get('/api/latest-sectors', async (req, res) => {
 });
 // Definir el endpoint para obtener el estado de las puertas
 // Endpoint to get door status history within a specific date range
+// Endpoint to get door status history within a specific date range
 app.get('/api/door-status', async (req, res) => {
   const { startDate, endDate } = req.query;
 
@@ -546,6 +547,7 @@ app.get('/api/door-status', async (req, res) => {
       FROM door_status ds
       JOIN beacons b ON ds.sector = b.ubicacion
       WHERE ds.timestamp BETWEEN ? AND ? AND b.esPuerta = 1
+      ORDER BY ds.timestamp ASC
     `;
     const [rows] = await pool.query(query, [startDate, endDate]);
     res.json(rows);
@@ -910,7 +912,7 @@ app.get('/api/oldest-active-beacon-detections', async (req, res) => {
 app.get('/api/beacons', async (req, res) => {
   try {
     // Ejecutar una consulta SQL para seleccionar todos los registros de la tabla 'beacons'
-    const [rows] = await pool.query('SELECT * FROM beacons');
+    const [rows] = await pool.query('SELECT * FROM beacons WHERE esTemperatura = 0');
     
     // Enviar los resultados de la consulta como una respuesta JSON
     res.json(rows);
@@ -1473,23 +1475,29 @@ async function getUbicacionFromIdent(ident, timestamp) {
 // En server.js, modifica el endpoint /api/temperature-data
 app.get('/api/temperature-data', async (req, res) => {
   try {
+    const { date } = req.query;
     const query = `
-      SELECT rt.beacon_id, rt.temperatura, rt.timestamp, b.lugar, b.ubicacion
+      SELECT rt.beacon_id, rt.temperatura, rt.timestamp, b.lugar, b.ubicacion,
+             (SELECT minimo FROM parametrizaciones WHERE param_id = 6) AS minimo,
+             (SELECT maximo FROM parametrizaciones WHERE param_id = 6) AS maximo
       FROM registro_temperaturas rt
       JOIN beacons b ON rt.beacon_id = b.id
-      WHERE rt.temperatura IS NOT NULL
+      WHERE DATE(rt.timestamp) = ?
       ORDER BY rt.timestamp ASC
     `;
-    const [rows] = await pool.query(query);
+    
+    const [rows] = await pool.query(query, [date]);
 
     const data = rows.reduce((acc, row) => {
       if (!acc[row.beacon_id]) {
         acc[row.beacon_id] = {
           beacon_id: row.beacon_id,
-          location: `Cámara de Frío: ${row.lugar}`,
-          ubicacion: row.ubicacion,
+          location: `Cámara de Frío: ${row.lugar || 'Desconocido'}`,
+          ubicacion: row.ubicacion || 'Desconocido',
           temperatures: [],
-          timestamps: []
+          timestamps: [],
+          minimo: row.minimo,
+          maximo: row.maximo
         };
       }
       acc[row.beacon_id].temperatures.push(row.temperatura);

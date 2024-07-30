@@ -63,37 +63,37 @@
 .door-status-matrix th,
 .door-status-matrix td {
   border: 1px solid #ddd;
-  padding: 8px;
+  padding: 0;
   text-align: center;
+  height: 40px; /* Aumentado para coincidir con .clickable-cell */
 }
 
 .col-width {
   width: 50px;
 }
 
+.minute-labels table,
+.clickable-cell table {
+  height: 100%;
+  width: 100%;
+  border-collapse: collapse;
+}
+
 .minute-labels td,
-.minute-label {
-  font-size: 12px;
-}
-
-.minute-labels {
-  text-align: center;
-}
-
-.minute-labels td {
-  padding: 8px 15px;
+.clickable-cell {
+  height: 16.66%; /* 100% / 6 rangos de minutos */
   vertical-align: middle;
-}
-
-.minute-label {
-  color: inherit;
+  padding: 2px;
 }
 
 .temperature {
-  font-size: 12px;
+  font-size: 14px; /* Aumentado */
+  line-height: 40px; /* Coincide con la altura de .clickable-cell */
 }
 
 .clickable-cell {
+  height: 40px; /* Aumentado */
+  width: 100%;
   cursor: pointer;
   border: 1px solid #ddd;
   text-align: center;
@@ -103,6 +103,16 @@
 
 .clickable-cell:hover {
   background-color: #f1f1f1;
+}
+
+.clickable-cell.open {
+  background-color: #26b43bcf; /* Verde */
+  color: white;
+}
+
+.clickable-cell.closed {
+  background-color: #af4c4f; /* Rojo */
+  color: white;
 }
 
 .line-chart {

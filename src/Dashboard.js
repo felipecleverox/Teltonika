@@ -5,6 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
 import Header from './Header';
 import dayjs from 'dayjs';
+import TemperatureGauge from './TemperatureGauge';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -14,11 +15,13 @@ const Dashboard = () => {
   const [doorChangeData, setDoorChangeData] = useState(null);
   const [currentDoorStatus, setCurrentDoorStatus] = useState(null);
   const [lastStatusTime, setLastStatusTime] = useState(null);
+  const [temperatureData, setTemperatureData] = useState([]);
 
   useEffect(() => {
     fetchPresenceData(selectedDate);
     fetchDoorStatusData(selectedDate);
     fetchDoorChangeData(selectedDate);
+    fetchTemperatureData(selectedDate);
   }, [selectedDate]);
 
   const fetchPresenceData = async (date) => {
@@ -73,6 +76,25 @@ const Dashboard = () => {
       processDoorChangeData(responseCurrent.data, responsePrevious.data, currentDate, previousDate);
     } catch (error) {
       console.error('Error fetching door change data:', error);
+    }
+  };
+
+  const fetchTemperatureData = async (date) => {
+    try {
+      const response = await axios.get('/api/temperature-data', {
+        params: { date: date.toISOString().split('T')[0] }
+      });
+      console.log('Temperature Data:', response.data);
+      
+      const processedData = response.data.map(item => ({
+        ...item,
+        temperatures: item.temperatures.filter(temp => temp !== null && temp !== ''),
+        timestamps: item.timestamps.filter((_, index) => item.temperatures[index] !== null && item.temperatures[index] !== '')
+      })).filter(item => item.temperatures.length > 0);
+      
+      setTemperatureData(processedData);
+    } catch (error) {
+      console.error('Error fetching temperature data:', error);
     }
   };
 
@@ -157,12 +179,12 @@ const Dashboard = () => {
       {
         name: previousDate.format('YYYY-MM-DD'),
         count: previousResult.changeCount,
-        color: '#20B2AA', // Light Sea Green
+        color: '#20B2AA',
       },
       { 
         name: currentDate.format('YYYY-MM-DD'),
         count: currentResult.changeCount, 
-        color: '#6A5ACD', // Slate Blue
+        color: '#6A5ACD',
         statusLabel: statusLabelCurrent,
         statusColor: statusColorCurrent
       }
@@ -215,91 +237,128 @@ const Dashboard = () => {
         />
       </div>
       <div className="charts-container">
-        <div className="chart-section">
-          <h2>Status de Presencia</h2>
-          {presenceData ? (
-            <PieChart width={400} height={400}>
-              <Pie
-                data={presenceData}
-                cx={200}
-                cy={200}
-                labelLine={false}
-                label={renderCustomizedLabel}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {presenceData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend
-                formatter={(value) => presenceStatusLegend[value] || value}
-              />
-            </PieChart>
-          ) : (
-            <p>Cargando datos de presencia...</p>
-          )}
-        </div>
-        <div className="chart-section">
-          <h2>Estado de Puertas por Sector</h2>
-          {doorStatusData ? (
-            <PieChart width={400} height={400}>
-              <Pie
-                data={doorStatusData}
-                cx={200}
-                cy={200}
-                labelLine={false}
-                label={renderCustomizedLabel}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {doorStatusData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={DOOR_COLORS[index % DOOR_COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          ) : (
-            <p>Cargando datos de estado de puertas...</p>
-          )}
-        </div>
-        <div className="chart-section">
-          <h2>Frecuencia de Cambios de Estado de Puertas</h2>
-          <div style={{ marginBottom: '30px' }}>
-            {currentDoorStatus && lastStatusTime && (
-              <div className="current-status-label" style={{
-                backgroundColor: 'black',
-                color: currentDoorStatus.current === 0 ? '#4CAF50' : '#F44336',
-                padding: '5px 10px',
-                borderRadius: '5px',
-                marginBottom: '10px',
-                display: 'inline-block'
-              }}>
-                Status Actual: {currentDoorStatus.current === 0 ? 'Abierta' : 'Cerrada'} 
-                (Último cambio: {dayjs(lastStatusTime).format('HH:mm:ss')})
-              </div>
-            )}
+        <div className="chart-row">
+          <div className="chart-section">
+            <div className="chart-container">
+              <h2>Status de Presencia</h2>
+              {presenceData ? (
+                <div className="pie-chart-container">
+                  <PieChart width={400} height={400}>
+                    <Pie
+                      data={presenceData}
+                      cx={200}
+                      cy={200}
+                      labelLine={false}
+                      label={renderCustomizedLabel}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {presenceData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend
+                      formatter={(value) => presenceStatusLegend[value] || value}
+                    />
+                  </PieChart>
+                </div>
+              ) : (
+                <p>Cargando datos de presencia...</p>
+              )}
+            </div>
           </div>
-          {doorChangeData ? (
-            <BarChart width={400} height={300} data={doorChangeData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis tickFormatter={(value) => Math.round(value)} />
-              <Tooltip />
-              <Bar dataKey="count">
-                {doorChangeData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+          <div className="chart-section">
+            <div className="chart-container">
+              <h2>Estado de Puertas por Sector</h2>
+              {doorStatusData ? (
+                <div className="pie-chart-container">
+                  <PieChart width={400} height={400}>
+                    <Pie
+                      data={doorStatusData}
+                      cx={200}
+                      cy={200}
+                      labelLine={false}
+                      label={renderCustomizedLabel}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {doorStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={DOOR_COLORS[index % DOOR_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </div>
+              ) : (
+                <p>Cargando datos de estado de puertas...</p>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="chart-row">
+          <div className="chart-section">
+            <div className="chart-container">
+              <h2>Frecuencia de Cambios de Estado de Puertas</h2>
+              <div style={{ marginBottom: '30px' }}>
+                {currentDoorStatus && lastStatusTime && (
+                  <div className="current-status-label" style={{
+                    backgroundColor: 'black',
+                    color: currentDoorStatus.current === 0 ? '#4CAF50' : '#F44336',
+                    padding: '5px 10px',
+                    borderRadius: '5px',
+                    marginBottom: '10px',
+                    display: 'inline-block'
+                  }}>
+                    Status Actual: {currentDoorStatus.current === 0 ? 'Abierta' : 'Cerrada'} 
+                    (Último cambio: {dayjs(lastStatusTime).format('HH:mm:ss')})
+                  </div>
+                )}
+              </div>
+              {doorChangeData ? (
+                <div className="bar-chart-container">
+                  <BarChart width={800} height={300} data={doorChangeData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis tickFormatter={(value) => Math.round(value)} />
+                    <Tooltip />
+                    <Bar dataKey="count">
+                      {doorChangeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                      <LabelList dataKey="count" content={<CustomizedLabel />} />
+                    </Bar>
+                  </BarChart>
+                </div>
+              ) : (
+                <p>Cargando datos de cambios de estado de puertas...</p>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="chart-row">
+          <div className="chart-section">
+            <div className="chart-container">
+              <h2>Temperaturas Actuales</h2>
+              <div className="temperature-gauges">
+                {temperatureData.slice(0, 3).map((data, index) => (
+                  <TemperatureGauge 
+                    key={index}
+                    temperature={data.temperatures[data.temperatures.length - 1]}
+                    location={data.location}
+                    timestamp={data.timestamps[data.timestamps.length - 1]}
+                    width={150}
+                    height={150}
+                    minimo={data.minimo}
+                    maximo={data.maximo}
+                  />
                 ))}
-                <LabelList dataKey="count" content={<CustomizedLabel />} />
-              </Bar>
-            </BarChart>
-          ) : (
-            <p>Cargando datos de cambios de estado de puertas...</p>
-          )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

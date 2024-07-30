@@ -32,14 +32,15 @@ const DoorStatusMatrix = () => {
   }, [selectedInterval, data, selectedDate]);
 
   const fetchDataForSelectedDate = async (date) => {
-    const startDate = dayjs(date).set('hour', 8).set('minute', 0).set('second', 0).format('YYYY-MM-DD HH:mm:ss');
-    const endDate = dayjs(date).set('hour', 23).set('minute', 30).set('second', 0).format('YYYY-MM-DD HH:mm:ss');
+    const startDate = dayjs(date).startOf('day').format('YYYY-MM-DD HH:mm:ss');
+    const endDate = dayjs(date).endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
     try {
       const response = await axios.get('/api/door-status', {
         params: { startDate, endDate }
       });
       const fetchedData = response.data;
+      console.log('Fetched data:', fetchedData);
 
       const uniqueSectors = [...new Set(fetchedData.map(item => item.sector))];
       setSectors(uniqueSectors);
@@ -106,57 +107,60 @@ const DoorStatusMatrix = () => {
   };
 
   const createMatrix = () => {
-    const hours = Array.from({ length: 16 }, (_, i) => 8 + i);
+    const hours = Array.from({ length: 16 }, (_, i) => i + 8);
+    const minuteRanges = ['10:00', '00:20', '00:30', '00:40', '00:50', '00:59'];
+
     return sectors.map(sector => {
       const sectorData = data.filter(d => d.sector === sector);
       return (
         <tr key={sector}>
           <td>{sector}</td>
-          <td className="minute-labels">
-            <table>
+          <td>
+            <table className="inner-table">
               <tbody>
-                {['00:00 10:00', '00:11 00:20', '00:21 00:30', '00:31 00:40', '00:41 00:50', '00:51 00:00'].map((minute, index) => (
+                {minuteRanges.map((range, index) => (
                   <tr key={index}>
-                    <td className="minute-label" style={{ color: 'inherit' }}>{minute}</td>
+                    <td className="minute-label">{range}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </td>
-          {hours.map(hour => {
-            return (
-              <td key={hour}>
-                <table>
-                  <tbody>
-                    {Array.from({ length: 6 }, (_, i) => {
-                      const startMinute = i * 10;
-                      const endMinute = (i + 1) * 10;
-                      const trameData = sectorData.filter(d => {
-                        const entryTime = dayjs(d.timestamp);
-                        return entryTime.hour() === hour && 
-                               entryTime.minute() >= startMinute && 
-                               entryTime.minute() < endMinute;
-                      });
-                      const lastEntry = trameData.length > 0 ? 
-                        trameData.reduce((prev, current) => (dayjs(current.timestamp).isAfter(dayjs(prev.timestamp)) ? current : prev)) 
-                        : null;
-                      return (
-                        <tr key={i}>
-                          <td className="clickable-cell" onClick={() => handleCellClick(hour, startMinute)}>
-                            {lastEntry && (
-                              <div className={`temperature ${getColorClass(lastEntry.magnet_status)}`}>
-                                {Math.round(lastEntry.temperature)}°C
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </td>
-            );
-          })}
+          {hours.map(hour => (
+            <td key={hour}>
+              <table className="inner-table">
+                <tbody>
+                  {minuteRanges.map((_, minuteIndex) => {
+                    const startMinute = minuteIndex * 10;
+                    const endMinute = startMinute + 10;
+                    const trameData = sectorData.filter(d => {
+                      const entryTime = dayjs(d.timestamp);
+                      return entryTime.hour() === hour && 
+                             entryTime.minute() >= startMinute && 
+                             entryTime.minute() < endMinute;
+                    });
+                    const lastEntry = trameData.length > 0 ? 
+                      trameData.reduce((prev, current) => (dayjs(current.timestamp).isAfter(dayjs(prev.timestamp)) ? current : prev)) 
+                      : null;
+                    return (
+                      <tr key={minuteIndex}>
+                        <td 
+                          className="clickable-cell" 
+                          onClick={() => handleCellClick(hour, startMinute)}
+                        >
+                          {lastEntry && (
+                            <div className={`temperature ${getColorClass(lastEntry.magnet_status)}`}>
+                              {Math.round(lastEntry.temperature)}°C
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </td>
+          ))}
         </tr>
       );
     });
@@ -194,7 +198,7 @@ const DoorStatusMatrix = () => {
               <th className="col-sector">Sector</th>
               <th className="col-minutes">Minutos hasta</th>
               {Array.from({ length: 16 }, (_, i) => (
-                <th key={i} className="col-width">{`${8 + i}:00`}</th>
+                <th key={i} className="col-width">{`${(i + 8).toString().padStart(2, '0')}:00`}</th>
               ))}
             </tr>
           </thead>
