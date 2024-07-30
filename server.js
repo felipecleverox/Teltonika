@@ -1511,6 +1511,30 @@ app.get('/api/temperature-data', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+// Agregar estos endpoints en server.js
+
+// Endpoint para obtener los umbrales de temperatura
+app.get('/api/temperatura-umbrales', async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT minimo, maximo FROM parametrizaciones WHERE param_id = 6');
+    res.json(results[0]);
+  } catch (error) {
+    console.error('Error fetching temperature thresholds:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Endpoint para actualizar los umbrales de temperatura
+app.post('/api/temperatura-umbrales', async (req, res) => {
+  const { minimo, maximo } = req.body;
+  try {
+    await pool.query('UPDATE parametrizaciones SET minimo = ?, maximo = ? WHERE param_id = 6', [minimo, maximo]);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Error updating temperature thresholds:', error);
+    res.status(500).send('Server Error');
+  }
+});
 // Start the server
 server.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
