@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -16,6 +16,7 @@ const Presencia = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [pieChartData, setPieChartData] = useState({});
   const [summaryPieChartData, setSummaryPieChartData] = useState(null);
+  const today = useRef(new Date());
 
   useEffect(() => {
     console.log('Fetching beacon data...');
@@ -126,7 +127,11 @@ const Presencia = () => {
 
   const handleDateChange = (date) => {
     console.log('Date selected:', date);
-    setSelectedDate(date);
+    if (date <= today.current) {
+      setSelectedDate(date);
+    } else {
+      alert("No se puede seleccionar una fecha futura.");
+    }
   };
 
   const getColorClass = (status) => {
@@ -181,6 +186,7 @@ const Presencia = () => {
         onChange={handleDateChange} 
         dateFormat="yyyy-MM-dd"
         className="date-picker"
+        maxDate={today.current}
       />
       {summaryPieChartData && (
         <div className="summary-pie-chart">

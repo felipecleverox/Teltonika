@@ -1,5 +1,5 @@
 // Temperatura.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, TimeScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
@@ -27,6 +27,7 @@ const Temperatura = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [error, setError] = useState(null);
+  const today = useRef(new Date());
 
   useEffect(() => {
     fetchTemperatureData(selectedDate);
@@ -51,8 +52,12 @@ const Temperatura = () => {
   };
 
   const handleDateChange = (date) => {
-    setSelectedDate(date);
-    setLoading(true);
+    if (date <= today.current) {
+      setSelectedDate(date);
+      setLoading(true);
+    } else {
+      alert("No se puede seleccionar una fecha futura.");
+    }
   };
 
   const formatDate = (date) => {
@@ -78,6 +83,7 @@ const Temperatura = () => {
           dateFormat="dd-MM-yyyy"
           className="date-picker"
           locale="es"
+          maxDate={today.current}
         />
         <p>No hay datos disponibles para la fecha seleccionada.</p>
       </div>
@@ -179,6 +185,7 @@ const Temperatura = () => {
         dateFormat="dd-MM-yyyy"
         className="date-picker"
         locale="es"
+        maxDate={today.current}
       />
       <div className="charts-grid">
         {data.map((beaconData) => {
