@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './PersonSearch.css';
-import Header from './Header'; // Import the new header component
+import Header from './Header';
 
 // Importa las imágenes
 import personal1Icon from './assets/images/Personal 1.png';
 import personal2Icon from './assets/images/Personal 2.png';
 import personal3Icon from './assets/images/Personal 3.png';
-import planoSectores from './assets/images/plano_sectores.jpg'; // Asegúrate de que esta ruta sea correcta
+import planoSectores from './assets/images/plano_sectores.jpg';
 
 function PersonSearch() {
     const [selectedDay, setSelectedDay] = useState('');
@@ -18,6 +18,7 @@ function PersonSearch() {
     const [devices, setDevices] = useState([]);
     const [personal, setPersonal] = useState([]);
     const [selectedDeviceId, setSelectedDeviceId] = useState('');
+    const today = useRef(new Date().toISOString().split('T')[0]);
 
     useEffect(() => {
         const fetchThresholds = async () => {
@@ -60,7 +61,7 @@ function PersonSearch() {
                 params: {
                     startDate: startDateTime,
                     endDate: endDateTime,
-                    device_id: selectedDeviceId // Use device ID
+                    device_id: selectedDeviceId
                 }
             });
             console.log('Data received:', response.data);
@@ -80,6 +81,20 @@ function PersonSearch() {
     };
 
     const handleSearch = () => {
+        const startDateTime = new Date(`${selectedDay}T${startTime}`);
+        const endDateTime = new Date(`${selectedDay}T${endTime}`);
+        const currentDate = new Date();
+
+        if (new Date(selectedDay) > currentDate) {
+            alert("La fecha seleccionada no puede ser posterior a la fecha actual.");
+            return;
+        }
+
+        if (endDateTime <= startDateTime) {
+            alert("La hora de fin debe ser posterior a la hora de inicio.");
+            return;
+        }
+
         fetchSearchResults();
     };
 
@@ -108,7 +123,7 @@ function PersonSearch() {
 
     const calculatePermanence = (entrada, salida) => {
         const start = new Date(entrada);
-        const end = salida ? new Date(salida) : new Date(); // Usa la fecha actual si no hay salida
+        const end = salida ? new Date(salida) : new Date();
         const duration = end - start;
 
         const hours = Math.floor(duration / (1000 * 60 * 60));
@@ -178,6 +193,7 @@ function PersonSearch() {
                                 type="date"
                                 value={selectedDay}
                                 onChange={e => setSelectedDay(e.target.value)}
+                                max={today.current}
                             />
                         </div>
                         <div className="date-time-input">
@@ -194,6 +210,7 @@ function PersonSearch() {
                                 type="time"
                                 value={endTime}
                                 onChange={e => setEndTime(e.target.value)}
+                                min={startTime}
                             />
                         </div>
                     </div>

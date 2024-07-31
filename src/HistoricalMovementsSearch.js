@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import mapboxgl from 'mapbox-gl';
 import './HistoricalMovementsSearch.css';
@@ -18,7 +18,8 @@ const HistoricalMovementsSearch = () => {
   const [endHour, setEndHour] = useState('');
   const [data, setData] = useState([]);
   const [map, setMap] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(''); // Variable de estado para el mensaje de error
+  const [errorMessage, setErrorMessage] = useState('');
+  const today = useRef(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     const fetchDevices = async () => {
@@ -37,6 +38,19 @@ const HistoricalMovementsSearch = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('Submitting form with values:', { device, date, startHour, endHour });
+
+    // Validación de fecha
+    if (new Date(date) > new Date()) {
+      setErrorMessage('La fecha seleccionada no puede ser posterior a la fecha actual.');
+      return;
+    }
+
+    // Validación de horas
+    if (startHour >= endHour) {
+      setErrorMessage('La hora de fin debe ser posterior a la hora de inicio.');
+      return;
+    }
+
     try {
       const result = await axios.get('/api/historical-gps-data', {
         params: {
@@ -47,17 +61,17 @@ const HistoricalMovementsSearch = () => {
         },
       });
       console.log('Response data:', result.data);
-      const validData = result.data.filter(d => d.latitude !== null && d.longitude !== null); // Filtrar datos válidos
+      const validData = result.data.filter(d => d.latitude !== null && d.longitude !== null);
       setData(validData);
       if (validData.length > 0) {
-        setErrorMessage(''); // Limpiar el mensaje de error
+        setErrorMessage('');
         plotRoute(validData);
       } else {
         setErrorMessage('Sin Datos para esa Búsqueda');
       }
     } catch (error) {
       console.error('Error fetching historical GPS data:', error);
-      setErrorMessage('Error al buscar los datos GPS históricos'); // Mensaje de error en caso de fallo en la búsqueda
+      setErrorMessage('Error al buscar los datos GPS históricos');
     }
   };
 
@@ -80,14 +94,14 @@ const HistoricalMovementsSearch = () => {
 
     // Estilizar los controles de navegación
     const navElement = nav._container;
-    navElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // Fondo semi-transparente
+    navElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
     navElement.querySelectorAll('button').forEach(button => {
-      button.style.color = 'red'; // Cambiar color del texto a blanco
-      button.style.backgroundColor = 'rgba(0, 0, 0, 0.10)'; // Fondo semi-transparente para botones
-      button.style.border = 'white'; // Sin borde para los botones
+      button.style.color = 'red';
+      button.style.backgroundColor = 'rgba(0, 0, 0, 0.10)';
+      button.style.border = 'white';
     });
     navElement.querySelectorAll('svg').forEach(svg => {
-      svg.style.fill = 'white'; // Cambiar color del ícono a blanco
+      svg.style.fill = 'white';
     });
 
     setMap(mapInstance);
@@ -119,7 +133,7 @@ const HistoricalMovementsSearch = () => {
             'line-cap': 'round',
           },
           paint: {
-            'line-color': '#FF0000', // Cambiar color de la línea a rojo
+            'line-color': '#FF0000',
             'line-width': 6,
           },
         });
@@ -145,8 +159,8 @@ const HistoricalMovementsSearch = () => {
   const createCustomMarker = () => {
     const marker = document.createElement('div');
     marker.style.backgroundImage = `url(${markerIcon})`;
-    marker.style.width = '20px';  // Ajusta el ancho
-    marker.style.height = '24px'; // Ajusta la altura
+    marker.style.width = '20px';
+    marker.style.height = '24px';
     marker.style.backgroundSize = '100%';
     return marker;
   };
@@ -155,50 +169,51 @@ const HistoricalMovementsSearch = () => {
     <div className="historical-movements-search">
       <Header title="Ubicación Exteriores Tiempo Real" />
       <form onSubmit={handleSubmit} className="search-container">
-  <div className="device-selection">
-    <select value={device} onChange={(e) => setDevice(e.target.value)}>
-      <option value="">Seleccione un dispositivo</option>
-      {devices.map((device) => (
-        <option key={device.id} value={device.id}>
-          {device.device_asignado}
-        </option>
-      ))}
-    </select>
-  </div>
-  <div className="date-time-selection">
-    <div className="date-input">
-      <label htmlFor="date-picker">Fecha:</label>
-      <input
-        id="date-picker"
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-      />
-    </div>
-    <div className="time-inputs">
-      <div className="time-input">
-        <label htmlFor="start-time">Hora de inicio:</label>
-        <input
-          id="start-time"
-          type="time"
-          value={startHour}
-          onChange={(e) => setStartHour(e.target.value)}
-        />
-      </div>
-      <div className="time-input">
-        <label htmlFor="end-time">Hora de fin:</label>
-        <input
-          id="end-time"
-          type="time"
-          value={endHour}
-          onChange={(e) => setEndHour(e.target.value)}
-        />
-      </div>
-    </div>
-  </div>
-  <button type="submit">Buscar</button>
-</form>
-      {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Mostrar mensaje de error */}
+        <div className="device-selection">
+          <select value={device} onChange={(e) => setDevice(e.target.value)}>
+            <option value="">Seleccione un dispositivo</option>
+            {devices.map((device) => (
+              <option key={device.id} value={device.id}>
+                {device.device_asignado}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="date-time-selection">
+          <div className="date-input">
+            <label htmlFor="date-picker">Fecha:</label>
+            <input
+              id="date-picker"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              max={today.current}
+            />
+          </div>
+          <div className="time-inputs">
+            <div className="time-input">
+              <label htmlFor="start-time">Hora de inicio:</label>
+              <input
+                id="start-time"
+                type="time"
+                value={startHour}
+                onChange={(e) => setStartHour(e.target.value)}
+              />
+            </div>
+            <div className="time-input">
+              <label htmlFor="end-time">Hora de fin:</label>
+              <input
+                id="end-time"
+                type="time"
+                value={endHour}
+                onChange={(e) => setEndHour(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+        <button type="submit">Buscar</button>
+      </form>
+      {errorMessage && <p className="error-message">{errorMessage}</p>}
       <div id="map" className="map"></div>
       {data.length > 0 && (
         <table>
