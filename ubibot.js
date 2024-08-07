@@ -1,4 +1,8 @@
 // Importar las bibliotecas necesarias
+// es necesario correr el siguiente comando antes de probar por primera vez
+// npm install axios exceljs (Marcar aqui [ ] si se realizo)
+
+
 const axios = require('axios'); // Para hacer solicitudes HTTP
 const fs = require('fs').promises; // Para operaciones de archivo asíncronas
 const ExcelJS = require('exceljs'); // Para manejar archivos Excel
