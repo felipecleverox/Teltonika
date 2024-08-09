@@ -12,6 +12,7 @@ const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
 const Joi = require('joi'); // New import for schema validation
 const sgMail = require('@sendgrid/mail');
 const config = require('./config/config.json');
+const { main: ubibotMain } = require('./ubibot');
 
 
 // Configurar SendGrid
@@ -247,7 +248,8 @@ const schemas = {
     }).unknown(true)
   }
 };
-
+// Iniciar el procesamiento de Ubibot
+ubibotMain().catch(error => console.error('Error en el proceso principal de Ubibot:', error));
 // Nodemailer configuration
 const transporter = nodemailer.createTransport({
   service: 'gmail',

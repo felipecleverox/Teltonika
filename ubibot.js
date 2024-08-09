@@ -1,32 +1,32 @@
-// Importar las bibliotecas necesarias
-// es necesario correr el siguiente comando antes de probar por primera vez
-// npm install axios exceljs (Marcar aqui [ ] si se realizo)
+const axios = require('axios');
+const mysql = require('mysql2/promise');
+const fs = require('fs').promises;
+const ddbb_data = require('./config/ddbb.json');
+const ubibot_acount_info = require('./config/ubibot_acount_info.json');
 
-
-const axios = require('axios'); // Para hacer solicitudes HTTP
-const fs = require('fs').promises; // Para operaciones de archivo asíncronas
-const ExcelJS = require('exceljs'); // Para manejar archivos Excel
-
-// Configuración
-const ACCOUNT_KEY = '2bb378b1b4e0b210b3974a02b9d5b4d0'; // Tu account_key de UbiBot
-const TOKEN_FILE = 'token_id.txt'; // Archivo para almacenar el token
-const EXCEL_FILE = 'channel_80005_data.xlsx'; // Archivo Excel para almacenar datos
-const UPDATE_INTERVAL = 60000; // Intervalo de actualización en milisegundos (1 minuto)
+const CHANNEL_ID = '88850';
+const UPDATE_INTERVAL = 300000; // 5 minutos en milisegundos
 const TOKEN_UPDATE_CYCLE = 50; // Número de ciclos antes de actualizar el token
 
-// Función para obtener un nuevo token
+const pool = mysql.createPool({
+  host: ddbb_data.host,
+  user: ddbb_data.user,
+  password: ddbb_data.password,
+  database: ddbb_data.database,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
 async function getNewToken() {
     try {
-        // Hacer una solicitud GET para generar un nuevo token
         const response = await axios.get('https://webapi.ubibot.com/accounts/generate_access_token', {
-            params: { account_key: ACCOUNT_KEY }
+            params: { account_key: ubibot_acount_info.ACCOUNT_KEY }
         });
 
-        // Verificar si la solicitud fue exitosa
         if (response.data.result === 'success') {
             const tokenId = response.data.token_id;
-            // Guardar el nuevo token en el archivo
-            await fs.writeFile(TOKEN_FILE, tokenId);
+            await fs.writeFile(ubibot_acount_info.TOKEN_FILE, tokenId);
             console.log('Token generado y guardado con éxito.');
             return tokenId;
         } else {
@@ -38,106 +38,124 @@ async function getNewToken() {
     }
 }
 
-// Función para leer el token actual
 async function readToken() {
     try {
-        // Leer el token desde el archivo
-        return await fs.readFile(TOKEN_FILE, 'utf8');
+        return await fs.readFile(ubibot_acount_info.TOKEN_FILE, 'utf8');
     } catch (error) {
         console.error('Error al leer el token:', error.message);
         return null;
     }
 }
 
-// Función para obtener y procesar datos del canal
-async function processChannelData(tokenId) {
+async function isTokenValid(tokenId) {
     try {
-        // Hacer una solicitud GET para obtener los datos del canal
-        const response = await axios.get('https://webapi.ubibot.com/channels', {
+        const response = await axios.get(`https://webapi.ubibot.com/channels/${CHANNEL_ID}`, {
             params: { token_id: tokenId }
         });
-
-        // Encontrar el canal con channel_id "80005"
-        const channelData = response.data.channels.find(channel => channel.channel_id === '80005');
-
-        if (channelData) {
-            // Extraer y procesar los datos del canal
-            const lastValues = JSON.parse(channelData.last_values);
-            const datetime = new Date(channelData.last_entry_date);
-            datetime.setHours(datetime.getHours() - 4); // Restar 4 horas
-
-            // Preparar los datos extraídos
-            const extractedData = {
-                date: datetime.toLocaleDateString('es-ES'),
-                time: datetime.toLocaleTimeString('es-ES'),
-                longitude: channelData.longitude,
-                latitude: channelData.latitude,
-                field1_value: lastValues.field1?.value,
-                field2_value: lastValues.field2?.value,
-                field7_value: lastValues.field7?.value,
-            };
-
-            // Guardar los datos en el archivo Excel
-            await saveToExcel(extractedData);
-            console.log('Datos del canal 80005 añadidos al archivo Excel.');
-        } else {
-            console.log('El canal 80005 no se encontró en la respuesta de la API.');
-        }
+        console.log("Token funcionando");
+        return response.data.result === 'success';
     } catch (error) {
-        console.error('Error al procesar los datos del canal:', error.message);
+        console.error('Error al validar el token:', error.message);
+        return false;
     }
 }
 
-// Función para guardar datos en Excel
-async function saveToExcel(data) {
-    const workbook = new ExcelJS.Workbook();
-    try {
-        // Intentar cargar el archivo Excel existente
-        await workbook.xlsx.readFile(EXCEL_FILE);
-    } catch (error) {
-        // Si el archivo no existe, crear una nueva hoja
-        workbook.addWorksheet('Sheet1');
-    }
+async function getChannelData(tokenId) {
+  try {
+    const response = await axios.get(`https://webapi.ubibot.com/channels/${CHANNEL_ID}`, {
+      params: { token_id: tokenId }
+    });
 
-    const worksheet = workbook.getWorksheet('Sheet1');
+    const channelData = response.data.channel;
+    const lastValues = JSON.parse(channelData.last_values);
 
-    // Si la hoja está vacía, agregar encabezados
-    if (worksheet.rowCount === 0) {
-        worksheet.addRow(Object.keys(data));
-    }
+    await processChannelData(channelData);
+    await processSensorReadings(channelData.channel_id, lastValues);
 
-    // Agregar los nuevos datos
-    worksheet.addRow(Object.values(data));
-
-    // Guardar el archivo Excel
-    await workbook.xlsx.writeFile(EXCEL_FILE);
+  } catch (error) {
+    console.error('Error fetching channel data:', error);
+  }
 }
 
-// Función principal que ejecuta el proceso
+async function processChannelData(channelData) {
+  const connection = await pool.getConnection();
+  try {
+    const [existingChannel] = await connection.query(
+      'SELECT * FROM channels_ubibot WHERE channel_id = ?',
+      [channelData.channel_id]
+    );
+
+    if (existingChannel.length === 0) {
+      await connection.query(
+        'INSERT INTO channels_ubibot (channel_id, name, product_id, device_id, latitude, longitude, firmware, mac_address, created_at, last_entry_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [channelData.channel_id, channelData.name, channelData.product_id, channelData.device_id, channelData.latitude, channelData.longitude, channelData.firmware, channelData.mac_address, new Date(channelData.created_at), new Date(channelData.last_entry_date)]
+      );
+    } else {
+      const currentChannel = existingChannel[0];
+      if (
+        currentChannel.product_id !== channelData.product_id ||
+        currentChannel.device_id !== channelData.device_id ||
+        currentChannel.latitude !== channelData.latitude ||
+        currentChannel.longitude !== channelData.longitude ||
+        currentChannel.firmware !== channelData.firmware ||
+        currentChannel.mac_address !== channelData.mac_address ||
+        new Date(currentChannel.last_entry_date).getTime() !== new Date(channelData.last_entry_date).getTime()
+      ) {
+        await connection.query(
+          'UPDATE channels_ubibot SET product_id = ?, device_id = ?, latitude = ?, longitude = ?, firmware = ?, mac_address = ?, last_entry_date = ? WHERE channel_id = ?',
+          [channelData.product_id, channelData.device_id, channelData.latitude, channelData.longitude, channelData.firmware, channelData.mac_address, new Date(channelData.last_entry_date), channelData.channel_id]
+        );
+      }
+    }
+  } finally {
+    connection.release();
+  }
+}
+
+async function processSensorReadings(channelId, lastValues) {
+  const connection = await pool.getConnection();
+  try {
+    await connection.query(
+      'INSERT INTO sensor_readings_ubibot (channel_id, timestamp, temperature, humidity, light, voltage, wifi_rssi, external_temperature) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        channelId,
+        new Date(lastValues.field1.created_at),
+        lastValues.field1.value,
+        lastValues.field2.value,
+        lastValues.field3.value,
+        lastValues.field4.value,
+        lastValues.field5.value,
+        lastValues.field8.value
+      ]
+    );
+  } finally {
+    connection.release();
+  }
+}
+
 async function main() {
     let cycleCount = 0;
     let tokenId = await readToken();
 
-    // Bucle principal
+    if (!tokenId || !(await isTokenValid(tokenId))) {
+        tokenId = await getNewToken();
+    }
+
     while (true) {
         if (!tokenId || cycleCount >= TOKEN_UPDATE_CYCLE) {
-            // Obtener un nuevo token si no existe o si es tiempo de actualizarlo
             tokenId = await getNewToken();
             cycleCount = 0;
         }
 
         if (tokenId) {
-            // Procesar los datos del canal
-            await processChannelData(tokenId);
+            await getChannelData(tokenId);
             cycleCount++;
         } else {
             console.log('No se pudo obtener un token válido. Reintentando en el próximo ciclo.');
         }
 
-        // Esperar antes del próximo ciclo
         await new Promise(resolve => setTimeout(resolve, UPDATE_INTERVAL));
     }
 }
 
-// Iniciar el proceso principal
-main().catch(error => console.error('Error en el proceso principal:', error));
+module.exports = { main };
