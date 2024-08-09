@@ -12,7 +12,7 @@ const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
 const Joi = require('joi'); // New import for schema validation
 const sgMail = require('@sendgrid/mail');
 const config = require('./config/config.json');
-const { main: ubibotMain } = require('./ubibot');
+const { procesarDatosUbibot } = require('./ubibot');
 
 
 // Configurar SendGrid
@@ -248,8 +248,33 @@ const schemas = {
     }).unknown(true)
   }
 };
-// Iniciar el procesamiento de Ubibot
-ubibotMain().catch(error => console.error('Error en el proceso principal de Ubibot:', error));
+
+// Función para ejecutar el proceso de Ubibot
+async function ejecutarProcesoUbibot() {
+  try {
+      console.log('Iniciando proceso de Ubibot...');
+      await procesarDatosUbibot();
+      console.log('Proceso de Ubibot completado.');
+  } catch (error) {
+      console.error('Error al procesar datos de Ubibot:', error);
+  }
+}
+// Ejecutar el proceso de Ubibot inmediatamente al iniciar el servidor
+ejecutarProcesoUbibot();
+
+// Programar la ejecución del proceso de Ubibot cada 5 minutos
+const intervaloDatos = setInterval(ejecutarProcesoUbibot, 5 * 60 * 1000);
+
+// Manejador para detener el intervalo si es necesario
+process.on('SIGINT', () => {
+    clearInterval(intervaloDatos);
+    console.log('Intervalo de Ubibot detenido');
+    process.exit();
+});
+// Justo antes de iniciar el servidor, agrega:
+app.get('/api/ubibot-status', (req, res) => {
+  res.json({ status: 'Ubibot process running', lastExecution: new Date() });
+});
 // Nodemailer configuration
 const transporter = nodemailer.createTransport({
   service: 'gmail',

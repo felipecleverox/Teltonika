@@ -5,8 +5,6 @@ const ddbb_data = require('./config/ddbb.json');
 const ubibot_acount_info = require('./config/ubibot_acount_info.json');
 
 const CHANNEL_ID = '88850';
-const UPDATE_INTERVAL = 300000; // 5 minutos en milisegundos
-const TOKEN_UPDATE_CYCLE = 50; // Número de ciclos antes de actualizar el token
 
 const pool = mysql.createPool({
   host: ddbb_data.host,
@@ -27,6 +25,7 @@ async function getNewToken() {
         if (response.data.result === 'success') {
             const tokenId = response.data.token_id;
             await fs.writeFile(ubibot_acount_info.TOKEN_FILE, tokenId);
+            await fs.writeFile(ubibot_acount_info.LOG_FILE,"Nuevo token obtenido");
             console.log('Token generado y guardado con éxito.');
             return tokenId;
         } else {
@@ -52,9 +51,11 @@ async function isTokenValid(tokenId) {
         const response = await axios.get(`https://webapi.ubibot.com/channels/${CHANNEL_ID}`, {
             params: { token_id: tokenId }
         });
-        console.log("Token funcionando");
+        await fs.writeFile(ubibot_acount_info.LOG_FILE,"Token valido");
         return response.data.result === 'success';
     } catch (error) {
+        await fs.writeFile(ubibot_acount_info.LOG_FILE,"error en el token:");
+        await fs.writeFile(ubibot_acount_info.LOG_FILE,error.message);
         console.error('Error al validar el token:', error.message);
         return false;
     }
@@ -133,29 +134,22 @@ async function processSensorReadings(channelId, lastValues) {
   }
 }
 
-async function main() {
-    let cycleCount = 0;
+async function procesarDatosUbibot() {
+    await fs.writeFile(ubibot_acount_info.LOG_FILE,"Inicio del proceso");
     let tokenId = await readToken();
 
     if (!tokenId || !(await isTokenValid(tokenId))) {
         tokenId = await getNewToken();
     }
 
-    while (true) {
-        if (!tokenId || cycleCount >= TOKEN_UPDATE_CYCLE) {
-            tokenId = await getNewToken();
-            cycleCount = 0;
-        }
-
-        if (tokenId) {
-            await getChannelData(tokenId);
-            cycleCount++;
-        } else {
-            console.log('No se pudo obtener un token válido. Reintentando en el próximo ciclo.');
-        }
-
-        await new Promise(resolve => setTimeout(resolve, UPDATE_INTERVAL));
+    if (tokenId) {
+        await getChannelData(tokenId);
+        await fs.writeFile(ubibot_acount_info.LOG_FILE,"Proceso finalizado exitosamente");
+        console.log('Datos de Ubibot procesados exitosamente.');
+    } else {
+        await fs.writeFile(ubibot_acount_info.LOG_FILE,"Error al obtener token");
+        console.log('No se pudo obtener un token válido.');
     }
 }
 
-module.exports = { main };
+module.exports = { procesarDatosUbibot };
