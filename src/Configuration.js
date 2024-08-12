@@ -9,6 +9,8 @@ const Configuration = () => {
     umbralVerde: '',
     umbralAmarillo: '',
     umbralRojo: '',
+    umbralTemperaturaMinimo: '',
+    umbralTemperaturaMaximo: '',
   });
 
   useEffect(() => {
@@ -23,8 +25,12 @@ const Configuration = () => {
 
     const fetchConfiguration = async () => {
       try {
-        const response = await axios.get('/api/configuracion');
-        const data = response.data.reduce((acc, cur) => {
+        const [configResponse, tempResponse] = await Promise.all([
+          axios.get('/api/configuracion'),
+          axios.get('/api/temperatura-umbrales')
+        ]);
+        
+        const configData = configResponse.data.reduce((acc, cur) => {
           acc[`beacon_${cur.beacon_id}_minTiempoPermanencia`] = cur.min_tiempo_permanencia;
           acc[`beacon_${cur.beacon_id}_maxTiempoPermanencia`] = cur.max_tiempo_permanencia;
           acc.umbralVerde = cur.umbral_verde;
@@ -32,7 +38,12 @@ const Configuration = () => {
           acc.umbralRojo = cur.umbral_rojo;
           return acc;
         }, {});
-        setConfig(data);
+
+        const tempData = tempResponse.data;
+        configData.umbralTemperaturaMinimo = tempData.minimo;
+        configData.umbralTemperaturaMaximo = tempData.maximo;
+
+        setConfig(configData);
       } catch (error) {
         console.error('Error fetching configuration:', error);
       }
@@ -59,8 +70,16 @@ const Configuration = () => {
       umbral_rojo: config.umbralRojo || 0,
     }));
 
+    const temperaturaUmbrales = {
+      minimo: config.umbralTemperaturaMinimo,
+      maximo: config.umbralTemperaturaMaximo,
+    };
+
     try {
-      await axios.post('/api/configuracion', configuraciones);
+      await Promise.all([
+        axios.post('/api/configuracion', configuraciones),
+        axios.post('/api/temperatura-umbrales', temperaturaUmbrales)
+      ]);
       alert('Configuración guardada exitosamente.');
     } catch (error) {
       console.error('Error saving configuration:', error);
@@ -73,7 +92,7 @@ const Configuration = () => {
       <Header title="Configuración" />
       <form onSubmit={handleSubmit} className="configuration-form">
         <h2>Parámetros de Sector</h2>
-        {sectors.map((sector, index) => (
+        {sectors.map((sector) => (
           <div key={sector.id}>
             <div className="form-group">
               <label>{sector.nombre} - Tiempo Mínimo de Permanencia (minutos)</label>
@@ -124,6 +143,27 @@ const Configuration = () => {
             onChange={handleChange}
           />
         </div>
+
+        <h2>Umbrales de Temperatura</h2>
+        <div className="form-group">
+          <label>Umbral Mínimo de Temperatura (°C)</label>
+          <input 
+            type="number"
+            name="umbralTemperaturaMinimo"
+            value={config.umbralTemperaturaMinimo}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="form-group">
+          <label>Umbral Máximo de Temperatura (°C)</label>
+          <input 
+            type="number"
+            name="umbralTemperaturaMaximo"
+            value={config.umbralTemperaturaMaximo}
+            onChange={handleChange}
+          />
+        </div>
+        
         <button type="submit" className="save-button">Guardar Configuración</button>
       </form>
     </div>

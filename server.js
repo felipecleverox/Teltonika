@@ -12,6 +12,7 @@ const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
 const Joi = require('joi'); // New import for schema validation
 const sgMail = require('@sendgrid/mail');
 const config = require('./config/config.json');
+const { procesarDatosUbibot } = require('./ubibot');
 
 
 // Configurar SendGrid
@@ -248,6 +249,32 @@ const schemas = {
   }
 };
 
+// Función para ejecutar el proceso de Ubibot
+async function ejecutarProcesoUbibot() {
+  try {
+      console.log('Iniciando proceso de Ubibot...');
+      await procesarDatosUbibot();
+      console.log('Proceso de Ubibot completado.');
+  } catch (error) {
+      console.error('Error al procesar datos de Ubibot:', error);
+  }
+}
+// Ejecutar el proceso de Ubibot inmediatamente al iniciar el servidor
+ejecutarProcesoUbibot();
+
+// Programar la ejecución del proceso de Ubibot cada 5 minutos
+const intervaloDatos = setInterval(ejecutarProcesoUbibot, 5 * 60 * 1000);
+
+// Manejador para detener el intervalo si es necesario
+process.on('SIGINT', () => {
+    clearInterval(intervaloDatos);
+    console.log('Intervalo de Ubibot detenido');
+    process.exit();
+});
+// Justo antes de iniciar el servidor, agrega:
+app.get('/api/ubibot-status', (req, res) => {
+  res.json({ status: 'Ubibot process running', lastExecution: new Date() });
+});
 // Nodemailer configuration
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -1508,6 +1535,30 @@ app.get('/api/temperature-data', async (req, res) => {
     res.json(Object.values(data));
   } catch (error) {
     console.error('Error fetching temperature data:', error);
+    res.status(500).send('Server Error');
+  }
+});
+// Agregar estos endpoints en server.js
+
+// Endpoint para obtener los umbrales de temperatura
+app.get('/api/temperatura-umbrales', async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT minimo, maximo FROM parametrizaciones WHERE param_id = 6');
+    res.json(results[0]);
+  } catch (error) {
+    console.error('Error fetching temperature thresholds:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Endpoint para actualizar los umbrales de temperatura
+app.post('/api/temperatura-umbrales', async (req, res) => {
+  const { minimo, maximo } = req.body;
+  try {
+    await pool.query('UPDATE parametrizaciones SET minimo = ?, maximo = ? WHERE param_id = 6', [minimo, maximo]);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Error updating temperature thresholds:', error);
     res.status(500).send('Server Error');
   }
 });
