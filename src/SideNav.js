@@ -17,6 +17,7 @@ import doorStatusImage from './assets/images/door_status.png';
 import userRegistrationImage from './assets/images/user_registration.png';
 import temperaturaImage from './assets/images/temperatura.png';
 import selectRoutineImage from './assets/images/selectroutine.png';
+import temperaturaCamarasImage from './assets/images/thermometer.png'; // Asegúrate de tener esta imagen
 
 const routines = [
   { title: "Seleccionar Rutina", image: selectRoutineImage, route: "/select-routine", permission: "view_dashboard" },
@@ -28,11 +29,13 @@ const routines = [
   { title: "Sectores : Presencia Personal", image: presenciaImage, route: "/presencia", permission: "view_presence" },
   { title: "Mensajes SOS : Visualización por Ubicación", image: smsDataImage, route: "/sms-data", permission: "view_sms" },
   { title: "Temperatura", image: temperaturaImage, route: "/temperatura", permission: "view_temperature" },
+  { title: "Temperaturas Cámaras de Frío", image: temperaturaCamarasImage, route: "/temperatura-camaras", permission: "view_temperature_camaras" },
   { title: "Puertas : Status Cierre / Apertura", image: doorStatusImage, route: "/door-status-matrix", permission: "view_door_status" },
   { title: "Datos : Análisis Forense", image: dataIntelligenceImage, route: "/inteligencia-de-datos", permission: "view_data_intelligence" },
   { title: "Parametrización", image: configurationImage, route: "/configuracion", permission: "view_configuration" },
   { title: "Registrar Usuario", image: userRegistrationImage, route: "/register-user", permission: "create_users" }
 ];
+
 
 const SideNav = ({ userPermissions }) => {
   const [isExpanded, setIsExpanded] = useState(false);

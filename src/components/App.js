@@ -18,6 +18,7 @@ import ForgotPassword from '../ForgotPassword';
 import ResetPassword from '../ResetPassword';
 import Dashboard from '../Dashboard';
 import Temperatura from '../Temperatura';
+import TemperaturaCamaras from '../TemperaturaCamaras';
 import GlobalStyle from '../GlobalStyle';
 import SideNav from '../SideNav';
 import 'core-js/stable';
@@ -142,6 +143,11 @@ function AppContent() {
             <PrivateRoute userPermissions={userPermissions}>
               <Temperatura />
             </PrivateRoute>
+          } />
+          <Route path="/temperatura-camaras" element={
+            <PrivateRoute userPermissions={userPermissions}>
+            <TemperaturaCamaras />
+          </PrivateRoute>
           } />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

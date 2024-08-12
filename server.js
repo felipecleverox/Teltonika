@@ -14,6 +14,7 @@ const sgMail = require('@sendgrid/mail');
 const config = require('./config/config.json');
 const { procesarDatosUbibot } = require('./ubibot');
 
+const intervalo_ejecucion_ubibot= 5 * 60 * 1000;
 
 // Configurar SendGrid
 sgMail.setApiKey(config.email.SENDGRID_API_KEY);
@@ -263,7 +264,7 @@ async function ejecutarProcesoUbibot() {
 ejecutarProcesoUbibot();
 
 // Programar la ejecución del proceso de Ubibot cada 5 minutos
-const intervaloDatos = setInterval(ejecutarProcesoUbibot, 5 * 60 * 1000);
+const intervaloDatos = setInterval(ejecutarProcesoUbibot,intervalo_ejecucion_ubibot);
 
 // Manejador para detener el intervalo si es necesario
 process.on('SIGINT', () => {
@@ -1538,7 +1539,6 @@ app.get('/api/temperature-data', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-// Agregar estos endpoints en server.js
 
 // Endpoint para obtener los umbrales de temperatura
 app.get('/api/temperatura-umbrales', async (req, res) => {
@@ -1559,6 +1559,53 @@ app.post('/api/temperatura-umbrales', async (req, res) => {
     res.sendStatus(200);
   } catch (error) {
     console.error('Error updating temperature thresholds:', error);
+    res.status(500).send('Server Error');
+  }
+});
+// Temperaturas en camaras de frio
+app.get('/api/temperature-camaras-data', async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    // Convertir la fecha a la zona horaria de Chile
+    const startDate = moment.tz(date, 'America/Santiago').startOf('day');
+    const endDate = moment(startDate).add(1, 'day');
+
+    console.log('Fecha de inicio (Chile):', startDate.format());
+    console.log('Fecha de fin (Chile):', endDate.format());
+
+    const query = `
+      SELECT sr.channel_id, sr.temperature, sr.timestamp, c.name
+      FROM sensor_readings_ubibot sr
+      JOIN channels_ubibot c ON sr.channel_id = c.channel_id
+      WHERE sr.timestamp >= ? AND sr.timestamp < ?
+      ORDER BY sr.channel_id, sr.timestamp ASC
+    `;
+    
+    const [rows] = await pool.query(query, [startDate.toDate(), endDate.toDate()]);
+
+    const groupedData = rows.reduce((acc, row) => {
+      if (!acc[row.channel_id]) {
+        acc[row.channel_id] = {
+          channel_id: row.channel_id,
+          name: row.name,
+          temperatures: [],
+          timestamps: []
+        };
+      }
+      acc[row.channel_id].temperatures.push(row.temperature);
+      // Convertir el timestamp a la zona horaria de Chile
+      const timestamp = moment(row.timestamp).tz('America/Santiago').format();
+      acc[row.channel_id].timestamps.push(timestamp);
+      return acc;
+    }, {});
+
+    const result = Object.values(groupedData);
+    console.log('Datos agrupados:', JSON.stringify(result, null, 2));
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching temperature data:', error);
     res.status(500).send('Server Error');
   }
 });
