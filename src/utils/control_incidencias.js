@@ -18,28 +18,126 @@ async function procesarPosibleIncidencia(
   ble_beacons,
   timestamp
 ) {
-  let id_incidencia;
-  if (comprobarBlindSpot(id_dispositivo, 1)) {
-    if (comprobarBleBeacons(ble_beacons)) {
-      if (comprobarBlindSpot(ble_beacons, 2)) {
-        if (existenIncidencias(id_dispositivo)) {
-          id_incidencia = obtenerUltimaIncidencia(id_dispositivo);
-          if (tieneHoraSalida(id_incidencia)) {
-            insertarIncidencia(id_dispositivo, timestamp);
-          } else {
-            actualizarUltimaIncidencia(id_dispositivo, timestamp);
+  try {
+    if (comprobarBlindSpot(id_dispositivo, 1)) {
+      // comprueba de que el dispositivo es blindspot
+      if (comprobarBleBeacons(ble_beacons)) {
+        //Si el dispositivo es blindspot y hay beacons
+        // Parsear la cadena JSON para convertirla en un arreglo de objetos
+        const beaconList = JSON.parse(jsonArray);
+        beaconList.forEach((beacon) => {
+          //por cada beacon
+          if (comprobarBlindSpot(beacon.id, 2)) {
+            //comprueba de que el beacon es blindspot
+            if (existenIncidencias(id_dispositivo, beacon.id)) {
+              //si existen incidencias
+              id_incidencia = obtenerUltimaIncidencia(
+                id_dispositivo,
+                beacon.id
+              ); //obtiene la ultima incidencia
+              if (tieneHoraSalida(id_incidencia)) {
+                //si tiene hora de salida, se inserta la incidencia
+                insertarIncidencia(id_dispositivo, beacon.id, timestamp);
+                //aqui hay que llamar
+              }
+            } else {
+              //si no existen incidencias
+              insertarIncidencia(id_dispositivo, beacon.id, timestamp);
+              //aqui hay que llamar
+            }
           }
-        } else {
-          insertarIncidencia(id_dispositivo, timestamp);
-        }
+        });
+      } else {
+        //si no hay beacons
+        actualizarUltimaIncidencia(timestamp, id_dispositivo);
       }
-    } else {
-      actualizarUltimaIncidencia(id_dispositivo, timestamp);
     }
+  } catch (error) {
+    console.error("Error al procesar el JSON:", error.message);
+    return [];
   }
 }
 
-module.exports = { procesarPosibleIncidencia };
+async function actualizarUltimaIncidencia(hora_salida, dispositivo) {
+  const query = `
+      UPDATE incidencias_blindspot
+      SET hora_salida = ?
+      WHERE id = (
+        SELECT id
+        FROM incidencias_blindspot
+        WHERE id_dispositivo = ?
+        AND hora_salida IS NULL
+        ORDER BY id DESC
+        LIMIT 1
+      )
+    `;
+  const connection = await pool.getConnection();
+  try {
+    await connection.query(query, [hora_salida, dispositivo]);
+  } finally {
+    connection.release();
+  }
+}
+async function tieneHoraSalida(idIncidencia) {
+  const query = `
+      SELECT hora_salida
+      FROM incidencias_blindspot
+      WHERE id = ?
+    `;
+  const connection = await pool.getConnection();
+  try {
+    const result = await connection.query(query, [idIncidencia]);
+    return result[0] && result[0].hora_salida !== null;
+  } finally {
+    connection.release();
+  }
+}
+
+async function obtenerUltimaIncidencia(dispositivo, beacon) {
+  const query = `
+      SELECT id
+      FROM incidencias_blindspot
+      WHERE id_dispositivo = ? AND beacon_id = ?
+      ORDER BY id DESC
+      LIMIT 1
+    `;
+  const connection = await pool.getConnection();
+  try {
+    const result = await connection.query(query, [dispositivo, beacon]);
+    return result[0] ? result[0].id : null;
+  } finally {
+    connection.release();
+  }
+}
+async function existenIncidencias(dispositivo, beacon, timestamp) {
+  const query = `
+    SELECT COUNT(*) as count
+    FROM incidencias_blindspot
+    WHERE id_dispositivo = ? AND beacon_id = ? AND hora_entrada >= ?
+  `;
+  const horaAtras = timestamp - 60 * 60; // 1 hora en segundos
+  const connection = await pool.getConnection();
+  try {
+    const result = await connection.query(query, [
+      dispositivo,
+      beacon,
+      horaAtras,
+    ]);
+    return result[0].count > 0;
+  } finally {
+    connection.release();
+  }
+}
+async function insertarIncidencia(dispositivo, beacon, timestamp) {
+  let query =
+    "INSERT INTO incidencias_blindspot (id_dispositivo,beacon_id,hora_entrada) VALUES ( ? , ? , ? )";
+  const connection = await pool.getConnection();
+  try {
+    connection.query(query, [dispositivo, beacon, timestamp]);
+  } finally {
+    connection.release();
+  }
+}
 async function comprobarBlindSpot(inputToCheck, caso) {
   let sentenciaSQL = "SELECT esBlind_spot FROM";
   let query;
@@ -70,3 +168,12 @@ async function comprobarBlindSpot(inputToCheck, caso) {
     connection.release();
   }
 }
+
+function comprobarBleBeacons(inputToCheck) {
+  if (typeof inputToCheck === "string") {
+    return inputToCheck !== "[]";
+  }
+  return inputToCheck.length > 0;
+}
+
+module.exports = { procesarPosibleIncidencia };

@@ -434,6 +434,12 @@ async function processGpsData(gpsData) {
     console.error('Params:', params);
     throw error;
   }
+    // Llamada a procesarPosibleIncidencia
+    await procesarPosibleIncidencia(
+      validatedData['device.id'],
+      validatedData['ble.beacons'] || [],
+      Math.floor(validatedData.timestamp)
+    );
 }
 
 // Endpoint para obtener los datos más recientes de GPS para un dispositivo específico
