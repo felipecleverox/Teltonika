@@ -13,6 +13,7 @@ const Joi = require('joi'); // New import for schema validation
 const sgMail = require('@sendgrid/mail');
 const config = require('./config/config.json');
 const { procesarDatosUbibot } = require('./ubibot');
+const { procesarPosibleIncidencia } = require('./control_incidencias');
 
 const intervalo_ejecucion_ubibot= 5 * 60 * 1000;
 
@@ -436,9 +437,10 @@ async function processGpsData(gpsData) {
   }
     // Llamada a procesarPosibleIncidencia
     await procesarPosibleIncidencia(
-      validatedData['device.id'],
+      validatedData['device.name'],
       validatedData['ble.beacons'] || [],
-      Math.floor(validatedData.timestamp)
+      Math.floor(validatedData.timestamp),
+      validatedData['event.enum']  // Añadir este parámetro
     );
 }
 
