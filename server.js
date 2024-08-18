@@ -324,8 +324,8 @@ const convertToLocalTime = (timestamp) => {
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
   const gpsDatas = Array.isArray(req.body) ? req.body : [req.body];
-  console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
-  
+  // console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
+  console.log("Llego datos a gps_data");
   try {
     for (const gpsData of gpsDatas) {
       await processGpsData(gpsData);
@@ -345,10 +345,11 @@ async function processGpsData(gpsData) {
     throw new Error(`Unknown device type: ${deviceTypeId}`);
   }
   console.log('Validating data for device type:', deviceTypeId);
-  console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
+  // console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
+  console.log('ble_beacons:', gpsData['ble.beacons']);
 
   let validatedData;
-  console.log('TypeB validation failed, attempting typeA schema');
+  // console.log('TypeB validation failed, attempting typeA schema');
   try {
     validatedData = await schema.typeA.validateAsync(gpsData);
   } catch (err) {
@@ -372,7 +373,7 @@ async function processGpsData(gpsData) {
   ];
   const query = `INSERT INTO gps_data (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`;
 
-  
+  console.log("Datos insertados en gps_data")
   const params = [
     validatedData['device.id'],
     validatedData['device.name'],
