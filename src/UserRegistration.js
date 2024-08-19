@@ -46,15 +46,31 @@ const UserRegistration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const updatedPermissions = permissions.join(',');
       if (selectedUser) {
         // Actualizar usuario existente
-        await axios.post('/api/register', { userId: selectedUser.id, username, email, permissions: permissions.join(',') });
+        await axios.post('/api/register', { 
+          userId: selectedUser.id, 
+          username, 
+          email, 
+          permissions: updatedPermissions
+        });
         setMessage('Permisos actualizados con éxito');
       } else {
         // Crear nuevo usuario
-        await axios.post('/api/register', { username, password, email, permissions: permissions.join(',') });
+        await axios.post('/api/register', { 
+          username, 
+          password, 
+          email, 
+          permissions: updatedPermissions
+        });
         setMessage('Usuario registrado con éxito');
       }
+      
+      // Actualizar la lista de usuarios después de crear/actualizar
+      const response = await axios.get('/api/users');
+      setUsers(response.data);
+      
       setTimeout(() => {
         navigate('/select-routine');
       }, 2000);
@@ -66,6 +82,7 @@ const UserRegistration = () => {
   const availablePermissions = [
     { label: 'Crear Usuarios', value: 'create_users' },
     { label: 'Ver Dashboard', value: 'view_dashboard' },
+    { label: 'Ver Intrusiones Blind Spot', value: 'view_blind_spot_intrusions' },
     { label: 'Ubicación en Interiores Tiempo Real', value: 'view_interior' },
     { label: 'Búsqueda Histórica en Interiores', value: 'search_interior' },
     { label: 'Presencia Personal por Interiores', value: 'view_presence' },
@@ -75,7 +92,8 @@ const UserRegistration = () => {
     { label: 'Estado de Puertas por Sector', value: 'view_door_status' },
     { label: 'Inteligencia de Datos', value: 'view_data_intelligence' },
     { label: 'Configuración', value: 'view_configuration' },
-    { label: 'Ver Temperatura', value: 'view_temperature' } // Nuevo permiso
+    { label: 'Ver Temperatura', value: 'view_temperature' },
+    { label: 'Ver Temperaturas Cámaras de Frío', value: 'view_temperature_camaras' }
   ];
 
   return (

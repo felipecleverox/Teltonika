@@ -18,11 +18,13 @@ import ForgotPassword from '../ForgotPassword';
 import ResetPassword from '../ResetPassword';
 import Dashboard from '../Dashboard';
 import Temperatura from '../Temperatura';
+import TemperaturaCamaras from '../TemperaturaCamaras';
 import GlobalStyle from '../GlobalStyle';
 import SideNav from '../SideNav';
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import './App.css';
+import BlindSpotIntrusions from '../BlindSpotIntrusions';
 
 const PrivateRoute = ({ children, userPermissions }) => {
   const token = localStorage.getItem('token');
@@ -141,6 +143,16 @@ function AppContent() {
           <Route path="/temperatura" element={
             <PrivateRoute userPermissions={userPermissions}>
               <Temperatura />
+            </PrivateRoute>
+          } />
+          <Route path="/temperatura-camaras" element={
+            <PrivateRoute userPermissions={userPermissions}>
+            <TemperaturaCamaras />
+          </PrivateRoute>
+          } />
+          <Route path="/blind-spot-intrusions" element={
+            <PrivateRoute userPermissions={userPermissions}>
+              <BlindSpotIntrusions />
             </PrivateRoute>
           } />
           <Route path="*" element={<Navigate to="/" />} />
