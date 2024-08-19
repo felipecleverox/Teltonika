@@ -9,21 +9,37 @@ const bcrypt = require('bcrypt'); // Library to hash passwords
 const crypto = require('crypto'); // Library for cryptographic functions
 const nodemailer = require('nodemailer'); // Library to send emails
 const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
-const bodyParser = require('body-parser'); // Middleware to parse incoming request bodies
+const Joi = require('joi'); // New import for schema validation
+const sgMail = require('@sendgrid/mail');
+const http = require('http');
+const { Server } = require('socket.io'); // Import Socket.IO
+const config = require('./config/config.json');
+const { procesarDatosUbibot } = require('./ubibot');
+const { procesarPosibleIncidencia } = require('./control_incidencias');
+const controlIncidencias = require('./control_incidencias');
+
+
+const intervalo_ejecucion_ubibot= 5 * 60 * 1000;
+
+// Configurar SendGrid
+sgMail.setApiKey(config.email.SENDGRID_API_KEY);
 
 // Create an Express application
 const app = express();
 
 // Import and configure Socket.IO for real-time communication
-const http = require('http'); // HTTP server
 const server = http.createServer(app); // Create HTTP server with Express app
-const { Server } = require('socket.io'); // Import Socket.IO
+
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all origins, adjust as needed for security
+    origin: ["http://tnstrack.ddns.net:3000", "http://localhost:3000","http://tnstrack.ddns.net:3001", "http://localhost:3001"], // Allow both origins
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true
   }
 });
-
+// Initialize control_incidencias with Socket.IO
+controlIncidencias.init(io);
 // Configure Socket.IO connection and disconnection events
 io.on('connection', (socket) => {
   console.log('A user connected'); // Log when a user connects
@@ -49,11 +65,241 @@ const pool = mysql.createPool({
 // Define default position coordinates
 const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Coordinates for Santiago, Chile
 
-// Middleware
-app.use(cors()); // Enable CORS for all routes
+// Middleware CORS (debe estar antes de otros middleware o rutas)
+const corsOptions = {
+  origin: ['http://tnstrack.ddns.net:3000', 'http://localhost:3000','http://tnstrack.ddns.net:3001', 'http://localhost:3001'],
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+  credentials: true
+};
+
+// Define schemas for data validation
+const schemas = {
+  303: { // FBM204
+    typeA: Joi.object({
+      'ble.beacons': Joi.array().items(Joi.object()),
+      'channel.id': Joi.number().integer(),
+      'codec.id': Joi.number().integer(),
+      'device.id': Joi.number().integer(),
+      'device.name': Joi.string(),
+      'device.type.id': Joi.number().integer(),
+      'event.enum': Joi.number().integer(),
+      'event.priority.enum': Joi.number().integer(),
+      'ident': Joi.string(),
+      'peer': Joi.string(),
+      'position.altitude': Joi.number(),
+      'position.direction': Joi.number(),
+      'position.latitude': Joi.number(),
+      'position.longitude': Joi.number(),
+      'position.satellites': Joi.number().integer(),
+      'position.speed': Joi.number(),
+      'protocol.id': Joi.number().integer(),
+      'server.timestamp': Joi.number(),
+      'timestamp': Joi.number(),
+      'battery.current': Joi.number(),
+      'battery.voltage': Joi.number(),
+      'ble.sensor.humidity.1': Joi.number().integer(),
+      'ble.sensor.magnet.status.1': Joi.boolean(),
+      'ble.sensor.temperature.1': Joi.number(),
+      'channel.id': Joi.number().integer(),
+      'codec.id': Joi.number().integer(),
+      'device.id': Joi.number().integer(),
+      'device.name': Joi.string(),
+      'device.type.id': Joi.number().integer(),
+      'engine.ignition.status': Joi.boolean(),
+      'event.priority.enum': Joi.number().integer(),
+      'external.powersource.voltage': Joi.number(),
+      'gnss.state.enum': Joi.number().integer(),
+      'gnss.status': Joi.boolean(),
+      'gsm.mcc': Joi.number().integer(),
+      'gsm.mnc': Joi.number().integer(),
+      'gsm.operator.code': Joi.string(),
+      'gsm.signal.level': Joi.number().integer(),
+      'ident': Joi.string(),
+      'movement.status': Joi.boolean(),
+      'peer': Joi.string(),
+      'position.altitude': Joi.number(),
+      'position.direction': Joi.number(),
+      'position.hdop': Joi.number(),
+      'position.latitude': Joi.number(),
+      'position.longitude': Joi.number(),
+      'position.pdop': Joi.number(),
+      'position.satellites': Joi.number().integer(),
+      'position.speed': Joi.number(),
+      'position.valid': Joi.boolean(),
+      'protocol.id': Joi.number().integer(),
+      'server.timestamp': Joi.number(),
+      'sleep.mode.enum': Joi.number().integer(),
+      'timestamp': Joi.number(),
+      'vehicle.mileage': Joi.number()
+    }).unknown(true)
+  },
+  507: { // GH5200
+    typeA: Joi.object({
+      'ble.beacons': Joi.array().items(Joi.object()),
+      'channel.id': Joi.number().integer(),
+      'codec.id': Joi.number().integer(),
+      'device.id': Joi.number().integer(),
+      'device.name': Joi.string(),
+      'device.type.id': Joi.number().integer().valid(507),
+      'event.enum': Joi.number().integer(),
+      'event.priority.enum': Joi.number().integer(),
+      'ident': Joi.string(),
+      'peer': Joi.string(),
+      'position.altitude': Joi.number(),
+      'position.direction': Joi.number(),
+      'position.satellites': Joi.number().integer(),
+      'position.speed': Joi.number(),
+      'protocol.id': Joi.number().integer(),
+      'server.timestamp': Joi.number(),
+      'timestamp': Joi.number(),
+      'battery.level': Joi.number().integer(),
+      'battery.voltage': Joi.number(),
+      'ble.sensor.humidity.1': Joi.number().integer(),
+      'ble.sensor.humidity.2': Joi.number().integer(),
+      'ble.sensor.humidity.3': Joi.number().integer(),
+      'ble.sensor.humidity.4': Joi.number().integer(),
+      'ble.sensor.low.battery.status.1': Joi.boolean(),
+      'ble.sensor.magnet.count.1': Joi.number().integer(),
+      'ble.sensor.magnet.status.1': Joi.boolean(),
+      'ble.sensor.temperature.1': Joi.number(),
+      'ble.sensor.temperature.2': Joi.number(),
+      'ble.sensor.temperature.3': Joi.number(),
+      'ble.sensor.temperature.4': Joi.number(),
+      'bluetooth.state.enum': Joi.number().integer(),
+      'channel.id': Joi.number().integer(),
+      'codec.id': Joi.number().integer(),
+      'custom.param.116': Joi.number().integer(),
+      'device.id': Joi.number().integer(),
+      'device.name': Joi.string(),
+      'device.type.id': Joi.number().integer().valid(507),
+      'event.priority.enum': Joi.number().integer(),
+      'gnss.sleep.mode.status': Joi.boolean(),
+      'gnss.state.enum': Joi.number().integer(),
+      'gsm.mcc': Joi.number().integer(),
+      'gsm.mnc': Joi.number().integer(),
+      'gsm.operator.code': Joi.string(),
+      'gsm.signal.level': Joi.number().integer(),
+      'ident': Joi.string(),
+      'movement.status': Joi.boolean(),
+      'peer': Joi.string(),
+      'position.altitude': Joi.number(),
+      'position.direction': Joi.number(),
+      'position.fix.age': Joi.number().integer(),
+      'position.hdop': Joi.number(),
+      'position.latitude': Joi.number(),
+      'position.longitude': Joi.number(),
+      'position.pdop': Joi.number(),
+      'position.satellites': Joi.number().integer(),
+      'position.speed': Joi.number(),
+      'protocol.id': Joi.number().integer(),
+      'server.timestamp': Joi.number(),
+      'sleep.mode.enum': Joi.number().integer(),
+      'timestamp': Joi.number()
+    }).unknown(true)
+  },
+  
+  508: { // TMT250
+    typeA: Joi.object({
+      'ble.beacons': Joi.array().items(Joi.object()),
+      'channel.id': Joi.number().integer(),
+      'codec.id': Joi.number().integer(),
+      'device.id': Joi.number().integer(),
+      'device.name': Joi.string(),
+      'device.type.id': Joi.number().integer().valid(508),
+      'event.enum': Joi.number().integer(),
+      'event.priority.enum': Joi.number().integer(),
+      'ident': Joi.string(),
+      'peer': Joi.string(),
+      'position.altitude': Joi.number(),
+      'position.direction': Joi.number(),
+      'position.satellites': Joi.number().integer(),
+      'position.speed': Joi.number(),
+      'protocol.id': Joi.number().integer(),
+      'server.timestamp': Joi.number(),
+      'timestamp': Joi.number(),
+      'battery.level': Joi.number().integer(),
+      'battery.voltage': Joi.number(),
+      'ble.sensor.humidity.1': Joi.number().integer(),
+      'ble.sensor.low.battery.status.1': Joi.boolean(),
+      'ble.sensor.magnet.count.1': Joi.number().integer(),
+      'ble.sensor.magnet.status.1': Joi.boolean(),
+      'ble.sensor.temperature.1': Joi.number(),
+      'channel.id': Joi.number().integer(),
+      'codec.id': Joi.number().integer(),
+      'custom.param.116': Joi.number().integer(),
+      'device.id': Joi.number().integer(),
+      'device.name': Joi.string(),
+      'device.type.id': Joi.number().integer().valid(508),
+      'event.priority.enum': Joi.number().integer(),
+      'gnss.sleep.mode.status': Joi.boolean(),
+      'gnss.state.enum': Joi.number().integer(),
+      'gsm.mcc': Joi.number().integer(),
+      'gsm.mnc': Joi.number().integer(),
+      'gsm.operator.code': Joi.string(),
+      'gsm.signal.level': Joi.number().integer(),
+      'ident': Joi.string(),
+      'movement.status': Joi.boolean(),
+      'peer': Joi.string(),
+      'position.altitude': Joi.number(),
+      'position.direction': Joi.number(),
+      'position.hdop': Joi.number(),
+      'position.pdop': Joi.number(),
+      'position.satellites': Joi.number().integer(),
+      'position.speed': Joi.number(),
+      'protocol.id': Joi.number().integer(),
+      'server.timestamp': Joi.number(),
+      'sleep.mode.enum': Joi.number().integer(),
+      'timestamp': Joi.number()
+    }).unknown(true)
+  }
+};
+
+// Función para ejecutar el proceso de Ubibot
+async function ejecutarProcesoUbibot() {
+  try {
+      console.log('Iniciando proceso de Ubibot...');
+      await procesarDatosUbibot();
+      console.log('Proceso de Ubibot completado.');
+  } catch (error) {
+      console.error('Error al procesar datos de Ubibot:', error);
+  }
+}
+// Ejecutar el proceso de Ubibot inmediatamente al iniciar el servidor
+ejecutarProcesoUbibot();
+
+// Programar la ejecución del proceso de Ubibot cada 5 minutos
+const intervaloDatos = setInterval(ejecutarProcesoUbibot,intervalo_ejecucion_ubibot);
+
+// Manejador para detener el intervalo si es necesario
+process.on('SIGINT', () => {
+    clearInterval(intervaloDatos);
+    console.log('Intervalo de Ubibot detenido');
+    process.exit();
+});
+// Justo antes de iniciar el servidor, agrega:
+app.get('/api/ubibot-status', (req, res) => {
+  res.json({ status: 'Ubibot process running', lastExecution: new Date() });
+});
+// Nodemailer configuration
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'felipe@thenextsecurity.cl',
+    pass: '9516npth8913tqm.'
+  }
+});
+// Agregar esta función de ayuda al principio del archivo
+function getCurrentDateStart() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 1000;
+}
+app.use(cors(corsOptions)); // Enable CORS for all routes
+
+// Otros middleware (deben estar después del middleware CORS)
 app.use(express.json()); // Parse JSON request bodies
-app.use(bodyParser.urlencoded({ extended: false })); // Parse URL-encoded request bodies
-app.use(bodyParser.json()); // Parse JSON request bodies
+app.use(express.urlencoded({ extended: false })); // Parse URL-encoded request bodies
+
 
 // Helper function to get sector name based on beacon ID
 const getSector = (beaconId) => {
@@ -72,146 +318,263 @@ const getSector = (beaconId) => {
       return 'Unknown'; // Return 'Unknown' if beacon ID does not match any case
   }
 };
+
 // Convert timestamp to local time in Chile
 const convertToLocalTime = (timestamp) => {
   return moment(timestamp * 1000).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss');
 };
+//const moment = require('moment-timezone');
 
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
-  const gpsDatas = req.body;
-  console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
-
+  const gpsDatas = Array.isArray(req.body) ? req.body : [req.body];
+  // console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
+  console.log("Llego datos a gps_data");
   try {
     for (const gpsData of gpsDatas) {
-      const beacons = gpsData['ble.beacons'] || [];
-      const isSensorData = gpsData.hasOwnProperty('battery.level');
-
-      let query = '';
-      let params = [];
-
-      if (isSensorData) {
-        // Insertar datos del sensor en la tabla 'gps_data'
-        query = `
-          INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp, battery_level, battery_voltage, ble_sensor_humidity_1, ble_sensor_humidity_2, ble_sensor_humidity_3, ble_sensor_humidity_4, ble_sensor_low_battery_status_1, ble_sensor_magnet_status_1, ble_sensor_temperature_1, ble_sensor_temperature_2, ble_sensor_temperature_3, ble_sensor_temperature_4, bluetooth_state_enum, gnss_state_enum, gnss_status, gsm_mcc, gsm_mnc, gsm_operator_code, gsm_signal_level, movement_status, position_hdop, position_pdop, position_valid, sleep_mode_enum, custom_param_116)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-        params = [
-          JSON.stringify(beacons),
-          gpsData['channel.id'],
-          gpsData['codec.id'],
-          gpsData['device.id'],
-          gpsData['device.name'],
-          gpsData['device.type.id'],
-          gpsData['event.priority.enum'],
-          gpsData.ident,
-          gpsData.peer,
-          gpsData['position.altitude'],
-          gpsData['position.direction'],
-          gpsData['position.latitude'],
-          gpsData['position.longitude'],
-          gpsData['position.satellites'],
-          gpsData['position.speed'],
-          gpsData['protocol.id'],
-          gpsData['server.timestamp'],
-          gpsData.timestamp,
-          gpsData['battery.level'],
-          gpsData['battery.voltage'],
-          gpsData['ble.sensor.humidity.1'],
-          gpsData['ble.sensor.humidity.2'],
-          gpsData['ble.sensor.humidity.3'],
-          gpsData['ble.sensor.humidity.4'],
-          gpsData['ble.sensor.low.battery.status.1'],
-          gpsData['ble.sensor.magnet.status.1'],
-          gpsData['ble.sensor.temperature.1'],
-          gpsData['ble.sensor.temperature.2'],
-          gpsData['ble.sensor.temperature.3'],
-          gpsData['ble.sensor.temperature.4'],
-          gpsData['bluetooth.state.enum'],
-          gpsData['gnss.state.enum'],
-          gpsData['gnss.status'],
-          gpsData['gsm.mcc'],
-          gpsData['gsm.mnc'],
-          gpsData['gsm.operator.code'],
-          gpsData['gsm.signal.level'],
-          gpsData['movement.status'],
-          gpsData['position.hdop'],
-          gpsData['position.pdop'],
-          gpsData['position.valid'],
-          gpsData['sleep.mode.enum'],
-          gpsData['custom.param.116']
-        ];
-
-        // Ejecutar la inserción en gps_data
-        await pool.query(query, params);
-
-        // Insertar en la nueva tabla 'door_status'
-        if (gpsData['ble.sensor.magnet.status.1'] !== null && gpsData['ble.sensor.temperature.1'] !== null) {
-          const [lastBeaconRecord] = await pool.query(`
-            SELECT ubicacion 
-            FROM beacons 
-            WHERE id LIKE CONCAT('%', 
-                JSON_UNQUOTE(JSON_EXTRACT((SELECT ble_beacons 
-                                           FROM gps_data 
-                                           WHERE id = (SELECT MAX(id) 
-                                                       FROM gps_data 
-                                                       WHERE ble_beacons IS NOT NULL 
-                                                       AND ble_beacons != '[]' 
-                                                       AND device_name = ?)
-                                           ), '$[0].id')), 
-                '%')
-          `, [gpsData['device.name']]);
-
-          const sector = lastBeaconRecord.length > 0 ? lastBeaconRecord[0].ubicacion : 'Desconocido';
-          const magnetStatus = gpsData['ble.sensor.magnet.status.1'];
-          const temperature = gpsData['ble.sensor.temperature.1'];
-          const timestamp = convertToLocalTime(gpsData.timestamp); // Convertir a hora local de Chile
-
-          await pool.query(`
-            INSERT INTO door_status (sector, magnet_status, temperature, timestamp)
-            VALUES (?, ?, ?, ?)
-          `, [sector, magnetStatus, temperature, timestamp]);
-        }
-      } else {
-        // Insertar datos de posición en la tabla 'gps_data'
-        query = `
-          INSERT INTO gps_data (ble_beacons, channel_id, codec_id, device_id, device_name, device_type_id, event_enum, event_priority_enum, ident, peer, altitude, direction, latitude, longitude, satellites, speed, protocol_id, server_timestamp, timestamp)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-        params = [
-          JSON.stringify(beacons),
-          gpsData['channel.id'],
-          gpsData['codec.id'],
-          gpsData['device.id'],
-          gpsData['device.name'],
-          gpsData['device.type.id'],
-          gpsData['event.enum'],
-          gpsData['event.priority.enum'],
-          gpsData.ident,
-          gpsData.peer,
-          gpsData['position.altitude'],
-          gpsData['position.direction'],
-          gpsData['position.latitude'],
-          gpsData['position.longitude'],
-          gpsData['position.satellites'],
-          gpsData['position.speed'],
-          gpsData['protocol.id'],
-          gpsData['server.timestamp'],
-          gpsData.timestamp
-        ];
-
-        await pool.query(query, params);
-      }
+      await processGpsData(gpsData);
     }
-
     res.status(200).send('GPS Data processed successfully');
   } catch (error) {
     console.error('Error processing GPS data:', error);
     res.status(500).send('Server Error');
   }
 });
+async function processGpsData(gpsData) {
+  const deviceTypeId = gpsData['device.type.id'];
+  const schema = schemas[deviceTypeId];
+  
+  
+  if (!schema) {
+    throw new Error(`Unknown device type: ${deviceTypeId}`);
+  }
+  console.log('Validating data for device type:', deviceTypeId);
+  // console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
+  console.log('ble_beacons:', gpsData['ble.beacons']);
 
+  let validatedData;
+  // console.log('TypeB validation failed, attempting typeA schema');
+  try {
+    validatedData = await schema.typeA.validateAsync(gpsData);
+  } catch (err) {
+    console.error('Validation failed for both schemas:', err);
+    throw err;
+  }
+  const columns = [
+    'device_id', 'device_name', 'device_type_id', 'event_enum', 'event_priority_enum',
+    'ident', 'peer', 'altitude', 'direction', 'latitude', 'longitude', 'satellites', 'speed',
+    'protocol_id', 'server_timestamp', 'timestamp', 'ble_beacons', 'channel_id', 'codec_id',
+    'battery_level', 'battery_voltage', 'battery_current',
+    'ble_sensor_humidity_1', 'ble_sensor_humidity_2', 'ble_sensor_humidity_3', 'ble_sensor_humidity_4',
+    'ble_sensor_low_battery_status_1', 'ble_sensor_low_battery_status_2',
+    'ble_sensor_magnet_status_1', 'ble_sensor_magnet_status_2',
+    'ble_sensor_magnet_count_1', 'ble_sensor_magnet_count_2',
+    'ble_sensor_temperature_1', 'ble_sensor_temperature_2', 'ble_sensor_temperature_3', 'ble_sensor_temperature_4',
+    'bluetooth_state_enum', 'gnss_state_enum', 'gnss_status',
+    'gsm_mcc', 'gsm_mnc', 'gsm_operator_code', 'gsm_signal_level',
+    'movement_status', 'position_hdop', 'position_pdop', 'position_valid',
+    'position_fix_age', 'sleep_mode_enum', 'custom_param_116', 'vehicle_mileage'
+  ];
+  const query = `INSERT INTO gps_data (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`;
+
+  console.log("Datos insertados en gps_data")
+  const params = [
+    validatedData['device.id'],
+    validatedData['device.name'],
+    validatedData['device.type.id'],
+    validatedData['event.enum'],
+    validatedData['event.priority.enum'],
+    validatedData.ident,
+    validatedData.peer,
+    validatedData['position.altitude'],
+    validatedData['position.direction'],
+    validatedData['position.latitude'],
+    validatedData['position.longitude'],
+    validatedData['position.satellites'],
+    validatedData['position.speed'],
+    validatedData['protocol.id'],
+    Math.floor(validatedData['server.timestamp']),
+    Math.floor(validatedData.timestamp),
+    JSON.stringify(validatedData['ble.beacons'] || []),
+    validatedData['channel.id']|| -1,
+    validatedData['codec.id']|| -1,
+    validatedData['battery.level'] || -1,
+    validatedData['battery.voltage'] || -1,
+    validatedData['battery.current'] || -1,
+    validatedData['ble.sensor.humidity.1'] || -1,
+    validatedData['ble.sensor.humidity.2'] || -1,
+    validatedData['ble.sensor.humidity.3'] || -1,
+    validatedData['ble.sensor.humidity.4'] || -1,
+    validatedData['ble.sensor.low.battery.status.1'] || -1,
+    validatedData['ble.sensor.low.battery.status.2'] || -1,
+    validatedData['ble.sensor.magnet.status.1'] || -1,
+    validatedData['ble.sensor.magnet.status.2'] || -1,
+    validatedData['ble.sensor.magnet.count.1'] || -1,
+    validatedData['ble.sensor.magnet.count.2'] || -1,
+    validatedData['ble.sensor.temperature.1'] || -1,
+    validatedData['ble.sensor.temperature.2'] || -1,
+    validatedData['ble.sensor.temperature.3'] || -1,
+    validatedData['ble.sensor.temperature.4'] || -1,
+    validatedData['bluetooth.state.enum'] || -1,
+    validatedData['gnss.state.enum'] || -1,
+    validatedData['gnss.status'] || -1,
+    validatedData['gsm.mcc'] || -1,
+    validatedData['gsm.mnc'] || -1,
+    validatedData['gsm.operator.code'] || '.',
+    validatedData['gsm.signal.level'] || -1,
+    validatedData['movement.status'] || -1,
+    validatedData['position.hdop'] || -1,
+    validatedData['position.pdop'] || -1,
+    validatedData['position.valid'] || -1,
+    validatedData['position.fix.age'] || -1,
+    validatedData['sleep.mode.enum'] || -1,
+    validatedData['custom.param.116'] || -1,
+    validatedData['vehicle.mileage'] || -1
+  ];
+
+  try {
+    await pool.query(query, params);
+  } catch (error) {
+    console.error('SQL Error:', error);
+    console.error('Query:', query);
+    console.error('Params:', params);
+    throw error;
+  }
+    // Llamada a procesarPosibleIncidencia
+    await procesarPosibleIncidencia(
+      validatedData['device.name'],
+      validatedData['ble.beacons'] || [],
+      Math.floor(validatedData.timestamp),
+      validatedData['event.enum']  // Añadir este parámetro
+    );
+}
+
+// Endpoint para obtener los datos más recientes de GPS para un dispositivo específico
+app.get('/api/get-latest-gps-data', async (req, res) => {
+  const { device_name, startTime, endTime } = req.query;
+  
+  console.log(`Buscando datos para ${device_name} entre ${startTime} y ${endTime}`);
+  
+  try {
+    const query = `
+      SELECT latitude, longitude, timestamp, ble_beacons, event_enum
+      FROM gps_data
+      WHERE device_name = ? AND timestamp BETWEEN ? AND ?
+      ORDER BY timestamp DESC
+      LIMIT 1
+    `;
+    const [results] = await pool.query(query, [device_name, startTime, endTime]);
+    
+    console.log(`Resultados para ${device_name}:`, results);
+    
+    res.json({ data: results });
+  } catch (error) {
+    console.error('Error fetching latest GPS data:', error);
+    res.status(500).send('Server Error');
+  }
+});
+app.get('/api/latest-sectors', async (req, res) => {
+  try {
+    const [devices] = await pool.query('SELECT id, device_asignado FROM devices');
+    const latestSectors = [];
+    const now = moment().tz('America/Santiago');
+    const startOfDay = now.clone().startOf('day').unix();
+
+    console.log(`Tiempo actual: ${now.format('YYYY-MM-DD HH:mm:ss')}`);
+    console.log(`Inicio del día: ${moment.unix(startOfDay).format('YYYY-MM-DD HH:mm:ss')}`);
+
+    for (const device of devices) {
+      console.log(`\nProcesando dispositivo: ${device.id}`);
+      
+      let tableName;
+      switch (device.id) {
+        case '353201350896384':
+          tableName = 'magic_box_tmt_210_data_353201350896384';
+          break;
+        case '352592573522828':
+          tableName = 'gh_5200_data_352592573522828';
+          break;
+        case '352592576164230':
+          tableName = 'fmb204_data_352592576164230';
+          break;
+        default:
+          console.log(`No se encontró una tabla para el dispositivo ${device.id}`);
+          continue;
+      }
+
+      const query = `
+        SELECT beacon_id, timestamp
+        FROM ${tableName}
+        WHERE timestamp >= ? AND beacon_id IS NOT NULL AND  beacon_id != 'no encontrado: NULL'
+
+        ORDER BY timestamp DESC
+      `;
+      
+      try {
+        const [results] = await pool.query(query, [startOfDay]);
+        console.log(`Resultados obtenidos: ${results.length}`);
+
+        if (results.length > 0) {
+          let latestBeaconId = results[0].beacon_id;
+          let latestTimestamp = results[0].timestamp;
+          let oldestTimestamp = results[0].timestamp;
+
+          for (let i = 1; i < results.length; i++) {
+            if (results[i].beacon_id !== latestBeaconId) {
+              oldestTimestamp = results[i-1].timestamp;
+              break;
+            }
+            oldestTimestamp = results[i].timestamp;
+          }
+
+          const [sector] = await pool.query('SELECT nombre FROM sectores WHERE id = ?', [latestBeaconId]);
+          const timeDiff = now.unix() - oldestTimestamp;
+          const hours = Math.floor(timeDiff / 3600);
+          const minutes = Math.floor((timeDiff % 3600) / 60);
+
+          console.log(`Beacon más reciente: ${latestBeaconId}`);
+          console.log(`Timestamp más reciente: ${moment.unix(latestTimestamp).format('YYYY-MM-DD HH:mm:ss')}`);
+          console.log(`Timestamp más antiguo del mismo beacon: ${moment.unix(oldestTimestamp).format('YYYY-MM-DD HH:mm:ss')}`);
+          console.log(`Tiempo transcurrido: ${hours} horas y ${minutes} minutos`);
+
+          latestSectors.push({
+            device_id: device.id,
+            sector: sector.length > 0 ? sector[0].nombre : 'Desconocido',
+            timestamp: moment.unix(oldestTimestamp).format('YYYY-MM-DD HH:mm:ss'),
+            timeSinceDetection: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+          });
+        } else {
+          console.log(`No se encontraron datos para el dispositivo ${device.id} en el día actual`);
+          latestSectors.push({
+            device_id: device.id,
+            sector: 'Sin datos para este día',
+            timestamp: null,
+            timeSinceDetection: '-'
+          });
+        }
+      } catch (innerError) {
+        console.error(`Error fetching data for device ${device.id}:`, innerError);
+        latestSectors.push({
+          device_id: device.id,
+          sector: 'Error al obtener datos',
+          timestamp: null,
+          timeSinceDetection: '-'
+        });
+      }
+    }
+
+    console.log('\nDatos finales a enviar:');
+    console.log(JSON.stringify(latestSectors, null, 2));
+
+    res.json(latestSectors);
+  } catch (error) {
+    console.error('Error fetching latest sectors:', error);
+    res.status(500).send('Server Error');
+  }
+});
 // Definir el endpoint para obtener el estado de las puertas
+// Endpoint to get door status history within a specific date range
+// Endpoint to get door status history within a specific date range
 app.get('/api/door-status', async (req, res) => {
   const { startDate, endDate } = req.query;
 
@@ -221,9 +584,11 @@ app.get('/api/door-status', async (req, res) => {
 
   try {
     const query = `
-      SELECT sector, magnet_status, temperature, timestamp
-      FROM door_status
-      WHERE timestamp BETWEEN ? AND ?
+      SELECT ds.sector, ds.magnet_status, ds.temperature, ds.timestamp
+      FROM door_status ds
+      JOIN beacons b ON ds.sector = b.ubicacion
+      WHERE ds.timestamp BETWEEN ? AND ? AND b.esPuerta = 1
+      ORDER BY ds.timestamp ASC
     `;
     const [rows] = await pool.query(query, [startDate, endDate]);
     res.json(rows);
@@ -234,97 +599,142 @@ app.get('/api/door-status', async (req, res) => {
 });
 
 
-// Endpoint for querying GPS data with filters
-app.get('/api/get-gps-data', async (req, res) => {
-  // Extract startDate and endDate from query parameters
-  const { startDate, endDate } = req.query;
+// Endpoint para obtener datos históricos de GPS
+app.get('/api/historical-gps-data', async (req, res) => {
+  const { device_id, date, startHour, endHour } = req.query;
 
-  // SQL query to select device_id, latitude, longitude, and timestamp from gps_data table
-  // The query filters records where the timestamp is between startDate and endDate
-  const query = `
-        SELECT device_id, latitude, longitude, timestamp AS unixTimestamp
-        FROM gps_data
-        WHERE timestamp BETWEEN ? AND ?
-    `;
+  // Convertir la fecha y hora a Unix timestamp usando la zona horaria de Chile
+  const startDateTime = moment.tz(`${date} ${startHour}:00`, 'YYYY-MM-DD HH:mm:ss', 'America/Santiago').unix();
+  const endDateTime = moment.tz(`${date} ${endHour}:59`, 'YYYY-MM-DD HH:mm:ss', 'America/Santiago').unix();
 
-  // Convert startDate and endDate to integers and store them in params array
-  const params = [parseInt(startDate), parseInt(endDate)];
-
-  // Log the query parameters, SQL query, and SQL parameters for debugging purposes
-  console.log('Query Params:', { startDate, endDate });
-  console.log('SQL Query:', query);
-  console.log('SQL Params:', params);
+  console.log(`Received request with device_id: ${device_id}, date: ${date}, startHour: ${startHour}, endHour: ${endHour}`);
+  console.log(`Constructed datetime range: ${startDateTime} to ${endDateTime}`);
 
   try {
-    // Execute the SQL query with the provided parameters
-    const [results] = await pool.query(query, params);
-    // Log the query results for debugging purposes
-    console.log('Query Results:', results);
+    const query = `
+      SELECT latitude, longitude, timestamp
+      FROM gps_data
+      WHERE device_name = ? AND timestamp BETWEEN ? AND ?
+      ORDER BY timestamp ASC
+    `;
+    const [results] = await pool.query(query, [device_id, startDateTime, endDateTime]);
 
-    // Send the query results as a JSON response
+    console.log(`Query results: ${JSON.stringify(results)}`);
+    if (results.length === 0) {
+      console.log(`No data found for device_id: ${device_id} between ${startDateTime} and ${endDateTime}`);
+    } else {
+      results.forEach(result => {
+        result.timestamp = convertToLocalTime(result.timestamp);
+      });
+    }
+
     res.json(results);
   } catch (error) {
-    // Log any errors that occur during the query execution
-    console.error('Error fetching GPS data:', error);
-    // Send a 500 Internal Server Error response if an error occurs
+    console.error('Error fetching historical GPS data:', error);
     res.status(500).send('Server Error');
+  }
+});
+
+// Endpoint para obtener los datos de personal
+app.get('/api/personal', async (req, res) => {
+  try {
+      const [rows] = await pool.query('SELECT * FROM personal');
+      res.json(rows);
+  } catch (error) {
+      console.error('Error fetching personal:', error);
+      res.status(500).send('Server Error');
+  }
+});
+
+app.get('/api/get-gps-data', async (req, res) => {
+  const { startDate, endDate, device_name } = req.query;
+
+  // Agregar logs para verificar los valores de los parámetros recibidos
+  console.log('Start Date:', startDate);
+  console.log('End Date:', endDate);
+  console.log('Device Name:', device_name);
+
+  const query = `
+      SELECT device_id, latitude, longitude, timestamp AS unixTimestamp
+      FROM gps_data
+      WHERE timestamp BETWEEN ? AND ? AND device_name = ?
+  `;
+
+  const params = [parseInt(startDate), parseInt(endDate), device_name];
+
+  try {
+      const [results] = await pool.query(query, params);
+      
+      // Agregar logs para verificar los resultados de la consulta
+      if (results.length === 0) {
+          console.log(`No data found for device_name: ${device_name} between ${startDate} and ${endDate}`);
+          return res.json({ data: [], message: 'No data found' });
+      }
+
+      console.log('Query Results:', results);
+
+      res.json({ data: results, message: 'Data found' });
+  } catch (error) {
+      console.error('Error fetching GPS data:', error);
+      res.status(500).send('Server Error');
   }
 });
 
 
 // Endpoint to get the last known position
 app.get('/api/last-known-position', async (req, res) => {
-  // Extract device_id from query parameters
-  const { device_id } = req.query;
+  // Extract ident from query parameters
+  const { ident } = req.query;
   
   try {
-    // Check if device_id is provided
-    if (!device_id) {
-      console.log('Error: device_id is required');
-      return res.status(400).send('device_id is required');
+    // Check if ident is provided
+    if (!ident) {
+      console.log('Error: ident is required');
+      return res.status(400).send('ident is required');
     }
 
-    // Log the received device_id for debugging purposes
-    console.log('Received device_id:', device_id);
+    // Log the received ident for debugging purposes
+    console.log('Received ident:', ident);
 
     // Query to get the last known position of the device
     const [lastKnownPosition] = await pool.query(`
-      SELECT device_id, latitude, longitude, timestamp * 1000 AS unixTimestamp
+      SELECT ident, latitude, longitude, timestamp * 1000 AS unixTimestamp
       FROM gps_data
-      WHERE device_name = ?
+      WHERE ident = ? AND latitude IS NOT NULL AND longitude IS NOT NULL
       ORDER BY timestamp DESC
       LIMIT 1
-    `, [device_id]);
+    `, [ident]);
 
-    // Check if any data is available for the given device_id
+    // Check if any data is available for the given ident
     if (lastKnownPosition.length === 0) {
-      console.log('Error: No data available for device_name:', device_id);
+      console.log('Error: No data available for ident:', ident);
       return res.status(404).send('No data available');
     }
 
     // Log the last known position for debugging purposes
     console.log('Last known position:', lastKnownPosition);
 
-    // Query to get the last coordinate change of the device
+    /* Query to get the last coordinate change of the device
     const [lastCoordinateChange] = await pool.query(`
       SELECT timestamp * 1000 AS changeTimestamp
       FROM gps_data
-      WHERE (latitude != ? OR longitude != ?) AND device_name = ?
+      WHERE (latitude != ? OR longitude != ?) AND ident = ?
       ORDER BY timestamp DESC
       LIMIT 1
     `, [
       lastKnownPosition[0].latitude || defaultPosition.lat, 
       lastKnownPosition[0].longitude || defaultPosition.lng, 
-      device_id
+      ident
     ]);
 
     // Log the last coordinate change for debugging purposes
-    console.log('Last coordinate change:', lastCoordinateChange);
+    console.log('Last coordinate change:', lastCoordinateChange);*/
 
     // Construct the response object
     const response = {
-      ...lastKnownPosition[0],
-      changeTimestamp: lastCoordinateChange.length > 0 ? lastCoordinateChange[0].changeTimestamp : null
+      ...lastKnownPosition[0]
+      //,
+      //changeTimestamp: lastCoordinateChange.length > 0 ? lastCoordinateChange[0].changeTimestamp : null
     };
 
     // Set default coordinates if latitude or longitude is null
@@ -343,6 +753,30 @@ app.get('/api/last-known-position', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+app.get('/api/previous-valid-position', async (req, res) => {
+  const { ident, timestamp } = req.query;
+
+  try {
+    // Query to get the previous valid position
+    const [previousValidPosition] = await pool.query(`
+      SELECT ident, latitude, longitude, timestamp * 1000 AS unixTimestamp
+      FROM gps_data
+      WHERE ident = ? AND timestamp < ? AND latitude IS NOT NULL AND longitude IS NOT NULL
+      ORDER BY timestamp DESC
+      LIMIT 1
+    `, [ident, timestamp / 1000]);
+
+    if (previousValidPosition.length === 0) {
+      return res.status(404).send('No previous valid position found');
+    }
+
+    res.json(previousValidPosition[0]);
+  } catch (error) {
+    console.error('Error fetching previous valid position:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
 
 
 // Endpoint to get active beacons
@@ -356,17 +790,12 @@ app.get('/api/active-beacons', async (req, res) => {
             LIMIT 1
         `);
 
-    // Log the latest record for debugging purposes
-    console.log('Latest Record:', latestRecord);
-
     // Check if the latest record exists and contains non-empty ble_beacons
     if (latestRecord.length && latestRecord[0].ble_beacons && latestRecord[0].ble_beacons !== '[]') {
       // Parse the ble_beacons JSON string to an array
       const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
       // Extract the IDs of active beacons
       const activeBeaconIds = beaconsData.map(beacon => beacon.id);
-      // Log the active beacon IDs for debugging purposes
-      console.log('Active Beacon IDs:', activeBeaconIds);
       // Send the active beacon IDs as a JSON response
       res.json({ activeBeaconIds });
     } else {
@@ -385,88 +814,78 @@ app.get('/api/active-beacons', async (req, res) => {
 
 
 // Endpoint to search for beacon entries and exits for a specific device
+// Endpoint para obtener las entradas y salidas de beacons para un dispositivo específico
 app.get('/api/beacon-entries-exits', async (req, res) => {
-  // Extract startDate, endDate, and device_id from query parameters
   const { startDate, endDate, device_id } = req.query;
 
-  // Log the received search request for debugging purposes
-  console.log("Received search request:", { startDate, endDate, device_id });
+  // Determinar la tabla a utilizar basado en el device_id
+  let tableName;
+  switch (device_id) {
+      case '353201350896384':
+          tableName = 'magic_box_tmt_210_data_353201350896384';
+          break;
+      case '352592573522828':
+          tableName = 'gh_5200_data_352592573522828';
+          break;
+      case '352592576164230':
+          tableName = 'fmb204_data_352592576164230';
+          break;
+      default:
+          return res.status(400).send('Invalid device_id');
+  }
 
-  // Convert startDate and endDate to Unix timestamps (seconds since epoch)
   const startTimestamp = new Date(startDate).getTime() / 1000;
   const endTimestamp = new Date(endDate).getTime() / 1000;
 
-  // Log the converted timestamps for debugging purposes
-  console.log("Converted timestamps:", { startTimestamp, endTimestamp });
-
-  // SQL query to select timestamp and ble_beacons from gps_data table
-  // The query filters records by device_id and timestamp range, and ensures ble_beacons is not empty
   const query = `
-        SELECT timestamp, ble_beacons
-        FROM gps_data
-        WHERE ident = ? AND timestamp BETWEEN ? AND ? AND ble_beacons != "[]"
-        ORDER BY timestamp ASC
-    `;
+      SELECT timestamp, beacon_id
+      FROM ${tableName}
+      WHERE timestamp BETWEEN ? AND ? AND beacon_id IS NOT NULL AND beacon_id != 'no encontrado: NULL'
+      ORDER BY timestamp ASC
+  `;
 
   try {
-    // Execute the SQL query with the provided parameters
-    const [results] = await pool.query(query, [device_id, startTimestamp, endTimestamp]);
-    // Log the query results for debugging purposes
-    console.log("Query results:", results);
+      const [results] = await pool.query(query, [startTimestamp, endTimestamp]);
+      const processedResults = [];
+      let currentBeacon = null;
+      let entryTimestamp = null;
 
-    // Initialize variables to process the results
-    const processedResults = [];
-    let currentBeacon = null;
-    let entryTimestamp = null;
+      results.forEach(record => {
+          const beacon = { id: record.beacon_id };
+          if (beacon.id) {
+              if (currentBeacon === null || beacon.id !== currentBeacon.id) {
+                  if (currentBeacon !== null) {
+                      processedResults.push({
+                          beaconId: currentBeacon.id,
+                          sector: getSector(currentBeacon.id),
+                          entrada: entryTimestamp,
+                          salida: record.timestamp * 1000,
+                          tiempoPermanencia: record.timestamp * 1000 - entryTimestamp,
+                      });
+                  }
+                  currentBeacon = beacon;
+                  entryTimestamp = record.timestamp * 1000;
+              }
+          }
+      });
 
-    // Iterate over each record in the query results
-    results.forEach(record => {
-      // Parse the ble_beacons JSON string to an array
-      const beacons = JSON.parse(record.ble_beacons || '[]');
-      if (beacons.length > 0) {
-        const beacon = beacons[0];
-        // Check if the current beacon has changed
-        if (currentBeacon === null || beacon.id !== currentBeacon.id) {
-          // If there was a previous beacon, add an exit record for it
-          if (currentBeacon !== null) {
-            processedResults.push({
+      if (currentBeacon !== null) {
+          processedResults.push({
               beaconId: currentBeacon.id,
               sector: getSector(currentBeacon.id),
               entrada: entryTimestamp,
-              salida: record.timestamp * 1000,
-              tiempoPermanencia: record.timestamp * 1000 - entryTimestamp,
-            });
-          }
-          // Update the current beacon and entry timestamp
-          currentBeacon = beacon;
-          entryTimestamp = record.timestamp * 1000;
-        }
+              salida: null,
+              tiempoPermanencia: 'En progreso',
+          });
       }
-    });
 
-    // If there is a current beacon, add an entry record for it
-    if (currentBeacon !== null) {
-      processedResults.push({
-        beaconId: currentBeacon.id,
-        sector: getSector(currentBeacon.id),
-        entrada: entryTimestamp,
-        salida: null,
-        tiempoPermanencia: 'En progreso',
-      });
-    }
-
-    // Log the processed results for debugging purposes
-    console.log("Processed results:", processedResults);
-
-    // Send the processed results as a JSON response
-    res.json(processedResults);
+      res.json(processedResults);
   } catch (error) {
-    // Log any errors that occur during the query execution
-    console.error('Error fetching beacon entries and exits:', error);
-    // Send a 500 Internal Server Error response if an error occurs
-    res.status(500).send('Server Error');
+      console.error('Error fetching beacon entries and exits:', error);
+      res.status(500).send('Server Error');
   }
 });
+
 
 // Endpoint to get the oldest timestamp for a specific active beacon
 app.get('/api/oldest-active-beacon-detections', async (req, res) => {
@@ -534,7 +953,7 @@ app.get('/api/oldest-active-beacon-detections', async (req, res) => {
 app.get('/api/beacons', async (req, res) => {
   try {
     // Ejecutar una consulta SQL para seleccionar todos los registros de la tabla 'beacons'
-    const [rows] = await pool.query('SELECT * FROM beacons');
+    const [rows] = await pool.query('SELECT * FROM beacons WHERE esTemperatura = 0');
     
     // Enviar los resultados de la consulta como una respuesta JSON
     res.json(rows);
@@ -620,6 +1039,7 @@ app.get('/api/sectores', async (req, res) => {
 
 // Endpoint para obtener la configuración
 app.get('/api/configuracion', async (req, res) => {
+  
   try {
     // Ejecutar una consulta SQL para seleccionar todos los registros de la tabla 'configuracion'
     const [results] = await pool.query('SELECT * FROM configuracion');
@@ -634,6 +1054,7 @@ app.get('/api/configuracion', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 // Endpoint para actualizar la configuración
 app.post('/api/configuracion', async (req, res) => {
@@ -670,12 +1091,68 @@ app.post('/api/configuracion', async (req, res) => {
   }
 });
 
+app.get('/api/configuracion_uno_solo/:beaconID', async (req, res) => {
+  try {
+    // Obtener el beaconID de los parámetros de la URL
+    const { beaconID } = req.params;
+    
+    // Ejecutar una consulta SQL para seleccionar los registros de la tabla 'configuracion' donde el beaconID coincida
+    const [results] = await pool.query('SELECT * FROM configuracion WHERE beacon_id = ?', [beaconID]);
+    
+    // Enviar los resultados de la consulta como una respuesta JSON
+    res.json(results);
+  } catch (error) {
+    // Registrar cualquier error que ocurra durante la ejecución de la consulta
+    console.error('Error fetching configuration:', error);
+    
+    // Enviar una respuesta de error 500 (Internal Server Error) con un mensaje de error
+    res.status(500).send('Server Error');
+  }
+});
+
+// ...
+
+// Endpoint consolidado para obtener sectores, configuración, umbrales y dispositivos
+app.get('/api/retrive_MapWithQuadrants_information', async (req, res) => {
+  try {
+    // Obtener sectores
+    const [sectors] = await pool.query('SELECT * FROM sectores');
+
+    // Obtener configuración
+    const [configuration] = await pool.query('SELECT * FROM configuracion');
+
+    // Obtener umbrales
+    const [thresholds] = await pool.query('SELECT * FROM configuracion');
+
+    // Obtener dispositivos
+    const [devices] = await pool.query('SELECT * FROM devices');
+
+    // Obtener personal
+    const [personal] = await pool.query('SELECT * FROM personal');
+
+    // Construir el objeto de respuesta consolidada
+    const combinedData = {
+      sectors,
+      configuration,
+      thresholds,
+      devices,
+      personal,  // Añadir los datos de personal aquí
+    };
+
+    // Enviar la respuesta consolidada como JSON
+    res.json(combinedData);
+  } catch (error) {
+    console.error('Error fetching combined data:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
 
 // Endpoint para obtener los umbrales
 app.get('/api/umbrales', async (req, res) => {
   try {
     // Ejecutar una consulta SQL para seleccionar el primer registro de la tabla 'umbrales'
-    const [results] = await pool.query('SELECT * FROM umbrales LIMIT 1');
+    const [results] = await pool.query('SELECT * FROM configuracion LIMIT 1');
     
     // Enviar el primer resultado de la consulta como una respuesta JSON
     res.json(results[0]);
@@ -695,7 +1172,7 @@ app.post('/api/umbrales', async (req, res) => {
 
   try {
     // Vaciar la tabla 'umbrales' antes de insertar nuevos umbrales
-    await pool.query('TRUNCATE TABLE umbrales');
+    await pool.query('TRUNCATE TABLE configuracion');
 
     // Insertar los nuevos umbrales en la tabla 'umbrales'
     await pool.query(
@@ -714,119 +1191,123 @@ app.post('/api/umbrales', async (req, res) => {
   }
 });
 
-// Endpoint for user registration
-app.post('/api/register', async (req, res) => {
-  const { username, password, email } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  try {
-    // Check if the username already exists
-    const [existingUser] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-    if (existingUser.length > 0) {
-      return res.status(400).send('Username already exists');
-    }
-
-    // Insert the new user into the database
-    await pool.query('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', [username, hashedPassword, email]);
-    res.sendStatus(201); // User created successfully
-  } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).send('Server Error');
-  }
-});
-
 // Endpoint for user login
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // Fetch the user by username
     const [user] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
     if (user.length === 0) {
       return res.status(400).send('Invalid username or password');
     }
 
-    // Compare the provided password with the stored hashed password
     const validPassword = await bcrypt.compare(password, user[0].password);
     if (!validPassword) {
       return res.status(400).send('Invalid username or password');
     }
 
-    // Generate a JWT token
-    const token = jwt.sign({ userId: user[0].id }, 'your_jwt_secret', { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user[0].id, permissions: user[0].permissions }, 'your_jwt_secret', { expiresIn: '1h' });
     res.json({ token });
   } catch (error) {
     console.error('Error logging in user:', error);
     res.status(500).send('Server Error');
   }
 });
+// Endpoint to get the list of users
+app.get('/api/users', async (req, res) => {
+  try {
+    const [users] = await pool.query('SELECT id, username, email, permissions FROM users');
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).send('Server Error');
+  }
+});
 
-// Endpoint for password reset request
-app.post('/api/request-password-reset', async (req, res) => {
-  const { email } = req.body;
+// Endpoint for user registration
+app.post('/api/register', async (req, res) => {
+  const { userId, username, password, email, permissions } = req.body;
+  const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
   try {
-    // Fetch the user by email
+    if (userId) {
+      // Update existing user
+      await pool.query(
+        'UPDATE users SET username = ?, email = ?, permissions = ? WHERE id = ?',
+        [username, email, permissions, userId]
+      );
+      res.sendStatus(200);
+    } else {
+      // Create new user
+      const [existingUser] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+      if (existingUser.length > 0) {
+        return res.status(400).send('Username already exists');
+      }
+
+      await pool.query('INSERT INTO users (username, password, email, permissions) VALUES (?, ?, ?, ?)', [username, hashedPassword, email, permissions]);
+      res.sendStatus(201);
+    }
+  } catch (error) {
+    console.error('Error registering or updating user:', error);
+    res.status(500).send('Server Error');
+  }
+});
+// Endpoint for requesting a password reset
+app.post('/api/request-password-reset', async (req, res) => {
+  const { email } = req.body;
+  console
+  try {
     const [user] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     if (user.length === 0) {
-      return res.status(400).send('User with this email does not exist');
+      return res.status(404).send('Usuario no encontrado');
     }
 
-    // Generate a reset token and expiry time
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hora de validez
 
-    // Update the user with the reset token and expiry time
-    await pool.query('UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE email = ?', [resetToken, resetTokenExpiry, email]);
+    await pool.query('UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE id = ?', [resetToken, resetTokenExpiry, user[0].id]);
 
-    // Send the reset token via email
-    const transporter = nodemailer.createTransport({
-      service: 'Gmail',
-      auth: {
-        user: 'your_email@gmail.com',
-        pass: 'your_email_password',
-      },
-    });
-
-    const mailOptions = {
-      from: 'your_email@gmail.com',
+    const resetUrl = `http://thenext.ddns.net:3000/reset-password/${resetToken}`;
+    const msg = {
       to: email,
-      subject: 'Password Reset',
-      text: `You requested for a password reset. Use this token to reset your password: ${resetToken}`,
+      from: 'felipe@thenextsecurity.cl', // Usa el correo que hayas verificado con SendGrid
+      subject: 'Restablecimiento de Contraseña',
+      text: `Para restablecer tu contraseña, haz clic en el siguiente enlace: ${resetUrl}`,
     };
 
-    transporter.sendMail(mailOptions);
-
-    res.send('Password reset email sent');
+    await sgMail.send(msg).then(() => {
+      console.log('Email sent');
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+    res.send('Se ha enviado un enlace de restablecimiento a su email');
   } catch (error) {
-    console.error('Error requesting password reset:', error);
-    res.status(500).send('Server Error');
+    console.error('Error al solicitar restablecimiento de contraseña:', error);
+    res.status(500).send('Error del servidor');
   }
 });
 
 // Endpoint for resetting the password
 app.post('/api/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-
+  
   try {
-    // Fetch the user by reset token and ensure the token is not expired
     const [user] = await pool.query('SELECT * FROM users WHERE resetToken = ? AND resetTokenExpiry > ?', [token, Date.now()]);
     if (user.length === 0) {
-      return res.status(400).send('Invalid or expired token');
+      return res.status(400).send('Token inválido o expirado');
     }
 
-    // Update the user's password and clear the reset token and expiry time
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     await pool.query('UPDATE users SET password = ?, resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?', [hashedPassword, user[0].id]);
 
-    res.send('Password reset successful');
+    res.send('Contraseña restablecida con éxito');
   } catch (error) {
-    console.error('Error resetting password:', error);
-    res.status(500).send('Server Error');
+    console.error('Error al restablecer la contraseña:', error);
+    res.status(500).send('Error del servidor');
   }
 });
 
-// Zapier function to format timestamp
 // Helper function to format timestamp
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
@@ -839,12 +1320,11 @@ function formatTimestamp(timestamp) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
 }
 
-// Endpoint to receive SMS data
+// Endpoint para recibir datos de SMS
 app.post('/sms', async (req, res) => {
   console.log('Request Headers:', req.headers);
   console.log('Request Body:', req.body);
 
-  // Validate the request body
   if (typeof req.body !== 'object' || !req.body.From || !req.body.Body) {
     console.log('Received incorrect data format:', req.body);
     return res.status(400).json({ error: 'Invalid data format', received: req.body });
@@ -852,7 +1332,6 @@ app.post('/sms', async (req, res) => {
 
   try {
     const currentEpoch = Math.floor(Date.now() / 1000);
-    console.log('current Epoch ' + currentEpoch);
     const deviceId = req.body.From;
     const deviceID_name = await getDeviceAsignado(deviceId);
     const message = req.body.Body;
@@ -864,25 +1343,24 @@ app.post('/sms', async (req, res) => {
 
     console.log('Parsed SMS:', { deviceId, message, currentEpoch });
 
-    // Validate the parsed data
     if (!deviceId || !message) {
       console.log('Invalid data format', req.body);
       return res.status(400).json({ error: 'Invalid data format', received: req.body });
     }
 
-    // Format the timestamp
-    const formattedTimestamp = formatTimestamp(new Date(currentEpoch * 1000));
+    // Formatear el timestamp
+    const formattedTimestamp = moment(timestamp).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss');
 
     const connection = await pool.getConnection();
     try {
-      // Insert the SMS data into the database
+      // Insertar los datos del SMS en la base de datos
       const [result] = await connection.query(
         'INSERT INTO sms_data (device_id, message, timestamp, latitud, longitud, sector) VALUES (?, ?, ?, ?, ?, ?)',
         [deviceID_name, message, formattedTimestamp, lat, lon, ubicacion]
       );
       console.log('SMS inserted successfully:', { id: result.insertId });
 
-      // Emit an event for the new SMS
+      // Emitir un evento para el nuevo SMS
       io.emit('new_sms', { id: result.insertId, deviceId, message, timestamp: formattedTimestamp });
 
       res.status(201).json({ id: result.insertId });
@@ -909,60 +1387,12 @@ app.get('/api/sms-data', async (req, res) => {
   }
 });
 
-// Helper function to format timestamp
-function formatTimestamp(timestamp) {
-  const date = new Date(timestamp);
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  const hh = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
-  const ss = String(date.getSeconds()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
-}
-
-// Endpoint to handle Flespi webhook
-app.post('/flespi-webhook', async (req, res) => {
-  const { "ble.sensor.magnet.status.1": magnetStatus, "device.id": deviceId } = req.body;
-
-  console.log('Webhook Data Received:', req.body);
-
-  if (magnetStatus !== undefined && deviceId) {
-    try {
-      let result;
-      const timestamp = new Date().toISOString();
-
-      if (magnetStatus) {
-        // Puerta abierta
-        result = await pool.query(
-          'INSERT INTO puertas (Puerta_Sector, Timestamp_Apertura) VALUES (?, ?)',
-          [deviceId, timestamp]
-        );
-        console.log('Puerta abierta registrada:', result);
-      } else {
-        // Puerta cerrada
-        result = await pool.query(
-          'UPDATE puertas SET Timestamp_Cierre = ? WHERE Puerta_Sector = ? AND Timestamp_Cierre IS NULL',
-          [timestamp, deviceId]
-        );
-        console.log('Puerta cerrada registrada:', result);
-      }
-
-      res.sendStatus(200);
-    } catch (error) {
-      console.error('Error processing webhook data:', error);
-      res.status(500).send('Server Error');
-    }
-  } else {
-    res.status(400).send('Invalid data format');
-  }
-});
 async function getDeviceAsignado(deviceId) {
   try {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query('SELECT device_asignado FROM devices WHERE telefono = ?', [deviceId]);
-      
+
       if (rows.length > 0) {
         const deviceID_name = rows[0].device_asignado;
         console.log('Device Asignado:', deviceID_name);
@@ -979,11 +1409,12 @@ async function getDeviceAsignado(deviceId) {
     throw error;
   }
 }
+// Función para extraer la latitud del mensaje
 function getLatitudeFromMessage(message) {
   // Expresión regular para encontrar la latitud en el mensaje
-  const latRegex = /Lat:-?(\d+\.\d+)/;
+  const latRegex = /Lat:(-?\d+\.\d+)/;
   const match = message.match(latRegex);
-  
+
   if (match && match[1]) {
     return parseFloat(match[1]);
   } else {
@@ -991,11 +1422,12 @@ function getLatitudeFromMessage(message) {
     return null;
   }
 }
+// Función para extraer la longitud del mensaje
 function getLongitudeFromMessage(message) {
-  // Expresión regular para encontrar la latitud en el mensaje
-  const latRegex = /Lon:-?(\d+\.\d+)/;
-  const match = message.match(latRegex);
-  
+  // Expresión regular para encontrar la longitud en el mensaje
+  const lonRegex = /Lon:(-?\d+\.\d+)/;
+  const match = message.match(lonRegex);
+
   if (match && match[1]) {
     return parseFloat(match[1]);
   } else {
@@ -1045,13 +1477,31 @@ async function getUbicacionFromIdent(ident, timestamp) {
 
     if (latestRecord.length > 0 && latestRecord[0].ble_beacons && latestRecord[0].ble_beacons !== '[]') {
       const beaconsData = JSON.parse(latestRecord[0].ble_beacons);
-      const activeBeaconIds = beaconsData.map(beacon => beacon.id);
-      console.log('Active Beacon IDs:', activeBeaconIds);
+      
 
-      const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE id = ?`, [activeBeaconIds[0]]);
-      console.log('Ubicación:', location);
+      const record = JSON.parse(latestRecord[0].ble_beacons)[0]; // Analizar el primer elemento del array JSON
+      // caso regsitro EYE
+      if (record.hasOwnProperty("mac.address")) {
+        console.log("Registro con mac.address:", record);
+        const beaconsData = latestRecord[0].ble_beacons ? JSON.parse(latestRecord[0].ble_beacons) : []; // Asegurar que beaconsData no es undefined
+        const activeBeaconMacAdrress = beaconsData.map(beacon => {
+          // Verificar si beacon.mac existe y tiene la propiedad address
+          return beacon["mac.address"] || null; // Obtener el valor de mac.address o null si no existe
+        }).filter(mac => mac !== null); // Filtrar los valores nulos
+      
+        console.log('Active Beacon IDs:', activeBeaconMacAdrress);
+        const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE mac = ?`, [activeBeaconMacAdrress[0]]);
+        console.log('Ubicación:', location);
+        return location.length > 0 ? location[0].ubicacion : null;
+      } else {
+        const activeBeaconIds = beaconsData.map(beacon => beacon.id);
+        console.log('Active Beacon IDs:', activeBeaconIds);
+        const [location] = await connection.query(`SELECT ubicacion FROM beacons WHERE id = ?`, [activeBeaconIds[0]]);
+        console.log('Ubicación:', location);
+        return location.length > 0 ? location[0].ubicacion : null;
+      }
 
-      return location.length > 0 ? location[0].ubicacion : null;
+
     } else {
       console.log('No active beacons found.');
       return null;
@@ -1063,8 +1513,148 @@ async function getUbicacionFromIdent(ident, timestamp) {
     connection.release();
   }
 }
+// En server.js, modifica el endpoint /api/temperature-data
+app.get('/api/temperature-data', async (req, res) => {
+  try {
+    const { date } = req.query;
+    const query = `
+      SELECT rt.beacon_id, rt.temperatura, rt.timestamp, b.lugar, b.ubicacion,
+             (SELECT minimo FROM parametrizaciones WHERE param_id = 6) AS minimo,
+             (SELECT maximo FROM parametrizaciones WHERE param_id = 6) AS maximo
+      FROM registro_temperaturas rt
+      JOIN beacons b ON rt.beacon_id = b.id
+      WHERE DATE(rt.timestamp) = ?
+      ORDER BY rt.timestamp ASC
+    `;
+    
+    const [rows] = await pool.query(query, [date]);
 
+    const data = rows.reduce((acc, row) => {
+      if (!acc[row.beacon_id]) {
+        acc[row.beacon_id] = {
+          beacon_id: row.beacon_id,
+          location: `Cámara de Frío: ${row.lugar || 'Desconocido'}`,
+          ubicacion: row.ubicacion || 'Desconocido',
+          temperatures: [],
+          timestamps: [],
+          minimo: row.minimo,
+          maximo: row.maximo
+        };
+      }
+      acc[row.beacon_id].temperatures.push(row.temperatura);
+      acc[row.beacon_id].timestamps.push(row.timestamp);
+      return acc;
+    }, {});
 
+    res.json(Object.values(data));
+  } catch (error) {
+    console.error('Error fetching temperature data:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Endpoint para obtener los umbrales de temperatura
+app.get('/api/temperatura-umbrales', async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT minimo, maximo FROM parametrizaciones WHERE param_id = 6');
+    res.json(results[0]);
+  } catch (error) {
+    console.error('Error fetching temperature thresholds:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Endpoint para actualizar los umbrales de temperatura
+app.post('/api/temperatura-umbrales', async (req, res) => {
+  const { minimo, maximo } = req.body;
+  try {
+    await pool.query('UPDATE parametrizaciones SET minimo = ?, maximo = ? WHERE param_id = 6', [minimo, maximo]);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Error updating temperature thresholds:', error);
+    res.status(500).send('Server Error');
+  }
+});
+// Temperaturas en camaras de frio
+app.get('/api/temperature-camaras-data', async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    // Convertir la fecha a la zona horaria de Chile
+    const startDate = moment.tz(date, 'America/Santiago').startOf('day');
+    const endDate = moment(startDate).add(1, 'day');
+
+    console.log('Fecha de inicio (Chile):', startDate.format());
+    console.log('Fecha de fin (Chile):', endDate.format());
+
+    const query = `
+      SELECT sr.channel_id, sr.temperature, sr.timestamp, c.name
+      FROM sensor_readings_ubibot sr
+      JOIN channels_ubibot c ON sr.channel_id = c.channel_id
+      WHERE sr.timestamp >= ? AND sr.timestamp < ?
+      ORDER BY sr.channel_id, sr.timestamp ASC
+    `;
+    
+    const [rows] = await pool.query(query, [startDate.toDate(), endDate.toDate()]);
+
+    const groupedData = rows.reduce((acc, row) => {
+      if (!acc[row.channel_id]) {
+        acc[row.channel_id] = {
+          channel_id: row.channel_id,
+          name: row.name,
+          temperatures: [],
+          timestamps: []
+        };
+      }
+      acc[row.channel_id].temperatures.push(row.temperature);
+      // Convertir el timestamp a la zona horaria de Chile
+      const timestamp = moment(row.timestamp).tz('America/Santiago').format();
+      acc[row.channel_id].timestamps.push(timestamp);
+      return acc;
+    }, {});
+
+    const result = Object.values(groupedData);
+    console.log('Datos agrupados:', JSON.stringify(result, null, 2));
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching temperature data:', error);
+    res.status(500).send('Server Error');
+  }
+});
+// En server.js, modifica el endpoint /api/blind-spot-intrusions
+app.get('/api/blind-spot-intrusions', async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    // Convertir la fecha a la zona horaria de Chile
+    const startOfDay = moment.tz(date, 'YYYY-MM-DD', 'America/Santiago').startOf('day');
+    const endOfDay = moment(startOfDay).endOf('day');
+
+    const query = `
+      SELECT hc.dispositivo, hc.mac_address, hc.timestamp,
+             d.device_asignado, b.ubicacion
+      FROM historico_llamadas_blindspot hc
+      LEFT JOIN devices d ON hc.dispositivo = d.id
+      LEFT JOIN beacons b ON hc.mac_address = b.mac
+      WHERE hc.timestamp BETWEEN ? AND ?
+      ORDER BY hc.timestamp ASC
+    `;
+    
+    const [rows] = await pool.query(query, [startOfDay.toDate(), endOfDay.toDate()]);
+
+    // Convertir los timestamps a la zona horaria de Chile
+    const formattedRows = rows.map(row => ({
+      ...row,
+      timestamp: moment(row.timestamp).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss')
+    }));
+
+    res.json(formattedRows);
+  } catch (error) {
+    console.error('Error fetching blind spot intrusions:', error);
+    res.status(500).send('Server Error');
+  }
+});
 // Start the server
 server.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);

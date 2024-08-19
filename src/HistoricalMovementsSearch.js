@@ -1,241 +1,242 @@
-import React, { useState, useEffect } from 'react';
-import MapboxGL from 'mapbox-gl';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import Header from './Header';
+import mapboxgl from 'mapbox-gl';
 import './HistoricalMovementsSearch.css';
+import markerIcon from './assets/images/pinazul.png';
+import Header from './Header';
+import './utils/backButtonHandler.js';
 
-MapboxGL.accessToken = 'pk.eyJ1IjoidGhlbmV4dHNlY3VyaXR5IiwiYSI6ImNsd3YxdmhkeDBqZDgybHB2OTh4dmo3Z2EifQ.bpZlTBTa56pF4cPhE3aSzg';
+//api keys
+const config = require('../config/config.json');
+mapboxgl.accessToken = config.maps.api_key;
 
 const HistoricalMovementsSearch = () => {
-    const [selectedDay, setSelectedDay] = useState('');
-    const [startHour, setStartHour] = useState('');
-    const [startMinute, setStartMinute] = useState('');
-    const [endHour, setEndHour] = useState('');
-    const [endMinute, setEndMinute] = useState('');
-    const [pathCoordinates, setPathCoordinates] = useState([]);
-    const [historicalDataError, setHistoricalDataError] = useState(null);
-    const [devices, setDevices] = useState([]);
-    const [selectedDeviceId, setSelectedDeviceId] = useState('');
-    const [isDataAvailable, setIsDataAvailable] = useState(false);
+  const [devices, setDevices] = useState([]);
+  const [device, setDevice] = useState('');
+  const [date, setDate] = useState('');
+  const [startHour, setStartHour] = useState('');
+  const [endHour, setEndHour] = useState('');
+  const [data, setData] = useState([]);
+  const [map, setMap] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const today = useRef(new Date().toISOString().split('T')[0]);
 
-    useEffect(() => {
-        const fetchDevices = async () => {
-            try {
-                const response = await axios.get('http://thenext.ddns.net:1337/api/devices');
-                setDevices(response.data);
-            } catch (error) {
-                console.error('Error fetching devices:', error);
-            }
-        };
-
-        fetchDevices();
-    }, []);
-
-    const handleSearch = async () => {
-        setHistoricalDataError(null);
-        setIsDataAvailable(false);
-        try {
-            const startTimestamp = Math.floor(new Date(`${selectedDay}T${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}:00`).getTime() / 1000);
-            const endTimestamp = Math.floor(new Date(`${selectedDay}T${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}:00`).getTime() / 1000);
-
-            const response = await axios.get('http://thenext.ddns.net:1337/api/get-gps-data', {
-                params: {
-                    startDate: startTimestamp,
-                    endDate: endTimestamp,
-                    device_id: selectedDeviceId
-                }
-            });
-
-            const newCoordinates = response.data.map(item => {
-                const latitude = parseFloat(item.latitude);
-                const longitude = parseFloat(item.longitude);
-                if (!isNaN(latitude) && !isNaN(longitude)) {
-                    return { latitude, longitude, timestamp: item.unixTimestamp };
-                }
-                return null;
-            }).filter(coord => coord !== null);
-
-            setPathCoordinates(newCoordinates);
-            setIsDataAvailable(newCoordinates.length > 0);
-        } catch (error) {
-            setHistoricalDataError(error.message);
-        }
+  useEffect(() => {
+    const fetchDevices = async () => {
+      try {
+        const result = await axios.get('/api/devices');
+        console.log('Fetched devices:', result.data);
+        setDevices(result.data);
+      } catch (error) {
+        console.error('Error fetching devices:', error);
+      }
     };
 
-    const formatDate = (timestamp) => {
-        if (!timestamp) return 'N/A';
-        const date = new Date(timestamp * 1000);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-    };
+    fetchDevices();
+  }, []);
 
-    const downloadCSV = () => {
-        const headers = ['Fecha', 'Hora', 'Latitud', 'Longitud'];
-        const rows = pathCoordinates.map(item => [
-            formatDate(item.timestamp).split(' ')[0],
-            formatDate(item.timestamp).split(' ')[1],
-            item.latitude,
-            item.longitude
-        ]);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log('Submitting form with values:', { device, date, startHour, endHour });
 
-        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    // Validación de fecha
+    if (new Date(date) > new Date()) {
+      setErrorMessage('La fecha seleccionada no puede ser posterior a la fecha actual.');
+      return;
+    }
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `historical_movements_${selectedDay}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
+    // Validación de horas
+    if (startHour >= endHour) {
+      setErrorMessage('La hora de fin debe ser posterior a la hora de inicio.');
+      return;
+    }
 
-    useEffect(() => {
-        if (pathCoordinates.length > 0) {
-            const map = new MapboxGL.Map({
-                container: 'map',
-                style: 'mapbox://styles/mapbox/streets-v11',
-                center: [pathCoordinates[0].longitude, pathCoordinates[0].latitude],
-                zoom: 13
-            });
+    try {
+      const result = await axios.get('/api/historical-gps-data', {
+        params: {
+          device_id: device,
+          date,
+          startHour,
+          endHour,
+        },
+      });
+      console.log('Response data:', result.data);
+      const validData = result.data.filter(d => d.latitude !== null && d.longitude !== null);
+      setData(validData);
+      if (validData.length > 0) {
+        setErrorMessage('');
+        plotRoute(validData);
+      } else {
+        setErrorMessage('Sin Datos para esa Búsqueda');
+      }
+    } catch (error) {
+      console.error('Error fetching historical GPS data:', error);
+      setErrorMessage('Error al buscar los datos GPS históricos');
+    }
+  };
 
-            const coordinates = pathCoordinates.map(({ latitude, longitude }) => [longitude, latitude]);
+  const plotRoute = (gpsData) => {
+    console.log('Plotting route with GPS data:', gpsData);
 
-            map.on('load', () => {
-                map.addSource('route', {
-                    type: 'geojson',
-                    data: {
-                        type: 'Feature',
-                        properties: {},
-                        geometry: {
-                            type: 'LineString',
-                            coordinates: coordinates
-                        }
-                    }
-                });
+    if (map) {
+      map.remove();
+    }
 
-                map.addLayer({
-                    id: 'route',
-                    type: 'line',
-                    source: 'route',
-                    layout: {
-                        'line-join': 'round',
-                        'line-cap': 'round'
-                    },
-                    paint: {
-                        'line-color': '#888',
-                        'line-width': 6
-                    }
-                });
+    const mapInstance = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [-70.6693, -33.4489],
+      zoom: 10,
+    });
 
-                coordinates.forEach(coord => {
-                    new MapboxGL.Marker()
-                        .setLngLat(coord)
-                        .addTo(map);
-                });
-            });
+    const nav = new mapboxgl.NavigationControl();
+    mapInstance.addControl(nav, 'top-right');
 
-            return () => map.remove();
-        }
-    }, [pathCoordinates]);
+    // Estilizar los controles de navegación
+    const navElement = nav._container;
+    navElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    navElement.querySelectorAll('button').forEach(button => {
+      button.style.color = 'red';
+      button.style.backgroundColor = 'rgba(0, 0, 0, 0.10)';
+      button.style.border = 'white';
+    });
+    navElement.querySelectorAll('svg').forEach(svg => {
+      svg.style.fill = 'white';
+    });
 
-    return (
-        <div>
-            <Header title="Consulta Histórica de Movimientos en Exterior" />
-            
-            <div className="search-container">
-                <div className="device-selection">
-                    <h3>Seleccionar Dispositivo</h3>
-                    <select onChange={(e) => {
-                        setSelectedDeviceId(e.target.value);
-                        setHistoricalDataError(null);
-                    }}>
-                        <option value="">Seleccionar...</option>
-                        {devices.map(device => (
-                            <option key={device.id} value={device.id}>{device.device_asignado}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="date-selection">
-                    <h3>Seleccionar Día</h3>
-                    <input
-                        type="date"
-                        value={selectedDay}
-                        onChange={e => setSelectedDay(e.target.value)}
-                    />
-                    <h3>Seleccionar Rango de Horas y Minutos</h3>
-                    <div className="time-selection">
-                        <label>Hora Inicio:</label>
-                        <input
-                            type="number"
-                            value={startHour}
-                            onChange={e => setStartHour(e.target.value)}
-                            placeholder="HH"
-                            min="0"
-                            max="23"
-                        />
-                        <input
-                            type="number"
-                            value={startMinute}
-                            onChange={e => setStartMinute(e.target.value)}
-                            placeholder="MM"
-                            min="0"
-                            max="59"
-                        />
-                        <label>Hora Fin:</label>
-                        <input
-                            type="number"
-                            value={endHour}
-                            onChange={e => setEndHour(e.target.value)}
-                            placeholder="HH"
-                            min="0"
-                            max="23"
-                        />
-                        <input
-                            type="number"
-                            value={endMinute}
-                            onChange={e => setEndMinute(e.target.value)}
-                            placeholder="MM"
-                            min="0"
-                            max="59"
-                        />
-                    </div>
-                    <button onClick={handleSearch}>Buscar</button>
-                    <button onClick={downloadCSV} disabled={!isDataAvailable}>Descargar Resultados</button>
-                </div>
-            </div>
+    setMap(mapInstance);
 
-            {historicalDataError && <div className="error-message">Error: {historicalDataError}</div>}
+    const coordinates = gpsData.map((data) => [parseFloat(data.longitude), parseFloat(data.latitude)]);
 
-            <div id="map" className="map-container"></div>
+    console.log('Coordinates:', coordinates);
 
-            {pathCoordinates.length > 0 && (
-                <div className="data-table-container">
-                    <h2>Tabla de Datos de Ubicaciones</h2>
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Latitud</th>
-                                <th>Longitud</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {pathCoordinates.map(({ latitude, longitude, timestamp }, index) => (
-                                <tr key={index}>
-                                    <td>{formatDate(timestamp).split(' ')[0]}</td>
-                                    <td>{formatDate(timestamp).split(' ')[1]}</td>
-                                    <td>{latitude}</td>
-                                    <td>{longitude}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+    if (coordinates.length > 0) {
+      mapInstance.on('load', () => {
+        mapInstance.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates,
+            },
+          },
+        });
+
+        mapInstance.addLayer({
+          id: 'route',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': '#FF0000',
+            'line-width': 6,
+          },
+        });
+
+        coordinates.forEach(coord => {
+          new mapboxgl.Marker({ element: createCustomMarker() })
+            .setLngLat(coord)
+            .addTo(mapInstance);
+        });
+
+        // Adjust the map view to the bounds of the coordinates
+        const bounds = coordinates.reduce((bounds, coord) => {
+          return bounds.extend(coord);
+        }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+
+        mapInstance.fitBounds(bounds, { padding: 50 });
+      });
+    } else {
+      console.log('No coordinates to plot.');
+    }
+  };
+
+  const createCustomMarker = () => {
+    const marker = document.createElement('div');
+    marker.style.backgroundImage = `url(${markerIcon})`;
+    marker.style.width = '20px';
+    marker.style.height = '24px';
+    marker.style.backgroundSize = '100%';
+    return marker;
+  };
+
+  return (
+    <div className="historical-movements-search">
+      <Header title="Ubicación Exteriores Tiempo Real" />
+      <form onSubmit={handleSubmit} className="search-container">
+        <div className="device-selection">
+          <select value={device} onChange={(e) => setDevice(e.target.value)}>
+            <option value="">Seleccione un dispositivo</option>
+            {devices.map((device) => (
+              <option key={device.id} value={device.id}>
+                {device.device_asignado}
+              </option>
+            ))}
+          </select>
         </div>
-    );
+        <div className="date-time-selection">
+          <div className="date-input">
+            <label htmlFor="date-picker">Fecha:</label>
+            <input
+              id="date-picker"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              max={today.current}
+            />
+          </div>
+          <div className="time-inputs">
+            <div className="time-input">
+              <label htmlFor="start-time">Hora de inicio:</label>
+              <input
+                id="start-time"
+                type="time"
+                value={startHour}
+                onChange={(e) => setStartHour(e.target.value)}
+              />
+            </div>
+            <div className="time-input">
+              <label htmlFor="end-time">Hora de fin:</label>
+              <input
+                id="end-time"
+                type="time"
+                value={endHour}
+                onChange={(e) => setEndHour(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+        <button type="submit">Buscar</button>
+      </form>
+      {errorMessage && <p className="error-message">{errorMessage}</p>}
+      <div id="map" className="map"></div>
+      {data.length > 0 && (
+        <table>
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Latitud</th>
+              <th>Longitud</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item, index) => (
+              <tr key={index}>
+                <td>{item.timestamp}</td>
+                <td>{item.latitude}</td>
+                <td>{item.longitude}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
 };
 
 export default HistoricalMovementsSearch;

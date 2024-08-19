@@ -1,21 +1,26 @@
-// Presencia.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import './Presencia.css';
 import Header from './Header';
 import dayjs from 'dayjs';
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const Presencia = () => {
   const [data, setData] = useState([]);
   const [beacons, setBeacons] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [pieChartData, setPieChartData] = useState({});
+  const [summaryPieChartData, setSummaryPieChartData] = useState(null);
+  const today = useRef(new Date());
 
   useEffect(() => {
     console.log('Fetching beacon data...');
-    // Obtener datos de beacons
-    axios.get('http://localhost:3000/api/beacons')
+    axios.get('/api/beacons')
       .then(response => {
         console.log('Beacons data:', response.data);
         setBeacons(response.data);
@@ -24,17 +29,16 @@ const Presencia = () => {
         console.error('Error fetching beacons:', error);
       });
 
-    // Obtener estados de beacons para el día seleccionado
     fetchDataForSelectedDate(selectedDate);
   }, [selectedDate]);
 
   const fetchDataForSelectedDate = (date) => {
     const startDate = dayjs(date).set('hour', 8).set('minute', 0).set('second', 0).format('YYYY-MM-DD HH:mm:ss');
-    const endDate = dayjs(date).set('hour', 23).set('minute', 0).set('second', 0).format('YYYY-MM-DD HH:mm:ss');
+    const endDate = dayjs(date).set('hour', 23).set('minute', 30).set('second', 0).format('YYYY-MM-DD HH:mm:ss');
 
     console.log(`Fetching data for date range: ${startDate} - ${endDate}`);
 
-    axios.get('http://localhost:3000/api/beacons-detection-status', {
+    axios.get('/api/beacons-detection-status', {
       params: {
         startDate: startDate,
         endDate: endDate
@@ -43,24 +47,93 @@ const Presencia = () => {
     .then(response => {
       console.log('Beacon detection status data:', response.data);
       setData(response.data);
+      generatePieChartData(response.data);
     })
     .catch(error => {
       console.error('Error fetching beacons detection status:', error);
     });
   };
 
+  const generatePieChartData = (data) => {
+    const sectors = ['Sector_1', 'Sector_2', 'Sector_3', 'Sector_4', 'Sector_5'];
+    const colors = {
+      'Verde': '#4CAF50',
+      'Rojo': '#F44336',
+      'Amarillo': '#FFEB3B',
+      'Negro': '#212121'
+    };
+    const statusLabels = {
+      'Verde': 'Presencia OK',
+      'Rojo': 'Presencia menor al esperado',
+      'Amarillo': 'Presencia baja',
+      'Negro': 'No hubo presencia'
+    };
+
+    const pieData = {};
+    const summaryData = {
+      'Verde': 0,
+      'Rojo': 0,
+      'Amarillo': 0,
+      'Negro': 0
+    };
+
+    sectors.forEach(sector => {
+      const sectorData = data.map(entry => entry[sector]);
+      const counts = {
+        'Verde': 0,
+        'Rojo': 0,
+        'Amarillo': 0,
+        'Negro': 0
+      };
+
+      sectorData.forEach(status => {
+        if (counts.hasOwnProperty(status)) {
+          counts[status]++;
+          summaryData[status]++;
+        }
+      });
+
+      const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+      const percentages = Object.entries(counts).map(([status, count]) => ({
+        status,
+        percentage: (count / total) * 100
+      }));
+
+      pieData[sector] = {
+        labels: percentages.map(item => `${statusLabels[item.status]} (${item.percentage.toFixed(2)}%)`),
+        datasets: [{
+          data: percentages.map(item => item.percentage),
+          backgroundColor: percentages.map(item => colors[item.status]),
+        }]
+      };
+    });
+
+    setPieChartData(pieData);
+
+    const summaryTotal = Object.values(summaryData).reduce((sum, count) => sum + count, 0);
+    const summaryPercentages = Object.entries(summaryData).map(([status, count]) => ({
+      status,
+      percentage: (count / summaryTotal) * 100
+    }));
+
+    setSummaryPieChartData({
+      labels: summaryPercentages.map(item => `${statusLabels[item.status]} (${item.percentage.toFixed(2)}%)`),
+      datasets: [{
+        data: summaryPercentages.map(item => item.percentage),
+        backgroundColor: summaryPercentages.map(item => colors[item.status]),
+      }]
+    });
+  };
+
   const handleDateChange = (date) => {
     console.log('Date selected:', date);
-    setSelectedDate(date);
+    if (date <= today.current) {
+      setSelectedDate(date);
+    } else {
+      alert("No se puede seleccionar una fecha futura.");
+    }
   };
 
-  // Función para obtener la ubicación por el beacon ID
-  const getUbicacionById = (id) => {
-    const beacon = beacons.find(beacon => beacon.id === id);
-    return beacon ? beacon.ubicacion : 'Unknown';
-  };
-
-  // Función para obtener la clase de color basado en el estado
   const getColorClass = (status) => {
     switch (status) {
       case 'Verde':
@@ -76,6 +149,34 @@ const Presencia = () => {
     }
   };
 
+  const getChartTitle = (sector) => {
+    const beacon = beacons.find(b => b.lugar === sector.replace('_', ' '));
+    return beacon ? beacon.ubicacion : sector;
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          boxWidth: 12,
+          font: {
+            size: 10
+          }
+        }
+      },
+      title: {
+        display: true,
+        font: {
+          size: 16,
+          weight: 'bold'
+        }
+      }
+    }
+  };
+
   return (
     <div className="presencia">
       <Header />
@@ -85,7 +186,56 @@ const Presencia = () => {
         onChange={handleDateChange} 
         dateFormat="yyyy-MM-dd"
         className="date-picker"
+        maxDate={today.current}
       />
+      {summaryPieChartData && (
+        <div className="summary-pie-chart">
+          <h2>Resumen General</h2>
+          <div className="chart-container">
+            <Pie 
+              data={summaryPieChartData} 
+              options={{
+                ...chartOptions,
+                plugins: {
+                  ...chartOptions.plugins,
+                  title: {
+                    ...chartOptions.plugins.title,
+                    text: 'Resumen de todos los sectores'
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
+      <div className="pie-charts-container">
+        {Object.entries(pieChartData).map(([sector, chartData]) => (
+          <div key={sector} className="pie-chart">
+            <h2>{getChartTitle(sector)}</h2>
+            <div className="chart-container">
+              <Pie 
+                data={chartData} 
+                options={{
+                  ...chartOptions,
+                  plugins: {
+                    ...chartOptions.plugins,
+                    title: {
+                      ...chartOptions.plugins.title,
+                      text: getChartTitle(sector)
+                    }
+                  }
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="color-legend">
+        <div><span className="color-box black"></span> No hubo presencia</div>
+        <div><span className="color-box red"></span> Presencia menor al esperado</div>
+        <div><span className="color-box yellow"></span> Presencia baja</div>
+        <div><span className="color-box green"></span> Presencia OK</div>
+      </div>
       <div className="table-wrapper">
         <table>
           <thead>
@@ -101,7 +251,7 @@ const Presencia = () => {
           <tbody>
             {beacons.map(beacon => (
               <tr key={beacon.id}>
-                <td>{getUbicacionById(beacon.id)}</td>
+                <td>{beacon.ubicacion}</td>
                 {data.map((entry, index) => (
                   <td key={index}>
                     <div className="status-bar-wrapper">
@@ -118,12 +268,6 @@ const Presencia = () => {
             ))}
           </tbody>
         </table>
-      </div>
-      <div className="color-legend">
-        <div><span className="color-box black"></span> No hubo presencia</div>
-        <div><span className="color-box red"></span> Presencia menor al esperado</div>
-        <div><span className="color-box yellow"></span> Presencia baja</div>
-        <div><span className="color-box green"></span> Presencia OK</div>
       </div>
     </div>
   );
