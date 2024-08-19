@@ -17,6 +17,7 @@ const config = require('./config/config.json');
 const { procesarDatosUbibot } = require('./ubibot');
 const { procesarPosibleIncidencia } = require('./control_incidencias');
 const controlIncidencias = require('./control_incidencias');
+const { procesarDatosGPS } = require('./src/utilz/dataProcesing');
 
 
 const intervalo_ejecucion_ubibot= 5 * 60 * 1000;
@@ -333,6 +334,21 @@ app.post('/gps-data', async (req, res) => {
   try {
     for (const gpsData of gpsDatas) {
       await processGpsData(gpsData);
+      // ejecucion de triggers
+      await procesarDatosGPS({
+        event_enum: gpsData['event.enum'],
+        ident: gpsData.ident,
+        device_id: gpsData['device.id'],
+        altitude: gpsData['position.altitude'],
+        latitude: gpsData['position.latitude'],
+        longitude: gpsData['position.longitude'],
+        timestamp: Math.floor(gpsData.timestamp),
+        ble_beacons: JSON.stringify(gpsData['ble.beacons'] || []),
+        battery_level: gpsData['battery.level'] || -1,
+        ble_sensor_humidity_1: gpsData['ble.sensor.humidity.1'] || -1,
+        ble_sensor_magnet_status_1: gpsData['ble.sensor.magnet.status.1'] || -1,
+        ble_sensor_temperature_1: gpsData['ble.sensor.temperature.1'] || -1
+      });
     }
     res.status(200).send('GPS Data processed successfully');
   } catch (error) {
