@@ -72,22 +72,18 @@
   width: 50px;
 }
 
+.minute-labels table,
+.clickable-cell table {
+  height: 100%;
+  width: 100%;
+  border-collapse: collapse;
+}
+
 .minute-labels td,
-.minute-label {
-  font-size: 12px;
-}
-
-.minute-labels {
-  text-align: center;
-}
-
-.minute-labels td {
-  padding: 8px 15px;
+.clickable-cell {
+  height: 16.66%; /* 100% / 6 rangos de minutos */
   vertical-align: middle;
-}
-
-.minute-label {
-  color: inherit;
+  padding: 2px;
 }
 
 .temperature {

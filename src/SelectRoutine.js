@@ -1,3 +1,4 @@
+
 // SelectRoutine.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -16,18 +17,22 @@ import presenciaImage from './assets/images/presencia.png';
 import smsDataImage from './assets/images/sms_data.png';
 import doorStatusImage from './assets/images/door_status.png';
 import userRegistrationImage from './assets/images/user_registration.png';
+import thermometerImage from './assets/images/thermometer.png';
+import detectionImage from './assets/images/detection.png';
 
 const routines = [
   { title: "Dashboard", image: dashboardImage, route: "/dashboard", permission: "view_dashboard" },
-  { title: "Interior : Ubicación en Tiempo Real", image: ubicaciontiemporealinteriorImage, route: "/ubicaciones-interior", permission: "view_interior" }, 
-  { title: "Interior : Búsqueda Histórica Ubicación", image: personSearchImage, route: "/busqueda-entradas-persona", permission: "search_interior" },
-  { title: "Exterior : Ubicación Tiempo Real", image: interiorLocationsImage, route: "/last-known-position", permission: "view_exterior" },
-  { title: "Exterior : Búsqueda Histórica Ubicación", image: historicalMovementsImage, route: "/consulta-historica-movimientos", permission: "search_exterior" },
-  { title: "Sectores : Presencia Personal", image: presenciaImage, route: "/presencia", permission: "view_presence" },
-  { title: "Mensajes SOS : Visualización por Ubicación", image: smsDataImage, route: "/sms-data", permission: "view_sms" },
+  { title: "Intrusiones Blind Spot", image: detectionImage, route: "/blind-spot-intrusions", permission: "view_blind_spot_intrusions" },
+  { title: "Interior Ubicación en Tiempo Real", image: ubicaciontiemporealinteriorImage, route: "/ubicaciones-interior", permission: "view_interior" }, 
+  { title: "Interior Búsqueda Histórica Ubicación", image: personSearchImage, route: "/busqueda-entradas-persona", permission: "search_interior" },
+  { title: "Exterior Ubicación Tiempo Real", image: interiorLocationsImage, route: "/last-known-position", permission: "view_exterior" },
+  { title: "Exterior Búsqueda Histórica Ubicación", image: historicalMovementsImage, route: "/consulta-historica-movimientos", permission: "search_exterior" },
+  { title: "Sectores Presencia Personal", image: presenciaImage, route: "/presencia", permission: "view_presence" },
+  { title: "Mensajes SOS Visualización por Ubicación", image: smsDataImage, route: "/sms-data", permission: "view_sms" },
   { title: "Temperatura", image: temperaturaImage, route: "/temperatura", permission: "view_temperature" },
-  { title: "Puertas : Status Cierre / Apertura", image: doorStatusImage, route: "/door-status-matrix", permission: "view_door_status" },
-  { title: "Datos : Análisis Forense", image: dataIntelligenceImage, route: "/inteligencia-de-datos", permission: "view_data_intelligence" },
+  { title: "Temperaturas Cámaras de Frío", image: thermometerImage, route: "/temperatura-camaras", permission: "view_temperature_camaras" },
+  { title: "Puertas Status Cierre / Apertura", image: doorStatusImage, route: "/door-status-matrix", permission: "view_door_status" },
+  { title: "Datos Análisis Forense", image: dataIntelligenceImage, route: "/inteligencia-de-datos", permission: "view_data_intelligence" },
   { title: "Parametrización", image: configurationImage, route: "/configuracion", permission: "view_configuration" },
   { title: "Registrar Usuario", image: userRegistrationImage, route: "/register-user", permission: "create_users" }
 ];
@@ -52,6 +57,19 @@ const SelectRoutine = () => {
     }
   };
 
+  const formatTitle = (title) => {
+    const parts = title.split(':');
+    if (parts.length > 1) {
+      return (
+        <>
+          <span className="routine-title-part">{parts[0].trim()}</span>
+          <span className="routine-title-part">{parts[1].trim()}</span>
+        </>
+      );
+    }
+    return <span className="routine-title-part">{title}</span>;
+  };
+
   return (
     <div className="select-routine">
       <Header title="Dashboard TNS Track" />
@@ -61,10 +79,11 @@ const SelectRoutine = () => {
             <img src={routine.image} alt={routine.title} className="routine-image" />
             <div className="routine-content">
               <h3 className="routine-title">
-                {routine.title.split(":")[0]}<br />
-                {routine.title.split(":")[1]}
+                {formatTitle(routine.title)}
               </h3>
-              <button className="routine-button">Ir a la App</button>
+              <div className="routine-button-container">
+                <button className="routine-button">Ir a la App</button>
+              </div>
             </div>
           </div>
         ))}
@@ -73,5 +92,4 @@ const SelectRoutine = () => {
     </div>
   );
 };
-
 export default SelectRoutine;

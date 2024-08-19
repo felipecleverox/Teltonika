@@ -1,8 +1,9 @@
+// En TemperatureGauge.js
 import React, { useEffect, useRef } from 'react';
 import { RadialGauge } from 'canvas-gauges';
 import dayjs from 'dayjs';
 
-const TemperatureGauge = ({ temperature, location, timestamp, width, height }) => {
+const TemperatureGauge = ({ temperature, location, timestamp, width, height, minimo, maximo }) => {
   const gaugeRef = useRef(null);
 
   useEffect(() => {
@@ -63,11 +64,27 @@ const TemperatureGauge = ({ temperature, location, timestamp, width, height }) =
       };
     }
   }, [temperature, location, width, height]);
+  const isTemperatureInRange = temperature >= minimo && temperature <= maximo;
 
   return (
     <div style={{ textAlign: 'center', margin: '10px' }}>
       <canvas ref={gaugeRef}></canvas>
       <p style={{ fontSize: '18px', fontWeight: 'bold' }}>{dayjs(timestamp).format('HH:mm')}</p>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+        <div style={{
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          backgroundColor: isTemperatureInRange ? 'rgba(0, 255, 0, 1)' : 'rgba(0, 255, 0, 0.3)',
+          marginRight: '5px'
+        }}></div>
+        <div style={{
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          backgroundColor: isTemperatureInRange ? 'rgba(255, 0, 0, 0.3)' : 'rgba(255, 0, 0, 1)'
+        }}></div>
+      </div>
     </div>
   );
 };

@@ -3,12 +3,14 @@ import React, { useState, useEffect } from 'react';
 import './Header.css';
 import homeIcon from './assets/images/home_white.png';
 import tnsTrackLogo from './assets/images/TNS Track White.png';
-import alertGif from './assets/alert.gif'; // Importar el GIF de alerta
+import alertGif from './assets/alert.gif';
+import sirenaGif from './assets/sirena.gif';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { io } from 'socket.io-client'; // Importar Socket.IO client
+import { io } from 'socket.io-client';
 
 const Header = ({ title }) => {
-  const [newSms, setNewSms] = useState(false); // Estado para mostrar el GIF
+  const [newSms, setNewSms] = useState(false);
+  const [newIncidencia, setNewIncidencia] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = location;
@@ -16,10 +18,14 @@ const Header = ({ title }) => {
   const routineImage = state?.image;
 
   useEffect(() => {
-    const socket = io('http://thenext.ddns.net:1337'); // Conectar al servidor de Socket.IO
+    const socket = io('http://thenext.ddns.net:1337');
     socket.on('new_sms', (data) => {
       console.log("Nuevo SMS recibido:", data);
-      setNewSms(true); // Mostrar el GIF cuando se reciba un nuevo SMS
+      setNewSms(true);
+    });
+    socket.on('nueva_incidencia', (data) => {
+      console.log("Nueva incidencia registrada:", data);
+      setNewIncidencia(true);
     });
 
     return () => {
@@ -37,8 +43,13 @@ const Header = ({ title }) => {
   };
 
   const handleSmsClick = () => {
-    setNewSms(false); // Ocultar el GIF al hacer clic
-    navigate('/sms-data'); // Navegar a la vista de la tabla sms_data
+    setNewSms(false);
+    navigate('/sms-data');
+  };
+
+  const handleIncidenciaClick = () => {
+    setNewIncidencia(false);
+    navigate('/blind-spot-intrusions');
   };
 
   return (
@@ -52,7 +63,8 @@ const Header = ({ title }) => {
         <h1 className="header-title">{routineTitle}</h1>
       </div>
       <div className="header-right">
-        {newSms && <img src={alertGif} alt="New SMS" className="header-icon" onClick={handleSmsClick} />} {/* Mostrar el GIF y manejar el clic */}
+        {newSms && <img src={alertGif} alt="New SMS" className="header-icon" onClick={handleSmsClick} />}
+        {newIncidencia && <img src={sirenaGif} alt="Nueva Incidencia" className="header-icon" onClick={handleIncidenciaClick} />}
         <button className="logout-button" onClick={handleLogoutClick}>Logout</button>
       </div>
     </header>

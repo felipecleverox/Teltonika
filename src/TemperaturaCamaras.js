@@ -1,4 +1,4 @@
-// Temperatura.js
+// TemperaturaCamaras.js
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
@@ -7,7 +7,7 @@ import 'chartjs-adapter-date-fns';
 import { es } from 'date-fns/locale';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import './Temperatura.css';
+import './TemperaturaCamaras.css';
 import Header from './Header';
 
 registerLocale('es', es);
@@ -22,7 +22,7 @@ ChartJS.register(
   Legend
 );
 
-const Temperatura = () => {
+const TemperaturaCamaras = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -37,7 +37,7 @@ const Temperatura = () => {
     try {
       const formattedDate = date.toISOString().split('T')[0];
       console.log('Fetching data for date:', formattedDate);
-      const response = await axios.get('/api/temperature-data', {
+      const response = await axios.get('/api/temperature-camaras-data', {
         params: { date: formattedDate }
       });
       console.log('Datos recibidos:', response.data);
@@ -60,10 +60,6 @@ const Temperatura = () => {
     }
   };
 
-  const formatDate = (date) => {
-    return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  };
-
   if (loading) {
     return <div>Cargando datos...</div>;
   }
@@ -74,9 +70,9 @@ const Temperatura = () => {
 
   if (data.length === 0) {
     return (
-      <div className="temperatura">
+      <div className="temperatura-camaras">
         <Header />
-        <h1>Temperatura</h1>
+        <h1>Temperaturas Cámaras de Frío</h1>
         <DatePicker 
           selected={selectedDate} 
           onChange={handleDateChange} 
@@ -110,26 +106,12 @@ const Temperatura = () => {
         title: {
           display: true,
           text: 'Hora'
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.1)',
-        },
-        ticks: {
-          padding: 5
         }
       },
       y: {
-        min: -25,
-        max: 35,
         title: {
           display: true,
           text: 'Temperatura (°C)'
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.1)',
-        },
-        ticks: {
-          padding: 5
         }
       }
     },
@@ -139,46 +121,15 @@ const Temperatura = () => {
       },
       tooltip: {
         mode: 'index',
-        intersect: false,
-        callbacks: {
-          title: (context) => {
-            return new Date(context[0].parsed.x).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-          },
-          label: (context) => {
-            return `Temperatura: ${context.parsed.y.toFixed(1)}°C`;
-          }
-        }
-      }
-    },
-    elements: {
-      line: {
-        tension: 0.4,
-        borderWidth: 2
-      },
-      point: {
-        radius: 0,
-        hitRadius: 10,
-        hoverRadius: 5
-      }
-    },
-    hover: {
-      mode: 'nearest',
-      intersect: true
-    },
-    layout: {
-      padding: {
-        left: 10,
-        right: 10,
-        top: 10,
-        bottom: 10
+        intersect: false
       }
     }
   };
 
   return (
-    <div className="temperatura">
+    <div className="temperatura-camaras">
       <Header />
-      <h1>Temperatura</h1>
+      <h1>Temperaturas Cámaras de Frío</h1>
       <DatePicker 
         selected={selectedDate} 
         onChange={handleDateChange} 
@@ -188,35 +139,23 @@ const Temperatura = () => {
         maxDate={today.current}
       />
       <div className="charts-grid">
-        {data.map((beaconData) => {
-          const validData = beaconData.temperatures.map((temp, index) => ({
-            x: new Date(beaconData.timestamps[index]),
-            y: temp !== null ? Number(temp) : null
-          })).filter(point => point.y !== null);
-
-          const temperatures = validData.map(point => point.y);
-          const maxTemp = Math.max(...temperatures);
-          const minTemp = Math.min(...temperatures);
-          
+        {data.map((camaraData) => {
           const chartData = {
+            labels: camaraData.timestamps,
             datasets: [
               {
                 label: 'Temperatura',
-                data: validData,
+                data: camaraData.temperatures,
                 fill: false,
                 borderColor: 'rgba(75,192,192,1)',
-                tension: 0.4,
+                tension: 0.1
               }
             ]
           };
 
           return (
-            <div key={beaconData.beacon_id} className="chart-container">
-              <h3>{`Cámara de Frío: ${beaconData.location} - ${beaconData.ubicacion}`}</h3>
-              <div className="temp-legend">
-                <span className="max-temp">Máx: {maxTemp.toFixed(1)}°C</span>
-                <span className="min-temp">Mín: {minTemp.toFixed(1)}°C</span>
-              </div>
+            <div key={camaraData.channel_id} className="chart-container">
+              <h3>{`Cámara de Frío: ${camaraData.name}`}</h3>
               <Line data={chartData} options={chartOptions} />
             </div>
           );
@@ -226,4 +165,4 @@ const Temperatura = () => {
   );
 };
 
-export default Temperatura;
+export default TemperaturaCamaras;

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
+import dayjs from 'dayjs';
 import "react-datepicker/dist/react-datepicker.css";
 import { PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
 import Header from './Header';
-import dayjs from 'dayjs';
 import TemperatureGauge from './TemperatureGauge';
 import './Dashboard.css';
 
@@ -224,6 +224,9 @@ const Dashboard = () => {
     );
   };
 
+  // Añadir esta línea para obtener la fecha actual
+  const today = dayjs().endOf('day').toDate();
+
   return (
     <div className="dashboard">
       <Header title="Dashboard" />
@@ -234,6 +237,7 @@ const Dashboard = () => {
           onChange={setSelectedDate} 
           dateFormat="yyyy-MM-dd"
           className="date-picker"
+          maxDate={today}  // Añadir esta línea para limitar la selección de fechas
         />
       </div>
       <div className="charts-container">
@@ -305,17 +309,21 @@ const Dashboard = () => {
               <h2>Frecuencia de Cambios de Estado de Puertas</h2>
               <div style={{ marginBottom: '30px' }}>
                 {currentDoorStatus && lastStatusTime && (
-                  <div className="current-status-label" style={{
-                    backgroundColor: 'black',
-                    color: currentDoorStatus.current === 0 ? '#4CAF50' : '#F44336',
-                    padding: '5px 10px',
-                    borderRadius: '5px',
-                    marginBottom: '10px',
-                    display: 'inline-block'
-                  }}>
+                <div className="current-status-label" style={{
+                  backgroundColor: 'black',
+                  color: currentDoorStatus.current === 0 ? '#4CAF50' : '#F44336',
+                  padding: '5px 10px',
+                  borderRadius: '5px',
+                  marginBottom: '10px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  width: '100%'
+                }}>
+                  <span>
                     Status Actual: {currentDoorStatus.current === 0 ? 'Abierta' : 'Cerrada'} 
                     (Último cambio: {dayjs(lastStatusTime).format('HH:mm:ss')})
-                  </div>
+                  </span>
+                </div>
                 )}
               </div>
               {doorChangeData ? (
@@ -344,17 +352,19 @@ const Dashboard = () => {
             <div className="chart-container">
               <h2>Temperaturas Actuales</h2>
               <div className="temperature-gauges">
-                  {temperatureData.slice(0, 3).map((data, index) => (
-                    <TemperatureGauge 
-                      key={index}
-                      temperature={data.temperatures[data.temperatures.length - 1]}
-                      location={data.location}
-                      timestamp={data.timestamps[data.timestamps.length - 1]}
-                      width={150}  // Increase from 200 to 250
-                      height={150} // Increase from 200 to 250
-                    />
-                  ))}
-                </div>
+                {temperatureData.slice(0, 3).map((data, index) => (
+                  <TemperatureGauge 
+                    key={index}
+                    temperature={data.temperatures[data.temperatures.length - 1]}
+                    location={data.location}
+                    timestamp={data.timestamps[data.timestamps.length - 1]}
+                    width={150}
+                    height={150}
+                    minimo={data.minimo}
+                    maximo={data.maximo}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>

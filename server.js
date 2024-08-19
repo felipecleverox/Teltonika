@@ -11,8 +11,15 @@ const nodemailer = require('nodemailer'); // Library to send emails
 const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
 const Joi = require('joi'); // New import for schema validation
 const sgMail = require('@sendgrid/mail');
+const http = require('http');
+const { Server } = require('socket.io'); // Import Socket.IO
 const config = require('./config/config.json');
+const { procesarDatosUbibot } = require('./ubibot');
+const { procesarPosibleIncidencia } = require('./control_incidencias');
+const controlIncidencias = require('./control_incidencias');
 
+
+const intervalo_ejecucion_ubibot= 5 * 60 * 1000;
 
 // Configurar SendGrid
 sgMail.setApiKey(config.email.SENDGRID_API_KEY);
@@ -21,18 +28,18 @@ sgMail.setApiKey(config.email.SENDGRID_API_KEY);
 const app = express();
 
 // Import and configure Socket.IO for real-time communication
-const http = require('http'); // HTTP server
 const server = http.createServer(app); // Create HTTP server with Express app
-const { Server } = require('socket.io'); // Import Socket.IO
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://thenext.ddns.net:3000", "http://localhost:3000"], // Allow both origins
+    origin: ["http://tnstrack.ddns.net:3000", "http://localhost:3000","http://tnstrack.ddns.net:3001", "http://localhost:3001"], // Allow both origins
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true
   }
 });
-
+// Initialize control_incidencias with Socket.IO
+controlIncidencias.init(io);
 // Configure Socket.IO connection and disconnection events
 io.on('connection', (socket) => {
   console.log('A user connected'); // Log when a user connects
@@ -60,7 +67,7 @@ const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Coordinates for San
 
 // Middleware CORS (debe estar antes de otros middleware o rutas)
 const corsOptions = {
-  origin: ['http://thenext.ddns.net:3000', 'http://localhost:3000'],
+  origin: ['http://tnstrack.ddns.net:3000', 'http://localhost:3000','http://tnstrack.ddns.net:3001', 'http://localhost:3001'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
   credentials: true
@@ -248,6 +255,32 @@ const schemas = {
   }
 };
 
+// Función para ejecutar el proceso de Ubibot
+async function ejecutarProcesoUbibot() {
+  try {
+      console.log('Iniciando proceso de Ubibot...');
+      await procesarDatosUbibot();
+      console.log('Proceso de Ubibot completado.');
+  } catch (error) {
+      console.error('Error al procesar datos de Ubibot:', error);
+  }
+}
+// Ejecutar el proceso de Ubibot inmediatamente al iniciar el servidor
+ejecutarProcesoUbibot();
+
+// Programar la ejecución del proceso de Ubibot cada 5 minutos
+const intervaloDatos = setInterval(ejecutarProcesoUbibot,intervalo_ejecucion_ubibot);
+
+// Manejador para detener el intervalo si es necesario
+process.on('SIGINT', () => {
+    clearInterval(intervaloDatos);
+    console.log('Intervalo de Ubibot detenido');
+    process.exit();
+});
+// Justo antes de iniciar el servidor, agrega:
+app.get('/api/ubibot-status', (req, res) => {
+  res.json({ status: 'Ubibot process running', lastExecution: new Date() });
+});
 // Nodemailer configuration
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -295,8 +328,8 @@ const convertToLocalTime = (timestamp) => {
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
   const gpsDatas = Array.isArray(req.body) ? req.body : [req.body];
-  console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
-  
+  // console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
+  console.log("Llego datos a gps_data");
   try {
     for (const gpsData of gpsDatas) {
       await processGpsData(gpsData);
@@ -316,10 +349,11 @@ async function processGpsData(gpsData) {
     throw new Error(`Unknown device type: ${deviceTypeId}`);
   }
   console.log('Validating data for device type:', deviceTypeId);
-  console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
+  // console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
+  console.log('ble_beacons:', gpsData['ble.beacons']);
 
   let validatedData;
-  console.log('TypeB validation failed, attempting typeA schema');
+  // console.log('TypeB validation failed, attempting typeA schema');
   try {
     validatedData = await schema.typeA.validateAsync(gpsData);
   } catch (err) {
@@ -343,7 +377,7 @@ async function processGpsData(gpsData) {
   ];
   const query = `INSERT INTO gps_data (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`;
 
-  
+  console.log("Datos insertados en gps_data")
   const params = [
     validatedData['device.id'],
     validatedData['device.name'],
@@ -406,6 +440,13 @@ async function processGpsData(gpsData) {
     console.error('Params:', params);
     throw error;
   }
+    // Llamada a procesarPosibleIncidencia
+    await procesarPosibleIncidencia(
+      validatedData['device.name'],
+      validatedData['ble.beacons'] || [],
+      Math.floor(validatedData.timestamp),
+      validatedData['event.enum']  // Añadir este parámetro
+    );
 }
 
 // Endpoint para obtener los datos más recientes de GPS para un dispositivo específico
@@ -533,6 +574,7 @@ app.get('/api/latest-sectors', async (req, res) => {
 });
 // Definir el endpoint para obtener el estado de las puertas
 // Endpoint to get door status history within a specific date range
+// Endpoint to get door status history within a specific date range
 app.get('/api/door-status', async (req, res) => {
   const { startDate, endDate } = req.query;
 
@@ -546,6 +588,7 @@ app.get('/api/door-status', async (req, res) => {
       FROM door_status ds
       JOIN beacons b ON ds.sector = b.ubicacion
       WHERE ds.timestamp BETWEEN ? AND ? AND b.esPuerta = 1
+      ORDER BY ds.timestamp ASC
     `;
     const [rows] = await pool.query(query, [startDate, endDate]);
     res.json(rows);
@@ -910,7 +953,7 @@ app.get('/api/oldest-active-beacon-detections', async (req, res) => {
 app.get('/api/beacons', async (req, res) => {
   try {
     // Ejecutar una consulta SQL para seleccionar todos los registros de la tabla 'beacons'
-    const [rows] = await pool.query('SELECT * FROM beacons');
+    const [rows] = await pool.query('SELECT * FROM beacons WHERE esTemperatura = 0');
     
     // Enviar los resultados de la consulta como una respuesta JSON
     res.json(rows);
@@ -1474,11 +1517,10 @@ async function getUbicacionFromIdent(ident, timestamp) {
 app.get('/api/temperature-data', async (req, res) => {
   try {
     const { date } = req.query;
-    console.log('Fecha recibida:', date); // Para depuración
-
-    // Asumiendo que la fecha viene en formato 'YYYY-MM-DD'
     const query = `
-      SELECT rt.beacon_id, rt.temperatura, rt.timestamp, b.lugar, b.ubicacion
+      SELECT rt.beacon_id, rt.temperatura, rt.timestamp, b.lugar, b.ubicacion,
+             (SELECT minimo FROM parametrizaciones WHERE param_id = 6) AS minimo,
+             (SELECT maximo FROM parametrizaciones WHERE param_id = 6) AS maximo
       FROM registro_temperaturas rt
       JOIN beacons b ON rt.beacon_id = b.id
       WHERE DATE(rt.timestamp) = ?
@@ -1487,8 +1529,6 @@ app.get('/api/temperature-data', async (req, res) => {
     
     const [rows] = await pool.query(query, [date]);
 
-    console.log('Filas recuperadas:', rows.length); // Para depuración
-
     const data = rows.reduce((acc, row) => {
       if (!acc[row.beacon_id]) {
         acc[row.beacon_id] = {
@@ -1496,7 +1536,9 @@ app.get('/api/temperature-data', async (req, res) => {
           location: `Cámara de Frío: ${row.lugar || 'Desconocido'}`,
           ubicacion: row.ubicacion || 'Desconocido',
           temperatures: [],
-          timestamps: []
+          timestamps: [],
+          minimo: row.minimo,
+          maximo: row.maximo
         };
       }
       acc[row.beacon_id].temperatures.push(row.temperatura);
@@ -1507,6 +1549,109 @@ app.get('/api/temperature-data', async (req, res) => {
     res.json(Object.values(data));
   } catch (error) {
     console.error('Error fetching temperature data:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Endpoint para obtener los umbrales de temperatura
+app.get('/api/temperatura-umbrales', async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT minimo, maximo FROM parametrizaciones WHERE param_id = 6');
+    res.json(results[0]);
+  } catch (error) {
+    console.error('Error fetching temperature thresholds:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Endpoint para actualizar los umbrales de temperatura
+app.post('/api/temperatura-umbrales', async (req, res) => {
+  const { minimo, maximo } = req.body;
+  try {
+    await pool.query('UPDATE parametrizaciones SET minimo = ?, maximo = ? WHERE param_id = 6', [minimo, maximo]);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Error updating temperature thresholds:', error);
+    res.status(500).send('Server Error');
+  }
+});
+// Temperaturas en camaras de frio
+app.get('/api/temperature-camaras-data', async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    // Convertir la fecha a la zona horaria de Chile
+    const startDate = moment.tz(date, 'America/Santiago').startOf('day');
+    const endDate = moment(startDate).add(1, 'day');
+
+    console.log('Fecha de inicio (Chile):', startDate.format());
+    console.log('Fecha de fin (Chile):', endDate.format());
+
+    const query = `
+      SELECT sr.channel_id, sr.temperature, sr.timestamp, c.name
+      FROM sensor_readings_ubibot sr
+      JOIN channels_ubibot c ON sr.channel_id = c.channel_id
+      WHERE sr.timestamp >= ? AND sr.timestamp < ?
+      ORDER BY sr.channel_id, sr.timestamp ASC
+    `;
+    
+    const [rows] = await pool.query(query, [startDate.toDate(), endDate.toDate()]);
+
+    const groupedData = rows.reduce((acc, row) => {
+      if (!acc[row.channel_id]) {
+        acc[row.channel_id] = {
+          channel_id: row.channel_id,
+          name: row.name,
+          temperatures: [],
+          timestamps: []
+        };
+      }
+      acc[row.channel_id].temperatures.push(row.temperature);
+      // Convertir el timestamp a la zona horaria de Chile
+      const timestamp = moment(row.timestamp).tz('America/Santiago').format();
+      acc[row.channel_id].timestamps.push(timestamp);
+      return acc;
+    }, {});
+
+    const result = Object.values(groupedData);
+    console.log('Datos agrupados:', JSON.stringify(result, null, 2));
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching temperature data:', error);
+    res.status(500).send('Server Error');
+  }
+});
+// En server.js, modifica el endpoint /api/blind-spot-intrusions
+app.get('/api/blind-spot-intrusions', async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    // Convertir la fecha a la zona horaria de Chile
+    const startOfDay = moment.tz(date, 'YYYY-MM-DD', 'America/Santiago').startOf('day');
+    const endOfDay = moment(startOfDay).endOf('day');
+
+    const query = `
+      SELECT hc.dispositivo, hc.mac_address, hc.timestamp,
+             d.device_asignado, b.ubicacion
+      FROM historico_llamadas_blindspot hc
+      LEFT JOIN devices d ON hc.dispositivo = d.id
+      LEFT JOIN beacons b ON hc.mac_address = b.mac
+      WHERE hc.timestamp BETWEEN ? AND ?
+      ORDER BY hc.timestamp ASC
+    `;
+    
+    const [rows] = await pool.query(query, [startOfDay.toDate(), endOfDay.toDate()]);
+
+    // Convertir los timestamps a la zona horaria de Chile
+    const formattedRows = rows.map(row => ({
+      ...row,
+      timestamp: moment(row.timestamp).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss')
+    }));
+
+    res.json(formattedRows);
+  } catch (error) {
+    console.error('Error fetching blind spot intrusions:', error);
     res.status(500).send('Server Error');
   }
 });
