@@ -1,19 +1,26 @@
 const mysql = require('mysql2/promise');
+const ddbb_data = require('../../config/ddbb.json');
 
 // Configuración de la conexión a la base de datos
-const dbConfig = mysql.createPool({
-    host: ddbb_data.host,
-    user: ddbb_data.user,
-    password: ddbb_data.password,
-    database: ddbb_data.database,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-  });
+const pool = mysql.createPool({
+  host: ddbb_data.host,
+  user: ddbb_data.user,
+  password: ddbb_data.password,
+  database: ddbb_data.database,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
 async function triggerGPSRegistroTemperatura(newData) {
   let connection;
   try {
-    connection = await mysql.createConnection(dbConfig);
+    connection = await pool.getConnection();
+
+    if (!newData || !newData.ble_beacons) {
+      console.error('Datos de entrada inválidos:', newData);
+      return;
+    }
 
     const jsonData = JSON.parse(newData.ble_beacons);
     const arrayLength = jsonData.length;
@@ -22,9 +29,9 @@ async function triggerGPSRegistroTemperatura(newData) {
       const jsonElement = jsonData[counter];
       const temperatura = jsonElement.temperature;
 
-      await connection.execute('INSERT INTO process_log(message) VALUES(?)', [temperatura]);
-
       if (temperatura !== null && temperatura !== undefined) {
+        await connection.execute('INSERT INTO process_log(message) VALUES(?)', [temperatura.toString()]);
+
         let macAddress = jsonElement['mac.address'];
         let beaconId, esTemperatura;
 
@@ -41,15 +48,20 @@ async function triggerGPSRegistroTemperatura(newData) {
             [`%${macAddress}% esTemperatura:_${esTemperatura}`]);
         } else {
           beaconId = jsonElement.id;
-          const [rows] = await connection.execute(
-            'SELECT esTemperatura FROM beacons WHERE id LIKE ?',
-            [`%${beaconId}%`]
-          );
-          if (rows.length > 0) {
-            esTemperatura = rows[0].esTemperatura;
+          if (beaconId) {
+            const [rows] = await connection.execute(
+              'SELECT esTemperatura FROM beacons WHERE id LIKE ?',
+              [`%${beaconId}%`]
+            );
+            if (rows.length > 0) {
+              esTemperatura = rows[0].esTemperatura;
+            }
+            await connection.execute('INSERT INTO process_log(message) VALUES(?)', 
+              [`%${beaconId}% esTemperatura:_${esTemperatura}`]);
+          } else {
+            console.warn('Beacon sin ID ni MAC address encontrado:', jsonElement);
+            continue;
           }
-          await connection.execute('INSERT INTO process_log(message) VALUES(?)', 
-            [`%${beaconId}% esTemperatura:_${esTemperatura}`]);
         }
 
         if (esTemperatura === 1) {
@@ -71,7 +83,7 @@ async function triggerGPSRegistroTemperatura(newData) {
     console.error('Error en triggerGPSRegistroTemperatura:', error);
   } finally {
     if (connection) {
-      await connection.end();
+      await connection.release();
     }
   }
 }

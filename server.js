@@ -17,7 +17,7 @@ const config = require('./config/config.json');
 const { procesarDatosUbibot } = require('./ubibot');
 const { procesarPosibleIncidencia } = require('./control_incidencias');
 const controlIncidencias = require('./control_incidencias');
-const { procesarDatosGPS } = require('./src/utilz/dataProcesing');
+const { procesarDatosGPS } = require('./src/utils/dataProcesing');
 
 
 const intervalo_ejecucion_ubibot= 5 * 60 * 1000;

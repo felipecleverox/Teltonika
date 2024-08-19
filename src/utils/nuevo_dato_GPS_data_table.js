@@ -1,19 +1,26 @@
 const mysql = require('mysql2/promise');
+const ddbb_data = require('../../config/ddbb.json');
 
 // Configuración de la conexión a la base de datos
-const dbConfig = mysql.createPool({
-    host: ddbb_data.host,
-    user: ddbb_data.user,
-    password: ddbb_data.password,
-    database: ddbb_data.database,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-  });
+const pool = mysql.createPool({
+  host: ddbb_data.host,
+  user: ddbb_data.user,
+  password: ddbb_data.password,
+  database: ddbb_data.database,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
 async function esTemperatura(idOrMac) {
+  if (!idOrMac) {
+    console.error('idOrMac is undefined or null');
+    return false;
+  }
+
   let connection;
   try {
-    connection = await mysql.createConnection(dbConfig);
+    connection = await pool.getConnection();
     const query = `
       SELECT esTemperatura 
       FROM beacons 
@@ -25,14 +32,19 @@ async function esTemperatura(idOrMac) {
     console.error('Error al consultar la base de datos:', error);
     return false;
   } finally {
-    if (connection) await connection.end();
+    if (connection) await connection.release();
   }
 }
 
 async function obtenerTempBeaconId(macAddress) {
+  if (!macAddress) {
+    console.error('macAddress is undefined or null');
+    return null;
+  }
+
   let connection;
   try {
-    connection = await mysql.createConnection(dbConfig);
+    connection = await pool.getConnection();
     const query = 'SELECT id FROM beacons WHERE mac = ?';
     const [rows] = await connection.execute(query, [macAddress]);
     return rows.length > 0 ? rows[0].id : null;
@@ -40,7 +52,7 @@ async function obtenerTempBeaconId(macAddress) {
     console.error('Error al obtener temp_beacon_id:', error);
     return null;
   } finally {
-    if (connection) await connection.end();
+    if (connection) await connection.release();
   }
 }
 
@@ -49,6 +61,7 @@ function obtenerValor(jsonString, key) {
     const json = JSON.parse(jsonString);
     return json[key];
   } catch (e) {
+    console.error('Error parsing JSON:', e);
     return null;
   }
 }
@@ -56,7 +69,7 @@ function obtenerValor(jsonString, key) {
 async function insertarDatosSegunIdent(ident, newData, additionalData, temp_beacon_id = null) {
   let connection;
   try {
-    connection = await mysql.createConnection(dbConfig);
+    connection = await pool.getConnection();
     let query, values;
 
     switch (ident) {
@@ -110,7 +123,7 @@ async function insertarDatosSegunIdent(ident, newData, additionalData, temp_beac
   } catch (error) {
     console.error('Error al insertar datos:', error);
   } finally {
-    if (connection) await connection.end();
+    if (connection) await connection.release();
   }
 }
 
@@ -123,11 +136,14 @@ async function procesarDatosGPS_GPS_DATA(newData) {
     for (const beacon of bleBeacons) {
       const rssi = parseInt(beacon.rssi);
       const id = beacon.id;
-      const esPuerta = await esTemperatura(id);
-
-      if (rssi > highestRssi && !esPuerta) {
-        highestRssi = rssi;
-        highestRssiElement = beacon;
+      if (id) {
+        const esPuerta = await esTemperatura(id);
+        if (rssi > highestRssi && !esPuerta) {
+          highestRssi = rssi;
+          highestRssiElement = beacon;
+        }
+      } else {
+        console.warn('Beacon sin ID encontrado:', beacon);
       }
     }
 
@@ -173,5 +189,4 @@ async function procesarDatosGPS_GPS_DATA(newData) {
   }
 }
 
-
-module.exports={procesarDatosGPS_GPS_DATA};
+module.exports = { procesarDatosGPS_GPS_DATA };
