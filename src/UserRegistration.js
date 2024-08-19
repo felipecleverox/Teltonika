@@ -82,6 +82,7 @@ const UserRegistration = () => {
   const availablePermissions = [
     { label: 'Crear Usuarios', value: 'create_users' },
     { label: 'Ver Dashboard', value: 'view_dashboard' },
+    { label: 'Ver Intrusiones Blind Spot', value: 'view_blind_spot_intrusions' },
     { label: 'Ubicación en Interiores Tiempo Real', value: 'view_interior' },
     { label: 'Búsqueda Histórica en Interiores', value: 'search_interior' },
     { label: 'Presencia Personal por Interiores', value: 'view_presence' },

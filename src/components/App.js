@@ -24,6 +24,7 @@ import SideNav from '../SideNav';
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import './App.css';
+import BlindSpotIntrusions from '../BlindSpotIntrusions';
 
 const PrivateRoute = ({ children, userPermissions }) => {
   const token = localStorage.getItem('token');
@@ -148,6 +149,11 @@ function AppContent() {
             <PrivateRoute userPermissions={userPermissions}>
             <TemperaturaCamaras />
           </PrivateRoute>
+          } />
+          <Route path="/blind-spot-intrusions" element={
+            <PrivateRoute userPermissions={userPermissions}>
+              <BlindSpotIntrusions />
+            </PrivateRoute>
           } />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

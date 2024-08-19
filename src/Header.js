@@ -4,11 +4,13 @@ import './Header.css';
 import homeIcon from './assets/images/home_white.png';
 import tnsTrackLogo from './assets/images/TNS Track White.png';
 import alertGif from './assets/alert.gif';
+import sirenaGif from './assets/sirena.gif';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
 
 const Header = ({ title }) => {
   const [newSms, setNewSms] = useState(false);
+  const [newIncidencia, setNewIncidencia] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = location;
@@ -20,6 +22,10 @@ const Header = ({ title }) => {
     socket.on('new_sms', (data) => {
       console.log("Nuevo SMS recibido:", data);
       setNewSms(true);
+    });
+    socket.on('nueva_incidencia', (data) => {
+      console.log("Nueva incidencia registrada:", data);
+      setNewIncidencia(true);
     });
 
     return () => {
@@ -41,6 +47,11 @@ const Header = ({ title }) => {
     navigate('/sms-data');
   };
 
+  const handleIncidenciaClick = () => {
+    setNewIncidencia(false);
+    navigate('/blind-spot-intrusions');
+  };
+
   return (
     <header className="header">
       <div className="header-left">
@@ -53,6 +64,7 @@ const Header = ({ title }) => {
       </div>
       <div className="header-right">
         {newSms && <img src={alertGif} alt="New SMS" className="header-icon" onClick={handleSmsClick} />}
+        {newIncidencia && <img src={sirenaGif} alt="Nueva Incidencia" className="header-icon" onClick={handleIncidenciaClick} />}
         <button className="logout-button" onClick={handleLogoutClick}>Logout</button>
       </div>
     </header>

@@ -3,7 +3,11 @@ const ddbb_data = require("./config/ddbb.json");
 const twilioConfig = require("./config/twilio.json");
 const moment = require('moment');
 const twilio = require('twilio');
+let io;
 
+function init(socketIo) {
+  io = socketIo;
+}
 const client = twilio(twilioConfig.accountSid, twilioConfig.authToken);
 
 const INTERVALO_ENTRE_LLAMADAS = 2 * 60; // 2 minutos en segundos
@@ -54,11 +58,15 @@ async function insertarIncidencia(dispositivo, mac_address) {
   try {
     await connection.query(query, [dispositivo, mac_address]);
     console.log("Se inserto en incidencias_blindspot");
+    if (io) {
+      io.emit('nueva_incidencia', { mensaje: 'Nueva incidencia registrada', dispositivo, mac_address });
+    } else {
+      console.warn('Socket.IO no está inicializado. No se pudo emitir el evento nueva_incidencia.');
+    }
   } finally {
     connection.release();
   }
 }
-
 async function realizarLlamadaTelefonica(dispositivo, mac_address) {
   try {
     const puedeRealizarLlamada = await verificarTiempoUltimaLlamada(dispositivo, mac_address);
@@ -76,8 +84,37 @@ async function realizarLlamadaTelefonica(dispositivo, mac_address) {
     console.log(`Llamada iniciada con SID: ${call.sid} para dispositivo ${dispositivo} y beacon MAC ${mac_address}`);
     
     await actualizarUltimaLlamada(dispositivo, mac_address);
+
+    // Registrar la llamada en la nueva tabla
+    const query = `
+      INSERT INTO historico_llamadas_blindspot 
+      (dispositivo, mac_address, timestamp, estado_llamada, sid) 
+      VALUES (?, ?, NOW(), 'iniciada', ?)
+    `;
+    const connection = await pool.getConnection();
+    try {
+      await connection.query(query, [dispositivo, mac_address, call.sid]);
+      console.log("Se registró la llamada en historico_llamadas");
+    } finally {
+      connection.release();
+    }
+
   } catch (error) {
     console.error('Error al realizar la llamada:', error);
+    
+    // Registrar el fallo de la llamada
+    const query = `
+      INSERT INTO historico_llamadas_blindspot 
+      (dispositivo, mac_address, timestamp, estado_llamada, detalles) 
+      VALUES (?, ?, NOW(), 'fallida', ?)
+    `;
+    const connection = await pool.getConnection();
+    try {
+      await connection.query(query, [dispositivo, mac_address, error.message]);
+      console.log("Se registró el fallo de la llamada en historico_llamadas");
+    } finally {
+      connection.release();
+    }
   }
 }
 
@@ -138,4 +175,4 @@ function comprobarBleBeacons(inputToCheck) {
   return inputToCheck.length > 0;
 }
 
-module.exports = { procesarPosibleIncidencia };
+module.exports = { init, procesarPosibleIncidencia };

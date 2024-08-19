@@ -17,11 +17,13 @@ import doorStatusImage from './assets/images/door_status.png';
 import userRegistrationImage from './assets/images/user_registration.png';
 import temperaturaImage from './assets/images/temperatura.png';
 import selectRoutineImage from './assets/images/selectroutine.png';
-import temperaturaCamarasImage from './assets/images/thermometer.png'; // Asegúrate de tener esta imagen
+import temperaturaCamarasImage from './assets/images/thermometer.png';
+import detectionImage from './assets/images/detection.png';
 
 const routines = [
   { title: "Seleccionar Rutina", image: selectRoutineImage, route: "/select-routine", permission: "view_dashboard" },
   { title: "Dashboard", image: dashboardImage, route: "/dashboard", permission: "view_dashboard" },
+  { title: "Intrusiones Blind Spot", image: detectionImage, route: "/blind-spot-intrusions", permission: "view_blind_spot_intrusions" },
   { title: "Interior : Ubicación en Tiempo Real", image: ubicaciontiemporealinteriorImage, route: "/ubicaciones-interior", permission: "view_interior" },
   { title: "Interior : Búsqueda Histórica Ubicación", image: personSearchImage, route: "/busqueda-entradas-persona", permission: "search_interior" },
   { title: "Exterior : Ubicación Tiempo Real", image: interiorLocationsImage, route: "/last-known-position", permission: "view_exterior" },

@@ -11,9 +11,13 @@ const nodemailer = require('nodemailer'); // Library to send emails
 const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
 const Joi = require('joi'); // New import for schema validation
 const sgMail = require('@sendgrid/mail');
+const http = require('http');
+const { Server } = require('socket.io'); // Import Socket.IO
 const config = require('./config/config.json');
 const { procesarDatosUbibot } = require('./ubibot');
 const { procesarPosibleIncidencia } = require('./control_incidencias');
+const controlIncidencias = require('./control_incidencias');
+
 
 const intervalo_ejecucion_ubibot= 5 * 60 * 1000;
 
@@ -24,9 +28,8 @@ sgMail.setApiKey(config.email.SENDGRID_API_KEY);
 const app = express();
 
 // Import and configure Socket.IO for real-time communication
-const http = require('http'); // HTTP server
 const server = http.createServer(app); // Create HTTP server with Express app
-const { Server } = require('socket.io'); // Import Socket.IO
+
 const io = new Server(server, {
   cors: {
     origin: ["http://tnstrack.ddns.net:3000", "http://localhost:3000","http://tnstrack.ddns.net:3001", "http://localhost:3001"], // Allow both origins
@@ -35,7 +38,8 @@ const io = new Server(server, {
     credentials: true
   }
 });
-
+// Initialize control_incidencias with Socket.IO
+controlIncidencias.init(io);
 // Configure Socket.IO connection and disconnection events
 io.on('connection', (socket) => {
   console.log('A user connected'); // Log when a user connects
@@ -1615,6 +1619,39 @@ app.get('/api/temperature-camaras-data', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error fetching temperature data:', error);
+    res.status(500).send('Server Error');
+  }
+});
+// En server.js, modifica el endpoint /api/blind-spot-intrusions
+app.get('/api/blind-spot-intrusions', async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    // Convertir la fecha a la zona horaria de Chile
+    const startOfDay = moment.tz(date, 'YYYY-MM-DD', 'America/Santiago').startOf('day');
+    const endOfDay = moment(startOfDay).endOf('day');
+
+    const query = `
+      SELECT hc.dispositivo, hc.mac_address, hc.timestamp,
+             d.device_asignado, b.ubicacion
+      FROM historico_llamadas_blindspot hc
+      LEFT JOIN devices d ON hc.dispositivo = d.id
+      LEFT JOIN beacons b ON hc.mac_address = b.mac
+      WHERE hc.timestamp BETWEEN ? AND ?
+      ORDER BY hc.timestamp ASC
+    `;
+    
+    const [rows] = await pool.query(query, [startOfDay.toDate(), endOfDay.toDate()]);
+
+    // Convertir los timestamps a la zona horaria de Chile
+    const formattedRows = rows.map(row => ({
+      ...row,
+      timestamp: moment(row.timestamp).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss')
+    }));
+
+    res.json(formattedRows);
+  } catch (error) {
+    console.error('Error fetching blind spot intrusions:', error);
     res.status(500).send('Server Error');
   }
 });
