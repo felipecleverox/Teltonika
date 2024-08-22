@@ -17,10 +17,38 @@ const config = require('./config/config.json');
 const { procesarDatosUbibot } = require('./ubibot');
 const { procesarPosibleIncidencia } = require('./control_incidencias');
 const controlIncidencias = require('./control_incidencias');
-
+const onvif = require('onvif');
+const NodeRtspStream = require('node-rtsp-stream');
+const { startStreaming } = require('./streamConverter');
+const path = require('path');
+const ffmpeg = require('fluent-ffmpeg');
+const fs = require('fs');
+const rangeParser = require('range-parser');
+const outputDir = path.join(__dirname, 'public', 'streams');
+const { spawn } = require('child_process');
+if (!fs.existsSync(outputDir)){
+    fs.mkdirSync(outputDir, { recursive: true });
+}
 
 const intervalo_ejecucion_ubibot= 5 * 60 * 1000;
-
+// conexion camara onvif
+function connectToCamera(callback) {
+  const cam = new onvif.Cam({
+    hostname: '192.168.1.184',
+    port: 8080,
+    username: 'admin',
+    password: 'admin'
+  }, function(err) {
+    if (err) {
+      console.error('Error connecting to camera:', err);
+      callback(err, null);
+    } else {
+      console.log('Connected to camera');
+      callback(null, cam);
+    }
+  });
+}
+// fin tema camara
 // Configurar SendGrid
 sgMail.setApiKey(config.email.SENDGRID_API_KEY);
 
@@ -1627,13 +1655,12 @@ app.get('/api/blind-spot-intrusions', async (req, res) => {
   try {
     const { date } = req.query;
 
-    // Convertir la fecha a la zona horaria de Chile
     const startOfDay = moment.tz(date, 'YYYY-MM-DD', 'America/Santiago').startOf('day');
     const endOfDay = moment(startOfDay).endOf('day');
 
     const query = `
-      SELECT hc.dispositivo, hc.mac_address, hc.timestamp,
-             d.device_asignado, b.ubicacion
+      SELECT hc.id, hc.dispositivo, hc.mac_address, hc.timestamp,
+             d.device_asignado, b.ubicacion, hc.ruta_video
       FROM historico_llamadas_blindspot hc
       LEFT JOIN devices d ON hc.dispositivo = d.id
       LEFT JOIN beacons b ON hc.mac_address = b.mac
@@ -1643,7 +1670,6 @@ app.get('/api/blind-spot-intrusions', async (req, res) => {
     
     const [rows] = await pool.query(query, [startOfDay.toDate(), endOfDay.toDate()]);
 
-    // Convertir los timestamps a la zona horaria de Chile
     const formattedRows = rows.map(row => ({
       ...row,
       timestamp: moment(row.timestamp).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss')
@@ -1655,6 +1681,20 @@ app.get('/api/blind-spot-intrusions', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
+
+app.get('/api/incidencia-video/:id', (req, res) => {
+  const videoId = req.params.id;
+  const videoPath = path.join(__dirname, 'public', 'videos', `incidencia_${videoId}.mp4`);
+
+  if (fs.existsSync(videoPath)) {
+    res.sendFile(videoPath);
+  } else {
+    res.status(404).send('Video no encontrado');
+  }
+});
+
+
 // Start the server
 server.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);

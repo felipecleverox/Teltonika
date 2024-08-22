@@ -1,4 +1,3 @@
-// BlindSpotIntrusions.js
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import moment from 'moment-timezone';
@@ -15,6 +14,7 @@ const BlindSpotIntrusions = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [currentVideoId, setCurrentVideoId] = useState(null);
   const today = useRef(new Date());
 
   useEffect(() => {
@@ -30,7 +30,6 @@ const BlindSpotIntrusions = () => {
           date: moment(selectedDate).format('YYYY-MM-DD')
         }
       });
-      // Ordenar las intrusiones por timestamp, las más recientes primero
       const sortedIntrusions = response.data.sort((a, b) => 
         moment(b.timestamp).valueOf() - moment(a.timestamp).valueOf()
       );
@@ -49,6 +48,10 @@ const BlindSpotIntrusions = () => {
     } else {
       alert("No se puede seleccionar una fecha futura.");
     }
+  };
+
+  const handleWatchVideo = (intrusionId) => {
+    setCurrentVideoId(currentVideoId === intrusionId ? null : intrusionId);
   };
 
   if (loading) {
@@ -79,15 +82,37 @@ const BlindSpotIntrusions = () => {
             <th>Sector</th>
             <th>Persona</th>
             <th>Timestamp Intrusión</th>
+            <th>Acción</th>
           </tr>
         </thead>
         <tbody>
           {intrusions.map((intrusion, index) => (
-            <tr key={index}>
-               <td>{intrusion.device_asignado || 'Desconocido'}</td>
-              <td>{intrusion.ubicacion || 'Desconocido'}</td>
-              <td>{intrusion.timestamp}</td>
-            </tr>
+            <React.Fragment key={intrusion.id}>
+              <tr>
+                <td>{intrusion.device_asignado || 'Desconocido'}</td>
+                <td>{intrusion.ubicacion || 'Desconocido'}</td>
+                <td>{intrusion.timestamp}</td>
+                <td>
+                <button 
+                    onClick={() => handleWatchVideo(intrusion.id)}
+                    className={currentVideoId === intrusion.id ? 'close-video-button' : ''}
+                  >
+                    {currentVideoId === intrusion.id ? 'Cerrar Video' : 'Ver Video'}
+                  </button>
+                </td>
+              </tr>
+              {currentVideoId === intrusion.id && (
+                <tr className="video-row">
+                  <td colSpan="4">
+                    <div className="video-player">
+                      <video src={`/api/incidencia-video/${intrusion.id}`} controls width="640" height="480">
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))}
         </tbody>
       </table>
