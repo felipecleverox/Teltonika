@@ -3,11 +3,14 @@ const ddbb_data = require("./config/ddbb.json");
 const twilioConfig = require("./config/twilio.json");
 const moment = require('moment');
 const twilio = require('twilio');
+const { spawn } = require('child_process');
+const path = require('path');
 let io;
 
 function init(socketIo) {
   io = socketIo;
 }
+
 const client = twilio(twilioConfig.accountSid, twilioConfig.authToken);
 
 const INTERVALO_ENTRE_LLAMADAS = 2 * 60; // 2 minutos en segundos
@@ -45,28 +48,60 @@ async function procesarPosibleIncidencia(device_name, ble_beacons, timestamp, ev
 }
 
 async function procesarBeacon(device_name, beacon) {
-  const beaconEsBlindSpot = await comprobarBlindSpot(beacon['mac.address'], 2);
-  if (!beaconEsBlindSpot) return;
+  try {
+    const beaconEsBlindSpot = await comprobarBlindSpot(beacon['mac.address'], 2);
+    if (!beaconEsBlindSpot) return;
 
-  await insertarIncidencia(device_name, beacon['mac.address']);
-  await realizarLlamadaTelefonica(device_name, beacon['mac.address']);
+    await insertarIncidencia(device_name, beacon['mac.address']);
+    await realizarLlamadaTelefonica(device_name, beacon['mac.address']);
+    const incidenciaId = await obtenerIDultimaIncidencia();
+    if (incidenciaId) {
+      await grabarVideo(incidenciaId);
+    } else {
+      console.error('No se pudo obtener el ID de la última incidencia');
+    }
+  } catch (error) {
+    console.error('Error al procesar beacon:', error);
+  }
+}
+
+async function obtenerIDultimaIncidencia() {
+  const query = "SELECT id FROM historico_llamadas_blindspot ORDER BY id DESC LIMIT 1";
+  const connection = await pool.getConnection();
+  try {
+    const [results] = await connection.query(query);
+    if (results.length > 0) {
+      console.log("ID obtenido: " + results[0].id);
+      return results[0].id;
+    } else {
+      console.log("No se encontraron registros de incidencias");
+      return null;
+    }
+  } catch (error) {
+    console.error('Error al obtener la última incidencia:', error);
+    return null;
+  } finally {
+    connection.release();
+  }
 }
 
 async function insertarIncidencia(dispositivo, mac_address) {
   const query = "INSERT INTO incidencias_blindspot (id_dispositivo, beacon_id, hora_entrada) VALUES (?, ?, NOW())";
   const connection = await pool.getConnection();
   try {
-    await connection.query(query, [dispositivo, mac_address]);
-    console.log("Se inserto en incidencias_blindspot");
+    const [result] = await connection.query(query, [dispositivo, mac_address]);
+    console.log("Se insertó en incidencias_blindspot");
     if (io) {
       io.emit('nueva_incidencia', { mensaje: 'Nueva incidencia registrada', dispositivo, mac_address });
     } else {
       console.warn('Socket.IO no está inicializado. No se pudo emitir el evento nueva_incidencia.');
     }
+    return result.insertId;
   } finally {
     connection.release();
   }
 }
+
 async function realizarLlamadaTelefonica(dispositivo, mac_address) {
   try {
     const puedeRealizarLlamada = await verificarTiempoUltimaLlamada(dispositivo, mac_address);
@@ -173,6 +208,66 @@ function comprobarBleBeacons(inputToCheck) {
     return inputToCheck !== "[]";
   }
   return inputToCheck.length > 0;
+}
+
+async function grabarVideo(incidenciaId) {
+  const outputPath = path.join(__dirname, 'public', 'videos', `incidencia_${incidenciaId}.mp4`);
+  
+  return new Promise((resolve, reject) => {
+    console.log(`Iniciando grabación de video para incidencia ${incidenciaId}`);
+    console.log(`Ruta de salida: ${outputPath}`);
+
+    const ffmpeg = spawn('ffmpeg', [
+      '-i', 'rtsp://192.168.1.184:554/11',
+      '-t', '20',
+      '-c:v', 'libx264',
+      '-preset', 'ultrafast',
+      '-y',
+      outputPath
+    ]);
+
+    ffmpeg.stdout.on('data', (data) => {
+      console.log(`FFmpeg stdout: ${data}`);
+    });
+
+    ffmpeg.stderr.on('data', (data) => {
+      console.error(`FFmpeg stderr: ${data}`);
+    });
+
+    ffmpeg.on('close', (code) => {
+      if (code === 0) {
+        console.log(`Video grabado exitosamente: ${outputPath}`);
+        actualizarRutaVideo(incidenciaId, outputPath)
+          .then(() => resolve())
+          .catch((error) => {
+            console.error('Error al actualizar ruta de video:', error);
+            reject(error);
+          });
+      } else {
+        console.error(`FFmpeg process exited with code ${code}`);
+        reject(new Error(`FFmpeg process exited with code ${code}`));
+      }
+    });
+
+    ffmpeg.on('error', (err) => {
+      console.error('Error al iniciar FFmpeg:', err);
+      reject(err);
+    });
+  });
+}
+
+async function actualizarRutaVideo(incidenciaId, rutaVideo) {
+  const query = "UPDATE historico_llamadas_blindspot SET ruta_video = ? WHERE id = ?";
+  const connection = await pool.getConnection();
+  try {
+    await connection.query(query, [rutaVideo, incidenciaId]);
+    console.log(`Se actualizó la ruta del video en historico_llamadas_blindspot para la incidencia ${incidenciaId}`);
+  } catch (error) {
+    console.error(`Error al actualizar la ruta del video para la incidencia ${incidenciaId}:`, error);
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 module.exports = { init, procesarPosibleIncidencia };

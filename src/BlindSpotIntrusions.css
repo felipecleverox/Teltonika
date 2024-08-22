@@ -26,7 +26,7 @@
 .intrusions-table th {
   background-color: #4a90e2;
   color: white;
-  font-size: 18px; /* Aumentamos el tamaño de la fuente de los títulos */
+  font-size: 18px;
 }
 
 .intrusions-table tr:nth-child(even) {
@@ -34,5 +34,29 @@
 }
 
 .intrusions-table tr:first-child {
-  background-color: #ffd700; /* Color amarillo para destacar la fila más reciente */
+  background-color: #ffd700;
+}
+
+.video-row td {
+  padding: 0;
+}
+
+.video-player {
+  width: 100%;
+  padding: 10px;
+  background-color: #f9f9f9;
+}
+
+.video-player video {
+  max-width: 100%;
+  height: auto;
+}
+.close-video-button {
+  background-color: #ff4d4d;
+  color: white;
+  font-weight: bold;
+}
+
+.close-video-button:hover {
+  background-color: #ff3333;
 }
