@@ -66,58 +66,67 @@ function obtenerValor(jsonString, key) {
   }
 }
 
+function getTableName(ident) {
+  switch (ident) {
+    case '352592573522828':
+      return 'gh_5200_data_352592573522828';
+    case '353201350896384':
+      return 'magic_box_tmt_210_data_353201350896384';
+    case '352592576164230':
+      return 'fmb204_data_352592576164230';
+    default:
+      throw new Error(`Ident no reconocido: ${ident}`);
+  }
+}
+
 async function insertarDatosSegunIdent(ident, newData, additionalData, temp_beacon_id = null) {
   let connection;
   try {
     connection = await pool.getConnection();
     let query, values;
 
+    const baseColumns = 'id_dispo, device_id_gps_data, event_enum, altitude, latitude, longitude, timestamp, beacon_id';
+    const baseValues = '?, ?, ?, ?, ?, ?, ?, ?';
+
     switch (ident) {
       case '352592573522828':
-        query = `INSERT INTO teltonika.gh_5200_data_352592573522828 
-                 (id_dispo, device_id_gps_data, event_enum, altitude, latitude, longitude, 
-                  timestamp, beacon_id, rsi_beacon, battery_level, ble_sensor_humidity, 
-                  ble_sensor_magnet_status, ble_sensor_temperature, ID_GPS_DATA) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        break;
       case '353201350896384':
-        query = `INSERT INTO teltonika.magic_box_tmt_210_data_353201350896384 
-                 (id_dispo, device_id_gps_data, event_enum, altitude, latitude, longitude, 
-                  timestamp, beacon_id, rsi_beacon, battery_level, ble_sensor_humidity, 
-                  ble_sensor_magnet_status, ble_sensor_temperature, ID_GPS_DATA) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        break;
       case '352592576164230':
-        query = `INSERT INTO teltonika.fmb204_data_352592576164230 
-                 (id_dispo, device_id_gps_data, event_enum, altitude, latitude, longitude, 
-                  timestamp, beacon_id, rsi_beacon, battery_level, ble_sensor_humidity, 
-                  ble_sensor_magnet_status, ble_sensor_temperature, ID_GPS_DATA) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        if (newData.event_enum === 385) {
+          query = `INSERT INTO teltonika.${getTableName(ident)} 
+                   (${baseColumns}, rsi_beacon, battery_level, ble_sensor_humidity, 
+                    ble_sensor_magnet_status, ble_sensor_temperature, ID_GPS_DATA) 
+                   VALUES (${baseValues}, ?, ?, ?, ?, ?, ?)`;
+          values = [
+            ident, newData.device_id, newData.event_enum, newData.altitude, newData.latitude, newData.longitude,
+            newData.timestamp, additionalData.KTK_ID, additionalData.KTK_RSSI, newData.battery_level, 
+            newData.ble_sensor_humidity_1, newData.ble_sensor_magnet_status_1, additionalData.KTK_TEMPERATURE, 
+            newData.id
+          ];
+        } else if (newData.event_enum === 11317) {
+          query = `INSERT INTO teltonika.${getTableName(ident)} 
+                   (${baseColumns}, battery_level, ble_sensor_humidity, ble_sensor_magnet_status, 
+                    ble_sensor_temperature, \`EYE_battery.low\`, EYE_humidity, EYE_id, 
+                    \`EYE_mac.address\`, EYE_magnet, \`EYE_magnet.count\`, EYE_movement, 
+                    \`EYE_movement.count\`, EYE_temperature, EYE_type, ID_GPS_DATA) 
+                   VALUES (${baseValues}, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          values = [
+            ident, newData.device_id, newData.event_enum, newData.altitude, newData.latitude, newData.longitude,
+            newData.timestamp, temp_beacon_id, newData.battery_level, newData.ble_sensor_humidity_1,
+            newData.ble_sensor_magnet_status_1, newData.ble_sensor_temperature_1, additionalData.EYE_battery_low, 
+            additionalData.EYE_humidity, additionalData.EYE_id, additionalData.EYE_mac_address, 
+            additionalData.EYE_magnet, additionalData.EYE_magnet_count, additionalData.EYE_movement, 
+            additionalData.EYE_movement_count, additionalData.EYE_temperature, additionalData.EYE_type, newData.id
+          ];
+        }
         break;
       default:
         console.log(`Ident no reconocido: ${ident}`);
         return;
     }
 
-    if (newData.event_enum === 385) {
-      values = [
-        ident, newData.device_id, newData.event_enum, newData.altitude, newData.latitude, newData.longitude,
-        newData.timestamp, additionalData.KTK_ID, additionalData.KTK_RSSI, newData.battery_level, 
-        newData.ble_sensor_humidity_1, newData.ble_sensor_magnet_status_1, additionalData.KTK_TEMPERATURE, 
-        newData.id
-      ];
-    } else if (newData.event_enum === 11317) {
-      query = query.replace('rsi_beacon', 'battery_level, ble_sensor_humidity, ble_sensor_magnet_status, ble_sensor_temperature, `EYE_battery.low`, EYE_humidity, EYE_id, `EYE_mac.address`, EYE_magnet, `EYE_magnet.count`, EYE_movement, `EYE_movement.count`, EYE_temperature, EYE_type');
-      values = [
-        ident, newData.device_id, newData.event_enum, newData.altitude, newData.latitude, newData.longitude,
-        newData.timestamp, temp_beacon_id, newData.battery_level, newData.ble_sensor_humidity_1,
-        newData.ble_sensor_magnet_status_1, newData.ble_sensor_temperature_1, additionalData.EYE_battery_low, 
-        additionalData.EYE_humidity, additionalData.EYE_id, additionalData.EYE_mac_address, 
-        additionalData.EYE_magnet, additionalData.EYE_magnet_count, additionalData.EYE_movement, 
-        additionalData.EYE_movement_count, additionalData.EYE_temperature, additionalData.EYE_type, newData.id
-      ];
-    }
-
+    // Before inserting data
+    values = values.map(value => value === undefined ? null : value);
     await connection.execute(query, values);
     console.log(`Datos insertados correctamente para ident: ${ident}`);
   } catch (error) {

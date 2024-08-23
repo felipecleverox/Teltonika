@@ -80,11 +80,11 @@ async function obtenerTemperatura(inputs) {
 }
 
 function obtenerMacAddress(input_mac) {
-  if (!input_mac || input_mac.length === 0 || !input_mac[0].hasOwnProperty('mac_address')) {
+  if (!input_mac || input_mac.length === 0) {
     console.warn('Datos inválidos para obtener MAC address:', input_mac);
     return null;
   }
-  return input_mac[0].mac_address;
+  return input_mac[0]['mac.address'] || null;
 }
 
 async function obtenerEsPuerta(mac_address) {
