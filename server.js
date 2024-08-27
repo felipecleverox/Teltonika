@@ -15,8 +15,8 @@ const http = require('http');
 const { Server } = require('socket.io'); // Import Socket.IO
 const config = require('./config/config.json');
 const { procesarDatosUbibot } = require('./ubibot');
-const { procesarPosibleIncidencia } = require('./control_incidencias');
-const controlIncidencias = require('./control_incidencias');
+const { procesarPosibleIncidencia } = require('./src/utils/control_incidencias');
+const controlIncidencias = require('./src/utils/control_incidencias');
 const { procesarDatosGPS } = require('./src/utils/dataProcesing');
 
 

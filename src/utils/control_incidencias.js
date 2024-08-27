@@ -1,6 +1,6 @@
 const mysql = require("mysql2/promise");
-const ddbb_data = require("./config/ddbb.json");
-const twilioConfig = require("./config/twilio.json");
+const ddbb_data = require("../../config/ddbb.json"); 
+const twilioConfig = require("../../config/twilio.json");
 const moment = require('moment');
 const twilio = require('twilio');
 let io;
