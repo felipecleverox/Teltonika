@@ -12,57 +12,54 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-async function esTemperatura(idOrMac) {
-  if (!idOrMac) {
-    console.error('idOrMac is undefined or null');
-    return false;
-  }
-
+async function obtenerMacsDeBaseDeDatos() {
   let connection;
   try {
     connection = await pool.getConnection();
-    const query = `
-      SELECT esTemperatura 
-      FROM beacons 
-      WHERE id = ? OR mac = ?
-    `;
-    const [rows] = await connection.execute(query, [idOrMac, idOrMac]);
-    return rows.length > 0 ? rows[0].esTemperatura === 1 : false;
+    const [rows] = await connection.query('SELECT mac FROM beacons');
+    return rows.map(row => row.mac);
   } catch (error) {
-    console.error('Error al consultar la base de datos:', error);
-    return false;
+    console.error('Error al obtener MACs de la base de datos:', error);
+    return [];
   } finally {
     if (connection) await connection.release();
   }
 }
 
-async function obtenerTempBeaconId(macAddress) {
-  if (!macAddress) {
-    console.error('macAddress is undefined or null');
-    return null;
+async function buscarMacEnTexto(texto, macs) {
+  for (const mac of macs) {
+    if (texto.includes(mac)) {
+      return mac;
+    }
   }
+  return null;
+}
 
+async function obtenerIdPorMac(mac) {
   let connection;
   try {
     connection = await pool.getConnection();
-    const query = 'SELECT id FROM beacons WHERE mac = ?';
-    const [rows] = await connection.execute(query, [macAddress]);
+    const [rows] = await connection.query('SELECT id FROM beacons WHERE mac = ?', [mac]);
     return rows.length > 0 ? rows[0].id : null;
   } catch (error) {
-    console.error('Error al obtener temp_beacon_id:', error);
+    console.error('Error al obtener ID por MAC:', error);
     return null;
   } finally {
     if (connection) await connection.release();
   }
 }
 
-function obtenerValor(jsonString, key) {
+async function esTemperatura(mac) {
+  let connection;
   try {
-    const json = JSON.parse(jsonString);
-    return json[key];
-  } catch (e) {
-    console.error('Error parsing JSON:', e);
-    return null;
+    connection = await pool.getConnection();
+    const [rows] = await connection.query('SELECT esTemperatura FROM beacons WHERE mac = ?', [mac]);
+    return rows.length > 0 ? rows[0].esTemperatura === 1 : false;
+  } catch (error) {
+    console.error('Error al consultar esTemperatura:', error);
+    return false;
+  } finally {
+    if (connection) await connection.release();
   }
 }
 
@@ -125,7 +122,6 @@ async function insertarDatosSegunIdent(ident, newData, additionalData, temp_beac
         return;
     }
 
-    // Before inserting data
     values = values.map(value => value === undefined ? null : value);
     await connection.execute(query, values);
     console.log(`Datos insertados correctamente para ident: ${ident}`);
@@ -137,63 +133,61 @@ async function insertarDatosSegunIdent(ident, newData, additionalData, temp_beac
 }
 
 async function procesarDatosGPS_GPS_DATA(newData) {
+  const macs = await obtenerMacsDeBaseDeDatos();
+
   if (newData.event_enum === 385) {
-    const bleBeacons = JSON.parse(newData.ble_beacons);
+    const bleBeacons = newData.ble_beacons;
     let highestRssi = -999999;
     let highestRssiElement = null;
 
-    for (const beacon of bleBeacons) {
-      const rssi = parseInt(beacon.rssi);
-      const id = beacon.id;
-      if (id) {
-        const esPuerta = await esTemperatura(id);
+    const beacons = bleBeacons.split('},').map(b => b.trim() + '}');
+    for (const beacon of beacons) {
+      const mac = await buscarMacEnTexto(beacon, macs);
+      if (mac) {
+        const rssi = parseInt(beacon.match(/"rssi":(-?\d+)/)?.[1] || '-999999');
+        const esPuerta = await esTemperatura(mac);
         if (rssi > highestRssi && !esPuerta) {
           highestRssi = rssi;
-          highestRssiElement = beacon;
+          highestRssiElement = { beacon, mac };
         }
-      } else {
-        console.warn('Beacon sin ID encontrado:', beacon);
       }
     }
 
     if (highestRssiElement) {
       const ktkData = {
-        KTK_ID: highestRssiElement.id,
-        KTK_battery_voltage: highestRssiElement.battery?.voltage,
-        KTK_RSSI: highestRssiElement.rssi,
-        KTK_TEMPERATURE: highestRssiElement.temperature
+        KTK_ID: await obtenerIdPorMac(highestRssiElement.mac),
+        KTK_battery_voltage: highestRssiElement.beacon.match(/"voltage":(\d+(\.\d+)?)/)?.[1],
+        KTK_RSSI: highestRssi,
+        KTK_TEMPERATURE: highestRssiElement.beacon.match(/"temperature":(-?\d+(\.\d+)?)/)?.[1]
       };
 
       await insertarDatosSegunIdent(newData.ident, newData, ktkData);
     }
   } else if (newData.event_enum === 11317) {
     const bleBeacons = newData.ble_beacons;
-    const eyeData = {
-      EYE_mac_address: obtenerValor(bleBeacons, 'mac.address'),
-      EYE_battery_low: obtenerValor(bleBeacons, 'battery.low'),
-      EYE_humidity: obtenerValor(bleBeacons, 'humidity'),
-      EYE_id: obtenerValor(bleBeacons, 'id'),
-      EYE_magnet: obtenerValor(bleBeacons, 'magnet'),
-      EYE_magnet_count: obtenerValor(bleBeacons, 'magnet.count'),
-      EYE_movement: obtenerValor(bleBeacons, 'movement'),
-      EYE_movement_count: obtenerValor(bleBeacons, 'movement.count'),
-      EYE_temperature: obtenerValor(bleBeacons, 'temperature'),
-      EYE_type: obtenerValor(bleBeacons, 'type')
-    };
+    const mac = await buscarMacEnTexto(bleBeacons, macs);
+    
+    if (mac) {
+      const eyeData = {
+        EYE_mac_address: mac,
+        EYE_battery_low: bleBeacons.includes('"battery.low":true'),
+        EYE_humidity: bleBeacons.match(/"humidity":(\d+(\.\d+)?)/)?.[1],
+        EYE_id: await obtenerIdPorMac(mac),
+        EYE_magnet: bleBeacons.includes('"magnet":true'),
+        EYE_magnet_count: bleBeacons.match(/"magnet.count":(\d+)/)?.[1],
+        EYE_movement: bleBeacons.includes('"movement":true'),
+        EYE_movement_count: bleBeacons.match(/"movement.count":(\d+)/)?.[1],
+        EYE_temperature: bleBeacons.match(/"temperature":(-?\d+(\.\d+)?)/)?.[1],
+        EYE_type: bleBeacons.match(/"type":"(\w+)"/)?.[1]
+      };
 
-    let temp_beacon_id = null;
-    if (eyeData.EYE_mac_address) {
-      temp_beacon_id = await obtenerTempBeaconId(eyeData.EYE_mac_address);
-    }
+      const temp_beacon_id = eyeData.EYE_id;
 
-    if (temp_beacon_id === null) {
-      temp_beacon_id = `no encontrado: ${eyeData.EYE_mac_address || 'NULL'}`;
-    }
+      const esPuerta = await esTemperatura(mac);
 
-    const esPuerta = await esTemperatura(eyeData.EYE_mac_address);
-
-    if (!esPuerta) {
-      await insertarDatosSegunIdent(newData.ident, newData, eyeData, temp_beacon_id);
+      if (!esPuerta) {
+        await insertarDatosSegunIdent(newData.ident, newData, eyeData, temp_beacon_id);
+      }
     }
   }
 }

@@ -10,9 +10,15 @@ async function procesarDatosGPS(newData) {
     // Paso 2: Registrar temperaturas
     await triggerGPSRegistroTemperatura(newData);
 
-    // Paso 3: Actualizar estado de puertas
-    // Nota: GPS_DATa_To_Door_Status espera ble_beacons y timestamp como argumentos separados
-    await GPS_DATa_To_Door_Status(JSON.parse(newData.ble_beacons), newData.timestamp);
+    // Paso 3: Actualizar estado de puertas solo si event_enum es 11317
+    if (newData.event_enum === 11317) {
+      // Nota: GPS_DATa_To_Door_Status ahora espera ble_beacons como un array
+      const bleBeacons = JSON.parse(newData.ble_beacons);
+      await GPS_DATa_To_Door_Status(bleBeacons, newData.timestamp);
+      console.log('Actualización de estado de puertas completada');
+    } else {
+      console.log('Saltando actualización de estado de puertas (event_enum no es 11317)');
+    }
 
     console.log('Procesamiento de datos GPS completado con éxito');
   } catch (error) {
@@ -20,4 +26,4 @@ async function procesarDatosGPS(newData) {
   }
 }
 
-module.exports = { procesarDatosGPS };  
+module.exports = { procesarDatosGPS };

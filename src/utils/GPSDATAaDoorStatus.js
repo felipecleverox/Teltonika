@@ -1,13 +1,54 @@
 const mysql = require("mysql2/promise");
 const ddbb_data = require('../../config/ddbb.json');
 
+const pool = mysql.createPool({
+  host: ddbb_data.host,
+  user: ddbb_data.user,
+  password: ddbb_data.password,
+  database: ddbb_data.database,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
+
+async function obtenerMacAddressesDeBaseDeDatos() {
+  const connection = await pool.getConnection();
+  try {
+    const [rows] = await connection.query("SELECT mac FROM beacons");
+    return rows.map(row => row.mac);
+  } catch (error) {
+    console.error('Error al obtener MAC addresses de la base de datos:', error);
+    return [];
+  } finally {
+    connection.release();
+  }
+}
+
+async function obtenerMacAddress(input_mac) {
+  if (!input_mac || typeof input_mac !== 'string') {
+    console.warn('Datos inválidos para obtener MAC address:', input_mac);
+    return null;
+  }
+
+  const macAddresses = await obtenerMacAddressesDeBaseDeDatos();
+
+  for (let mac of macAddresses) {
+    if (input_mac.includes(mac)) {
+      return mac;
+    }
+  }
+
+  console.warn('No se encontró una MAC address válida en:', input_mac);
+  return null;
+}
+
 async function GPS_DATa_To_Door_Status(ble_beacons, timestamp) {
   if (!Array.isArray(ble_beacons) || ble_beacons.length === 0) {
     console.warn('ble_beacons is not an array or is empty:', ble_beacons);
     return;
   }
 
-  let mac_address = obtenerMacAddress(ble_beacons);
+  let mac_address = await obtenerMacAddress(JSON.stringify(ble_beacons));
   if (!mac_address) {
     console.warn('No se pudo obtener mac_address');
     return;
@@ -79,14 +120,6 @@ async function obtenerTemperatura(inputs) {
   return inputs[0].temperature;
 }
 
-function obtenerMacAddress(input_mac) {
-  if (!input_mac || input_mac.length === 0) {
-    console.warn('Datos inválidos para obtener MAC address:', input_mac);
-    return null;
-  }
-  return input_mac[0]['mac.address'] || null;
-}
-
 async function obtenerEsPuerta(mac_address) {
   if (!mac_address) {
     console.warn('MAC address inválida para obtener esPuerta');
@@ -107,16 +140,6 @@ async function obtenerEsPuerta(mac_address) {
     connection.release();
   }
 }
-
-const pool = mysql.createPool({
-  host: ddbb_data.host,
-  user: ddbb_data.user,
-  password: ddbb_data.password,
-  database: ddbb_data.database,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
 
 async function fromUnixTime(tiempo) {
   const date = new Date(tiempo * 1000);
