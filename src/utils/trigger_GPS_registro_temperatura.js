@@ -17,20 +17,32 @@ async function triggerGPSRegistroTemperatura(newData) {
   try {
     connection = await pool.getConnection();
 
-    if (!newData || !newData.ble_beacons) {
-      console.error('Datos de entrada inválidos:', newData);
+    if (!newData || typeof newData.ble_beacons !== 'string') {
+      console.error('Datos de entrada inválidos para triggerGPSRegistroTemperatura:', newData);
       return;
     }
 
-    const jsonData = JSON.parse(newData.ble_beacons);
-    const arrayLength = jsonData.length;
+    let jsonData;
+    try {
+      jsonData = JSON.parse(newData.ble_beacons);
+    } catch (error) {
+      console.error('Error al parsear ble_beacons en triggerGPSRegistroTemperatura:', error);
+      console.log('ble_beacons raw:', newData.ble_beacons);
+      return;
+    }
 
-    for (let counter = 0; counter < arrayLength; counter++) {
-      const jsonElement = jsonData[counter];
+    if (!Array.isArray(jsonData)) {
+      console.error('ble_beacons no es un array en triggerGPSRegistroTemperatura:', jsonData);
+      return;
+    }
+
+    console.log('Procesando', jsonData.length, 'beacons');
+
+    for (let jsonElement of jsonData) {
       const temperatura = jsonElement.temperature;
 
       if (temperatura !== null && temperatura !== undefined) {
-        await connection.execute('INSERT INTO process_log(message) VALUES(?)', [temperatura.toString()]);
+        await connection.execute('INSERT INTO process_log(message) VALUES(?)', [`Temperatura encontrada: ${temperatura}`]);
 
         let macAddress = jsonElement['mac.address'];
         let beaconId, esTemperatura;
@@ -45,7 +57,7 @@ async function triggerGPSRegistroTemperatura(newData) {
             esTemperatura = rows[0].esTemperatura;
           }
           await connection.execute('INSERT INTO process_log(message) VALUES(?)', 
-            [`%${macAddress}% esTemperatura:_${esTemperatura}`]);
+            [`Beacon encontrado: ${macAddress}, esTemperatura: ${esTemperatura}`]);
         } else {
           beaconId = jsonElement.id;
           if (beaconId) {
@@ -57,7 +69,7 @@ async function triggerGPSRegistroTemperatura(newData) {
               esTemperatura = rows[0].esTemperatura;
             }
             await connection.execute('INSERT INTO process_log(message) VALUES(?)', 
-              [`%${beaconId}% esTemperatura:_${esTemperatura}`]);
+              [`Beacon encontrado por ID: ${beaconId}, esTemperatura: ${esTemperatura}`]);
           } else {
             console.warn('Beacon sin ID ni MAC address encontrado:', jsonElement);
             continue;
@@ -71,7 +83,7 @@ async function triggerGPSRegistroTemperatura(newData) {
             [beaconId, timestamp, temperatura]
           );
           await connection.execute('INSERT INTO process_log(message) VALUES(?)', 
-            [`INSERT INTO teltonika.registro_temperaturas(beacon_id, timestamp, temperatura) VALUES (${beaconId}, ${timestamp}, ${temperatura})`]);
+            [`Temperatura registrada: beacon_id=${beaconId}, timestamp=${timestamp}, temperatura=${temperatura}`]);
         }
       }
     }
@@ -81,6 +93,8 @@ async function triggerGPSRegistroTemperatura(newData) {
 
   } catch (error) {
     console.error('Error en triggerGPSRegistroTemperatura:', error);
+    await connection.execute('INSERT INTO process_log(message) VALUES(?)', 
+      [`Error en triggerGPSRegistroTemperatura: ${error.message}`]);
   } finally {
     if (connection) {
       await connection.release();
