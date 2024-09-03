@@ -62,3 +62,9 @@
     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
 2024-09-03 19:19:04.476 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-09-03 20:53:45.023 [info] [<unknown>][cdfff96e][ManagementConnection] The client has disconnected gracefully, so the connection will be disposed.
+2024-09-03 20:54:30.041 [info] [<unknown>][99aa3182][ManagementConnection] New connection established.
+2024-09-03 20:54:30.049 [info] [<unknown>][7a7274aa][ExtensionHostConnection] New connection established.
+2024-09-03 20:54:30.054 [info] [<unknown>][7a7274aa][ExtensionHostConnection] <353146> Launched Extension Host Process.
+2024-09-03 20:55:05.599 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)

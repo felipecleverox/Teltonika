@@ -100,3 +100,6 @@
 2024-09-03 20:35:49.285 [info] ExtensionService#_doActivateExtension vscode.configuration-editing, startup: false, activationEvent: 'onLanguage:json'
 2024-09-03 20:35:49.285 [info] ExtensionService#_doActivateExtension vscode.json-language-features, startup: false, activationEvent: 'onLanguage:json'
 2024-09-03 20:35:56.715 [info] ExtensionService#_doActivateExtension vscode.html-language-features, startup: false, activationEvent: 'onLanguage:html'
+2024-09-03 20:51:24.348 [error] Actual command not found, wanted to execute git.sync /3450 __vscf81a12a1-ae02-4987-8f5c-937c905363b0 undefined
+2024-09-03 20:51:24.348 [error] Actual command not found, wanted to execute git.sync /3450 __vscf81a12a1-ae02-4987-8f5c-937c905363b0 undefined
+2024-09-03 20:51:24.348 [error] Actual command not found, wanted to execute git.checkout /3449 __vscf81a12a1-ae02-4987-8f5c-937c905363b0 undefined

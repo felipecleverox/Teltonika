@@ -319,3 +319,17 @@ git add .
 git commit -m "creada rama storage"
 git commit -a -m "creada rama storage"
 git push
+cd servicios/
+npm run start-all
+npm install moment-timezone
+npm run start-all
+clear
+npm run start-all
+clear
+npm run start-all
+npm install moment
+npm run start-all
+cd servicios/
+git status
+git commit -m "desde terimnal"
+git push
