@@ -1,0 +1,110 @@
+*
+* Visual Studio Code Server
+*
+* By using the software, you agree to
+* the Visual Studio Code Server License Terms (https://aka.ms/vscode-server-license) and
+* the Microsoft Privacy Statement (https://privacy.microsoft.com/en-US/privacystatement).
+*
+Server bound to /tmp/code-2bf87a54-ff93-4b10-af6a-03fd24612eb2
+Extension host agent listening on /tmp/code-2bf87a54-ff93-4b10-af6a-03fd24612eb2
+
+[00:26:47] 
+
+
+
+
+[00:26:48] Extension host agent started.
+[00:26:48] [<unknown>][16fb421d][ExtensionHostConnection] New connection established.
+[00:26:48] [<unknown>][e974cb23][ManagementConnection] New connection established.
+[00:26:48] [<unknown>][16fb421d][ExtensionHostConnection] <1434> Launched Extension Host Process.
+rejected promise not handled within 1 second: Error: connect ECONNREFUSED 127.0.0.1:3000
+stack trace: Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+[00:26:52] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16) {
+  errno: -111,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 3000
+}
+New EH opened, aborting shutdown
+[00:31:48] New EH opened, aborting shutdown
+rejected promise not handled within 1 second: Error: connect ECONNREFUSED 127.0.0.1:3000
+stack trace: Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+[13:28:23] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16) {
+  errno: -111,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 3000
+}
+rejected promise not handled within 1 second: Error: connect ECONNREFUSED 127.0.0.1:3000
+stack trace: Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+[13:36:30] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16) {
+  errno: -111,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 3000
+}
+rejected promise not handled within 1 second: Error: connect ECONNREFUSED 127.0.0.1:3000
+stack trace: Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+[13:36:31] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16) {
+  errno: -111,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 3000
+}
+rejected promise not handled within 1 second: Error: connect ECONNREFUSED 127.0.0.1:3000
+stack trace: Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+[13:43:48] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16) {
+  errno: -111,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 3000
+}
+rejected promise not handled within 1 second: Error: connect ECONNREFUSED 127.0.0.1:3000
+stack trace: Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+[13:43:49] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16) {
+  errno: -111,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 3000
+}
+rejected promise not handled within 1 second: Error: connect ECONNREFUSED 127.0.0.1:3000
+stack trace: Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+[13:51:07] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16) {
+  errno: -111,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 3000
+}
+rejected promise not handled within 1 second: Error: connect ECONNREFUSED 127.0.0.1:3000
+stack trace: Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+[13:51:08] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16) {
+  errno: -111,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 3000
+}
+[16:19:43] [<unknown>][e974cb23][ManagementConnection] The client has disconnected, will wait for reconnection 3h before disposing...

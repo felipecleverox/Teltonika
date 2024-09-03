@@ -1,0 +1,48 @@
+.dashboard-temperatura {
+    padding: 20px;
+  }
+  
+  .temperature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+  
+  .temperature-card {
+    background-color: #000;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .temperature-display {
+    font-family: 'Digital-7', sans-serif; /* Asegúrate de incluir esta fuente */
+    color: #ff0000;
+    font-size: 3rem;
+    margin-bottom: 10px;
+  }
+  
+  .temperature-value {
+    font-weight: bold;
+  }
+  
+  .temperature-unit {
+    font-size: 2rem;
+    margin-left: 5px;
+  }
+  
+  .temperature-info {
+    color: #fff;
+    font-size: 0.9rem;
+  }
+  
+  .camera-name {
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  .timestamp {
+    display: block;
+    font-size: 0.8rem;
+    color: #aaa;
+  }

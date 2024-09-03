@@ -1,0 +1,77 @@
+2024-08-29 02:04:56.453 [info] 
+
+
+
+
+2024-08-29 02:04:56.463 [info] Extension host agent started.
+2024-08-29 02:04:56.504 [info] [<unknown>][8d6f9f55][ExtensionHostConnection] New connection established.
+2024-08-29 02:04:56.510 [info] [<unknown>][f7394d15][ManagementConnection] New connection established.
+2024-08-29 02:04:56.564 [info] [<unknown>][8d6f9f55][ExtensionHostConnection] <2013> Launched Extension Host Process.
+2024-08-29 02:04:58.777 [error] CodeExpectedError: Could not find pty on pty host
+    at k.U (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/out/vs/platform/terminal/node/ptyHostMain.js:54:30837)
+    at k.updateTitle (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/out/vs/platform/terminal/node/ptyHostMain.js:54:26037)
+    at D.<computed> (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/out/vs/platform/terminal/node/ptyHostMain.js:54:21308)
+    at Object.call (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/out/vs/platform/terminal/node/ptyHostMain.js:36:5378)
+    at c.s (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/out/vs/platform/terminal/node/ptyHostMain.js:34:5506)
+    at c.q (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/out/vs/platform/terminal/node/ptyHostMain.js:34:4947)
+    at w.value (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/out/vs/platform/terminal/node/ptyHostMain.js:34:4247)
+    at i.B (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/out/vs/platform/terminal/node/ptyHostMain.js:30:741)
+    at i.fire (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/out/vs/platform/terminal/node/ptyHostMain.js:30:958)
+    at process.$e (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/out/vs/platform/terminal/node/ptyHostMain.js:25:27395)
+    at process.emit (node:events:519:28)
+    at emit (node:internal/child_process:951:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+2024-08-29 02:05:04.767 [info] [<unknown>][f7394d15][ManagementConnection] The client has disconnected gracefully, so the connection will be disposed.
+2024-08-29 02:05:35.128 [info] [<unknown>][50b1b2a6][ManagementConnection] New connection established.
+2024-08-29 02:05:35.133 [info] [<unknown>][1fdbe2f2][ExtensionHostConnection] New connection established.
+2024-08-29 02:05:35.136 [info] [<unknown>][1fdbe2f2][ExtensionHostConnection] <2153> Launched Extension Host Process.
+2024-08-29 02:06:16.425 [error] Error: connect ECONNREFUSED 127.0.0.1:1337
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 02:06:16.427 [error] Error: connect ECONNREFUSED 127.0.0.1:1337
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 02:06:16.668 [error] Error: connect ECONNREFUSED 127.0.0.1:1337
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 02:09:56.464 [info] New EH opened, aborting shutdown
+2024-08-29 02:09:56.465 [error] Error: Unexpected SIGPIPE
+    at process.<anonymous> (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/out/vs/server/node/server.main.js:190:6369)
+    at process.emit (node:events:531:35)
+2024-08-29 02:10:35.322 [info] [<unknown>][8d6f9f55][ExtensionHostConnection] <2013> Extension Host Process exited with code: 0, signal: null.
+2024-08-29 13:27:46.588 [error] Error: connect ECONNREFUSED 127.0.0.1:1337
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 13:27:46.848 [error] Error: connect ECONNREFUSED 127.0.0.1:1337
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 13:27:51.658 [error] Error: connect ECONNREFUSED 127.0.0.1:1337
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 13:27:51.661 [error] Error: connect ECONNREFUSED 127.0.0.1:1337
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 13:27:51.901 [error] Error: connect ECONNREFUSED 127.0.0.1:1337
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 13:39:44.811 [warning] [File Watcher (parcel)] started ignoring events due to too many file change events at once (incoming: 39155, most recent change: /home/servicios/servicios/node_modules). Use 'files.watcherExclude' setting to exclude folders with lots of changing files (e.g. compilation output).
+2024-08-29 13:40:07.681 [warning] [File Watcher (parcel)] started ignoring events due to too many file change events at once (incoming: 44420, most recent change: /home/servicios/servicios/node_modules). Use 'files.watcherExclude' setting to exclude folders with lots of changing files (e.g. compilation output).
+2024-08-29 13:41:34.454 [warning] [File Watcher (parcel)] started ignoring events due to too many file change events at once (incoming: 44420, most recent change: /home/servicios/servicios/node_modules). Use 'files.watcherExclude' setting to exclude folders with lots of changing files (e.g. compilation output).
+2024-08-29 13:45:59.766 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 13:58:49.371 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 14:04:32.197 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 14:04:39.736 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 14:24:40.722 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 14:27:22.760 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 14:31:24.795 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 14:40:18.349 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 15:05:31.454 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 15:06:43.279 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 15:09:33.620 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 15:10:43.041 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)
+2024-08-29 15:11:00.836 [error] Error: connect ECONNREFUSED 127.0.0.1:3000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1606:16)

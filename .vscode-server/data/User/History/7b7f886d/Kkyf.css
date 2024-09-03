@@ -1,0 +1,20 @@
+.temperature-display {
+  background-color: #000;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.temperature-channel {
+  margin-top: 10px;
+  font-size: 1.2em;
+  color: #ccc;
+}
+
+.temperature-display-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 1200px;
+}

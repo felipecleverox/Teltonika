@@ -1,0 +1,6 @@
+{
+    "API_KEY" : "",
+    "ACCOUNT_KEY" : "2bb378b1b4e0b210b3974a02b9d5b4d0 ",
+    "TOKEN_FILE" : "./config/token_id.txt",
+    "EXCLUDED_CHANNELS": ["80005"]
+}

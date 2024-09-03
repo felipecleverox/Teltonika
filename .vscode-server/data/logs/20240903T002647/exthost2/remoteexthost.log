@@ -1,0 +1,56 @@
+2024-09-03 17:15:50.405 [info] Extension host with pid 177325 started
+2024-09-03 17:15:50.405 [error] Error: EEXIST: file already exists, open '/home/servicios/.vscode-server/data/User/workspaceStorage/fc0cbc0939dd42c9cf9fb917b040e657/vscode.lock'
+2024-09-03 17:15:50.409 [info] Lock '/home/servicios/.vscode-server/data/User/workspaceStorage/fc0cbc0939dd42c9cf9fb917b040e657/vscode.lock': Could not acquire lock, checking if the file is stale.
+2024-09-03 17:15:50.421 [info] Lock '/home/servicios/.vscode-server/data/User/workspaceStorage/fc0cbc0939dd42c9cf9fb917b040e657/vscode.lock': The lock does not look stale, elapsed: 581 ms, giving up.
+2024-09-03 17:15:50.423 [error] Error: EEXIST: file already exists, open '/home/servicios/.vscode-server/data/User/workspaceStorage/fc0cbc0939dd42c9cf9fb917b040e657-1/vscode.lock'
+2024-09-03 17:15:50.425 [info] Lock '/home/servicios/.vscode-server/data/User/workspaceStorage/fc0cbc0939dd42c9cf9fb917b040e657-1/vscode.lock': Could not acquire lock, checking if the file is stale.
+2024-09-03 17:15:50.427 [info] Lock '/home/servicios/.vscode-server/data/User/workspaceStorage/fc0cbc0939dd42c9cf9fb917b040e657-1/vscode.lock': The pid 944239 appears to be gone.
+2024-09-03 17:15:50.427 [info] Lock '/home/servicios/.vscode-server/data/User/workspaceStorage/fc0cbc0939dd42c9cf9fb917b040e657-1/vscode.lock': Deleting a stale lock.
+2024-09-03 17:15:50.444 [info] Lock '/home/servicios/.vscode-server/data/User/workspaceStorage/fc0cbc0939dd42c9cf9fb917b040e657-1/vscode.lock': Lock acquired.
+2024-09-03 17:15:50.748 [info] ExtensionService#_doActivateExtension vscode.tunnel-forwarding, startup: false, activationEvent: 'onTunnel'
+2024-09-03 17:15:50.749 [info] ExtensionService#_doActivateExtension vscode.emmet, startup: false, activationEvent: 'onLanguage'
+2024-09-03 17:15:50.749 [info] ExtensionService#_doActivateExtension vscode.typescript-language-features, startup: false, activationEvent: 'onLanguage:javascript'
+2024-09-03 17:15:51.230 [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*', root cause: vscode.git
+2024-09-03 17:15:51.236 [info] ExtensionService#_doActivateExtension vscode.npm, startup: true, activationEvent: 'workspaceContains:package.json'
+2024-09-03 17:15:51.732 [info] ExtensionService#_doActivateExtension vscode.git, startup: true, activationEvent: '*'
+2024-09-03 17:15:51.732 [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+2024-09-03 17:15:52.461 [info] Eager extensions activated
+2024-09-03 17:15:52.470 [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: false, activationEvent: 'onStartupFinished'
+2024-09-03 17:15:52.470 [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+2024-09-03 17:49:39.569 [info] ExtensionService#_doActivateExtension vscode.css-language-features, startup: false, activationEvent: 'onLanguage:css'
+2024-09-03 20:26:12.614 [warning] [Decorations] CAPPING events from decorations provider vscode.git 10000
+2024-09-03 20:26:13.542 [warning] [Decorations] CAPPING events from decorations provider vscode.git 10000
+2024-09-03 20:26:14.366 [error] Error: No such branch: main.
+	at N.getBranch (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:936645)
+	at async T.retryRun (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1032124)
+	at async T.run (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1031728)
+	at async T.getBranch (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1020077)
+	at async T.getBranchBase (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1020363)
+	at async t.GitHistoryProvider.resolveHEADMergeBase (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:948043)
+	at async t.GitHistoryProvider.onDidRunGitStatus (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:941421)
+2024-09-03 20:26:14.554 [error] Error: No such branch: main.
+	at N.getBranch (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:936645)
+	at async T.retryRun (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1032124)
+	at async T.run (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1031728)
+	at async T.getBranch (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1020077)
+	at async T.getBranchBase (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1020363)
+	at async t.GitHistoryProvider.resolveHEADMergeBase (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:948043)
+	at async t.GitHistoryProvider.onDidRunGitStatus (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:941421)
+2024-09-03 20:27:09.402 [warning] [Decorations] CAPPING events from decorations provider vscode.git 10000
+2024-09-03 20:27:10.422 [error] Error: No such branch: main.
+	at N.getBranch (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:936645)
+	at async T.retryRun (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1032124)
+	at async T.run (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1031728)
+	at async T.getBranch (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1020077)
+	at async T.getBranchBase (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1020363)
+	at async t.GitHistoryProvider.resolveHEADMergeBase (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:948043)
+	at async t.GitHistoryProvider.onDidRunGitStatus (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:941421)
+2024-09-03 20:27:21.394 [warning] [Decorations] CAPPING events from decorations provider vscode.git 10000
+2024-09-03 20:27:22.405 [error] Error: No such branch: main.
+	at N.getBranch (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:936645)
+	at async T.retryRun (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1032124)
+	at async T.run (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1031728)
+	at async T.getBranch (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1020077)
+	at async T.getBranchBase (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:1020363)
+	at async t.GitHistoryProvider.resolveHEADMergeBase (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:948043)
+	at async t.GitHistoryProvider.onDidRunGitStatus (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:941421)

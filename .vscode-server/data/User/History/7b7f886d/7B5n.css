@@ -1,0 +1,82 @@
+.dashboard-temperatura {
+    padding: 20px;
+    background-color: #f0f8ff;
+  }
+  
+  .temperature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    padding: 20px;
+  }
+  
+  .temperature-card {
+    background-color: #000;
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+    position: relative;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .temperature-display {
+    font-family: 'Digital-7', sans-serif;
+    color: #ff0000;
+    font-size: 4rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+  }
+  
+  .temperature-value {
+    font-weight: bold;
+    font-size: 5rem; /* 4 veces más grande que el tamaño base */
+  }
+  
+  .temperature-unit {
+    font-size: 3rem;
+    vertical-align: super;
+  }
+  
+  .temperature-info {
+    color: #fff;
+    font-size: 1rem;
+    margin-top: auto;
+  }
+  
+  .camera-name {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  
+  .timestamp {
+    display: block;
+    font-size: 0.9rem;
+    color: #aaa;
+  }
+  
+  @media (max-width: 768px) {
+    .temperature-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .temperature-card {
+      height: 180px;
+    }
+  
+    .temperature-display {
+      font-size: 3.5rem;
+    }
+  
+    .temperature-value {
+      font-size: 4rem;
+    }
+  }

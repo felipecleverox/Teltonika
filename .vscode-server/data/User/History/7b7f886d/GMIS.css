@@ -1,0 +1,45 @@
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #f0f0f0;
+}
+
+h1 {
+    margin-bottom: 20px;
+    font-size: 2em;
+}
+
+.temperature-display-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.temperature-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #000;
+    color: #ff0000;
+    border-radius: 8px;
+    padding: 40px;
+    font-family: 'Digital-7', sans-serif;
+    min-width: 200px;
+}
+
+.temperature-value {
+    font-size: 6em;
+    margin-bottom: 20px;
+}
+
+.temperature-channel {
+    font-size: 1.2em;
+    color: #ccc;
+    margin-top: 10px;
+    text-align: center;
+}

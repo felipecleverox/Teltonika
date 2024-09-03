@@ -1,0 +1,28 @@
+.dashboard-container {
+    font-family: sans-serif;
+  }
+  
+  .temperature-display {
+    background-color: #000;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 20px; /* Espacio entre displays */
+  }
+  
+  .temperature-channel {
+    margin-top: 10px;
+    font-size: 1.2em;
+    color: #ccc;
+  }
+  
+  .temperature-date {
+    font-size: 0.8em;
+    color: #999;
+  }
+  
+  .temperature-display-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Ajustado para 13 dispositivos */
+    gap: 20px;
+  }

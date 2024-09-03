@@ -1,0 +1,8 @@
+{
+    "workbench.colorTheme": "Vampire Theme",
+    "git.enableSmartCommit": true,
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "remote.SSH.remotePlatform": {
+        "192.168.1.118": "linux"
+    }
+}
