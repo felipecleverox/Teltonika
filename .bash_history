@@ -302,3 +302,20 @@ git status
 git add .
 git status
 git commit -a 
+git config --global user.email "felipe.vasquez@cleverox.com"
+git config --global user.name "felipecleverox"
+cd servicios/
+git status
+git commit -a -m "desde terminal"
+git push
+git push --set-upstream remote main}
+git push --set-upstream remote main
+git push -f
+git push --set-upstream remote main -f
+git checkout "storage"
+git branch "storage"
+git checkout "storage"
+git add .
+git commit -m "creada rama storage"
+git commit -a -m "creada rama storage"
+git push
