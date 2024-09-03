@@ -295,3 +295,10 @@ npm run start-all
 npm stop
 node server.stop.js
 npm run start-all
+ls
+cd servicios/
+ls
+git status
+git add .
+git status
+git commit -a 

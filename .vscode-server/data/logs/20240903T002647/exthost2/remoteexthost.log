@@ -92,3 +92,11 @@
 	at async t.GitHistoryProvider.onDidRunGitStatus (/home/servicios/.vscode-server/cli/servers/Stable-fee1edb8d6d72a0ddff41e5f71a671c23ed924b9/server/extensions/git/dist/main.js:2:941421)
 2024-09-03 20:31:33.754 [warning] [Decorations] CAPPING events from decorations provider vscode.git 12421
 2024-09-03 20:31:34.253 [warning] [Decorations] CAPPING events from decorations provider vscode.git 2423
+2024-09-03 20:32:44.242 [warning] [Decorations] CAPPING events from decorations provider vscode.git 2423
+2024-09-03 20:32:52.586 [warning] [Decorations] CAPPING events from decorations provider vscode.git 2423
+2024-09-03 20:35:00.644 [warning] [Decorations] CAPPING events from decorations provider vscode.git 2423
+2024-09-03 20:35:49.284 [info] ExtensionService#_doActivateExtension vscode.extension-editing, startup: false, activationEvent: 'onLanguage:markdown'
+2024-09-03 20:35:49.284 [info] ExtensionService#_doActivateExtension vscode.markdown-language-features, startup: false, activationEvent: 'onLanguage:markdown'
+2024-09-03 20:35:49.285 [info] ExtensionService#_doActivateExtension vscode.configuration-editing, startup: false, activationEvent: 'onLanguage:json'
+2024-09-03 20:35:49.285 [info] ExtensionService#_doActivateExtension vscode.json-language-features, startup: false, activationEvent: 'onLanguage:json'
+2024-09-03 20:35:56.715 [info] ExtensionService#_doActivateExtension vscode.html-language-features, startup: false, activationEvent: 'onLanguage:html'
