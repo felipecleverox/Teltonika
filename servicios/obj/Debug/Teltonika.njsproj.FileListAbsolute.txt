@@ -1,0 +1,3 @@
+C:\Users\cleve\source\repos\Teltonika\Teltonika\obj\Debug\Teltonika.njsproj.AssemblyReference.cache
+C:\Users\cleve\source\repos\Teltonika\Teltonika\obj\Debug\Teltonika.njsproj.CoreCompileInputs.cache
+C:\Users\cleve\source\repos\Teltonika\Teltonika\bin\Microsoft.NodejsTools.WebRole.dll

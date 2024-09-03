@@ -1,0 +1,13 @@
+node_modules
+/Respaldo al 6 de mayo am
+.idea/misc.xml
+.idea/modules.xml
+.idea/Teltonika.iml
+.idea/vcs.xml
+config/config.json
+config/config.json
+config/config.json
+config/config.json
+/config
+token_id.txt
+src/utils/paso.js
