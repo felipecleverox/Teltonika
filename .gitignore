@@ -5,9 +5,6 @@ node_modules
 .idea/Teltonika.iml
 .idea/vcs.xml
 config/config.json
-config/config.json
-config/config.json
-config/config.json
 /config
 token_id.txt
 src/utils/paso.js
@@ -21,3 +18,9 @@ src/utils/paso.js
 .vscode-server/data/logs/20240903T002647/exthost3/vscode.github/GitHub.log
 .vscode-server/data/User/History/-7260770b/uyFC
 .lesshst
+/.idea/dataSources/2836b675-1d38-4c24-911e-27e5f5b7f9b7.xml
+/.idea/dataSources.local.xml
+/.idea/dataSources.xml
+/.idea/sqldialects.xml
+/.idea/dataSources/2836b675-1d38-4c24-911e-27e5f5b7f9b7/storage_v2/_src_/schema/teltonica_dev.BfSG6w.meta
+/.idea/dataSources/2836b675-1d38-4c24-911e-27e5f5b7f9b7/storage_v2/_src_/schema/teltonica_dev.BfSG6w.zip
