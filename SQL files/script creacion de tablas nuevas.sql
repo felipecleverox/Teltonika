@@ -460,6 +460,31 @@ CREATE TABLE IF NOT EXISTS `teltonica_dev`.`registro_temperatura` (
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `teltonica_dev`.`beacons_detection_status`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `sensor_readings_ubibot` (
+    `id` INT NOT NULL AUTO_INCREMENT,
+    `channel_id` INT NOT NULL,
+    `timestamp` TIMESTAMP NOT NULL,
+    `temperature` DECIMAL(5,2) NULL,
+    `humidity` INT NULL,
+    `light` INT NULL,
+    `voltage` DECIMAL(5,2) NULL,
+    `wifi_rssi` INT NULL,
+    `external_temperature` DECIMAL(5,2) NULL,
+    PRIMARY KEY (`id`),
+    INDEX `idx_channel_id` (`channel_id` ASC),
+    INDEX `idx_timestamp` (`timestamp` ASC),
+    CONSTRAINT `fk_sensor_readings_channels_ubibot`
+    FOREIGN KEY (`channel_id`)
+    REFERENCES `channels_ubibot` (`channel_id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+)
+    ENGINE = InnoDB;
+
 
 -- -----------------------------------------------------
 -- Table `teltonica_dev`.`beacons_detection_status`
