@@ -1,26 +1,24 @@
 // server.js
+// server.js
 
 // Import necessary libraries
-const express = require('express'); // Web framework for Node.js
-const cors = require('cors'); // Middleware to enable Cross-Origin Resource Sharing
-const mysql = require('mysql2/promise'); // MySQL client for Node.js with Promise support
-const moment = require('moment-timezone'); // Importar moment-timezone
-const bcrypt = require('bcrypt'); // Library to hash passwords
-const crypto = require('crypto'); // Library for cryptographic functions
-const nodemailer = require('nodemailer'); // Library to send emails
-const jwt = require('jsonwebtoken'); // Library to handle JSON Web Tokens
-const Joi = require('joi'); // New import for schema validation
+const express = require('express');
+const cors = require('cors');
+const mysql = require('mysql2/promise');
+const moment = require('moment-timezone');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+const Joi = require('joi');
 const sgMail = require('@sendgrid/mail');
 const http = require('http');
-const { Server } = require('socket.io'); // Import Socket.IO
+const { Server } = require('socket.io');
 const config = require('./config/config.json');
 const { procesarDatosUbibot } = require('./ubibot');
-const { procesarPosibleIncidencia } = require('./src/utils/control_incidencias');
-const controlIncidencias = require('./src/utils/control_incidencias');
-const { procesarDatosGPS } = require('./src/utils/dataProcesing');
+const ddbb_data = require("./config/ddbb.json");
 
-
-const intervalo_ejecucion_ubibot= 5 * 60 * 1000;
+const intervalo_ejecucion_ubibot = 5 * 60 * 1000;
 
 // Configurar SendGrid
 sgMail.setApiKey(config.email.SENDGRID_API_KEY);
@@ -29,233 +27,179 @@ sgMail.setApiKey(config.email.SENDGRID_API_KEY);
 const app = express();
 
 // Import and configure Socket.IO for real-time communication
-const server = http.createServer(app); // Create HTTP server with Express app
+const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://tnstrack.ddns.net:3000", "http://localhost:3000","http://tnstrack.ddns.net:3001", "http://localhost:3001"], // Allow both origins
+    origin: ["http://localhost:3000"],
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true
   }
 });
-// Initialize control_incidencias with Socket.IO
-controlIncidencias.init(io);
-// Configure Socket.IO connection and disconnection events
-io.on('connection', (socket) => {
-  console.log('A user connected'); // Log when a user connects
-  socket.on('disconnect', () => {
-    console.log('User disconnected'); // Log when a user disconnects
-  });
-});
 
-// Define the port to listen on, default to 1337 if not specified in environment variables
 const port = process.env.PORT || 1337;
 
-// Create a MySQL connection pool for efficient database access
 const pool = mysql.createPool({
-  host: 'localhost', // Database host
-  user: 'root', // Database user
-  password: 'admin', // Database password
-  database: 'teltonika', // Database name
-  waitForConnections: true, // Wait for connections if none are available
-  connectionLimit: 10, // Maximum number of connections in the pool
-  queueLimit: 0 // No limit on the number of queued connection requests
+  host: ddbb_data.host,
+  user: ddbb_data.user,
+  password: ddbb_data.password,
+  database: ddbb_data.database,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-// Define default position coordinates
-const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Coordinates for Santiago, Chile
+const defaultPosition = { lat: -33.4489, lng: -70.6693 };
 
-// Middleware CORS (debe estar antes de otros middleware o rutas)
 const corsOptions = {
-  origin: ['http://tnstrack.ddns.net:3000', 'http://localhost:3000','http://tnstrack.ddns.net:3001', 'http://localhost:3001'],
+  origin: ['http://localhost:3000'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
   credentials: true
 };
-
 // Define schemas for data validation
 const schemas = {
   303: { // FBM204
     typeA: Joi.object({
-      'ble.beacons': Joi.array().items(Joi.object()),
-      'channel.id': Joi.number().integer(),
-      'codec.id': Joi.number().integer(),
-      'device.id': Joi.number().integer(),
-      'device.name': Joi.string(),
-      'device.type.id': Joi.number().integer(),
-      'event.enum': Joi.number().integer(),
-      'event.priority.enum': Joi.number().integer(),
-      'ident': Joi.string(),
+      'ble_beacon': Joi.array().items(Joi.object()),
+      'device_id': Joi.number().integer(),
+      'device_name': Joi.number().integer(),
+      'device_type_id': Joi.number().integer(),
+      'event_enum': Joi.number().integer(),
+      'event_priority_enum': Joi.number().integer(),
+      'ident': Joi.number().integer(),
       'peer': Joi.string(),
-      'position.altitude': Joi.number(),
-      'position.direction': Joi.number(),
-      'position.latitude': Joi.number(),
-      'position.longitude': Joi.number(),
-      'position.satellites': Joi.number().integer(),
-      'position.speed': Joi.number(),
-      'protocol.id': Joi.number().integer(),
-      'server.timestamp': Joi.number(),
-      'timestamp': Joi.number(),
-      'battery.current': Joi.number(),
-      'battery.voltage': Joi.number(),
-      'ble.sensor.humidity.1': Joi.number().integer(),
-      'ble.sensor.magnet.status.1': Joi.boolean(),
-      'ble.sensor.temperature.1': Joi.number(),
-      'channel.id': Joi.number().integer(),
-      'codec.id': Joi.number().integer(),
-      'device.id': Joi.number().integer(),
-      'device.name': Joi.string(),
-      'device.type.id': Joi.number().integer(),
-      'engine.ignition.status': Joi.boolean(),
-      'event.priority.enum': Joi.number().integer(),
-      'external.powersource.voltage': Joi.number(),
-      'gnss.state.enum': Joi.number().integer(),
-      'gnss.status': Joi.boolean(),
-      'gsm.mcc': Joi.number().integer(),
-      'gsm.mnc': Joi.number().integer(),
-      'gsm.operator.code': Joi.string(),
-      'gsm.signal.level': Joi.number().integer(),
-      'ident': Joi.string(),
-      'movement.status': Joi.boolean(),
-      'peer': Joi.string(),
-      'position.altitude': Joi.number(),
-      'position.direction': Joi.number(),
-      'position.hdop': Joi.number(),
-      'position.latitude': Joi.number(),
-      'position.longitude': Joi.number(),
-      'position.pdop': Joi.number(),
-      'position.satellites': Joi.number().integer(),
-      'position.speed': Joi.number(),
-      'position.valid': Joi.boolean(),
-      'protocol.id': Joi.number().integer(),
-      'server.timestamp': Joi.number(),
-      'sleep.mode.enum': Joi.number().integer(),
-      'timestamp': Joi.number(),
-      'vehicle.mileage': Joi.number()
+      'altitude': Joi.number(),
+      'direction': Joi.number(),
+      'latitude': Joi.number(),
+      'longitude': Joi.number(),
+      'satellites': Joi.number().integer(),
+      'speed': Joi.number(),
+      'protocol_id': Joi.number().integer(),
+      'server_timestamp': Joi.date(),
+      'timestamp': Joi.date(),
+      'battery_level': Joi.number().integer(),
+      'battery_voltage': Joi.number(),
+      'battery_current': Joi.number(),
+      'ble_sensor_humidity_1': Joi.number().integer(),
+      'ble_sensor_humidity_2': Joi.number().integer(),
+      'ble_sensor_humidity_3': Joi.number().integer(),
+      'ble_sensor_humidity_4': Joi.number().integer(),
+      'ble_sensor_low_battery_status_1': Joi.boolean(),
+      'ble_sensor_low_battery_status_2': Joi.boolean(),
+      'ble_sensor_magnet_status_1': Joi.boolean(),
+      'ble_sensor_magnet_status_2': Joi.boolean(),
+      'ble_sensor_magnet_count_1': Joi.number().integer(),
+      'ble_sensor_magnet_count_2': Joi.number().integer(),
+      'ble_sensor_temperature_1': Joi.number(),
+      'ble_sensor_temperature_2': Joi.number(),
+      'ble_sensor_temperature_3': Joi.number(),
+      'ble_sensor_temperature_4': Joi.number(),
+      'bluetooth_state_enum': Joi.number().integer(),
+      'gnss_state_enum': Joi.number().integer(),
+      'gnss_status': Joi.boolean(),
+      'gnss_sleep_mode_status': Joi.boolean(),
+      'gsm_mcc': Joi.number().integer(),
+      'gsm_mnc': Joi.number().integer(),
+      'gsm_operator_code': Joi.string(),
+      'gsm_signal_level': Joi.number().integer(),
+      'movement_status': Joi.boolean(),
+      'position_hdop': Joi.number(),
+      'position_valid': Joi.boolean(),
+      'position_fix_age': Joi.number().integer(),
+      'sleep_mode_enum': Joi.number().integer(),
+      'custom_param_116': Joi.number().integer(),
+      'engine_ignition_status': Joi.boolean(),
+      'external_powersource_voltage': Joi.number(),
+      'vehicle_mileage': Joi.number(),
     }).unknown(true)
   },
   507: { // GH5200
     typeA: Joi.object({
-      'ble.beacons': Joi.array().items(Joi.object()),
-      'channel.id': Joi.number().integer(),
-      'codec.id': Joi.number().integer(),
-      'device.id': Joi.number().integer(),
-      'device.name': Joi.string(),
-      'device.type.id': Joi.number().integer().valid(507),
-      'event.enum': Joi.number().integer(),
-      'event.priority.enum': Joi.number().integer(),
-      'ident': Joi.string(),
+      'ble_beacon': Joi.array().items(Joi.object()),
+      'device_id': Joi.number().integer(),
+      'device_name': Joi.number().integer(),
+      'device_type_id': Joi.number().integer().valid(507),
+      'event_enum': Joi.number().integer(),
+      'event_priority_enum': Joi.number().integer(),
+      'ident': Joi.number().integer(),
       'peer': Joi.string(),
-      'position.altitude': Joi.number(),
-      'position.direction': Joi.number(),
-      'position.satellites': Joi.number().integer(),
-      'position.speed': Joi.number(),
-      'protocol.id': Joi.number().integer(),
-      'server.timestamp': Joi.number(),
-      'timestamp': Joi.number(),
-      'battery.level': Joi.number().integer(),
-      'battery.voltage': Joi.number(),
-      'ble.sensor.humidity.1': Joi.number().integer(),
-      'ble.sensor.humidity.2': Joi.number().integer(),
-      'ble.sensor.humidity.3': Joi.number().integer(),
-      'ble.sensor.humidity.4': Joi.number().integer(),
-      'ble.sensor.low.battery.status.1': Joi.boolean(),
-      'ble.sensor.magnet.count.1': Joi.number().integer(),
-      'ble.sensor.magnet.status.1': Joi.boolean(),
-      'ble.sensor.temperature.1': Joi.number(),
-      'ble.sensor.temperature.2': Joi.number(),
-      'ble.sensor.temperature.3': Joi.number(),
-      'ble.sensor.temperature.4': Joi.number(),
-      'bluetooth.state.enum': Joi.number().integer(),
-      'channel.id': Joi.number().integer(),
-      'codec.id': Joi.number().integer(),
-      'custom.param.116': Joi.number().integer(),
-      'device.id': Joi.number().integer(),
-      'device.name': Joi.string(),
-      'device.type.id': Joi.number().integer().valid(507),
-      'event.priority.enum': Joi.number().integer(),
-      'gnss.sleep.mode.status': Joi.boolean(),
-      'gnss.state.enum': Joi.number().integer(),
-      'gsm.mcc': Joi.number().integer(),
-      'gsm.mnc': Joi.number().integer(),
-      'gsm.operator.code': Joi.string(),
-      'gsm.signal.level': Joi.number().integer(),
-      'ident': Joi.string(),
-      'movement.status': Joi.boolean(),
-      'peer': Joi.string(),
-      'position.altitude': Joi.number(),
-      'position.direction': Joi.number(),
-      'position.fix.age': Joi.number().integer(),
-      'position.hdop': Joi.number(),
-      'position.latitude': Joi.number(),
-      'position.longitude': Joi.number(),
-      'position.pdop': Joi.number(),
-      'position.satellites': Joi.number().integer(),
-      'position.speed': Joi.number(),
-      'protocol.id': Joi.number().integer(),
-      'server.timestamp': Joi.number(),
-      'sleep.mode.enum': Joi.number().integer(),
-      'timestamp': Joi.number()
+      'altitude': Joi.number(),
+      'direction': Joi.number(),
+      'latitude': Joi.number(),
+      'longitude': Joi.number(),
+      'satellites': Joi.number().integer(),
+      'speed': Joi.number(),
+      'protocol_id': Joi.number().integer(),
+      'server_timestamp': Joi.date(),
+      'timestamp': Joi.date(),
+      'battery_level': Joi.number().integer(),
+      'battery_voltage': Joi.number(),
+      'ble_sensor_humidity_1': Joi.number().integer(),
+      'ble_sensor_humidity_2': Joi.number().integer(),
+      'ble_sensor_humidity_3': Joi.number().integer(),
+      'ble_sensor_humidity_4': Joi.number().integer(),
+      'ble_sensor_low_battery_status_1': Joi.boolean(),
+      'ble_sensor_magnet_status_1': Joi.boolean(),
+      'ble_sensor_magnet_count_1': Joi.number().integer(),
+      'ble_sensor_temperature_1': Joi.number(),
+      'ble_sensor_temperature_2': Joi.number(),
+      'ble_sensor_temperature_3': Joi.number(),
+      'ble_sensor_temperature_4': Joi.number(),
+      'bluetooth_state_enum': Joi.number().integer(),
+      'gnss_state_enum': Joi.number().integer(),
+      'gnss_sleep_mode_status': Joi.boolean(),
+      'gsm_mcc': Joi.number().integer(),
+      'gsm_mnc': Joi.number().integer(),
+      'gsm_operator_code': Joi.string(),
+      'gsm_signal_level': Joi.number().integer(),
+      'movement_status': Joi.boolean(),
+      'position_hdop': Joi.number(),
+      'position_fix_age': Joi.number().integer(),
+      'sleep_mode_enum': Joi.number().integer(),
+      'custom_param_116': Joi.number().integer(),
     }).unknown(true)
   },
-  
   508: { // TMT250
     typeA: Joi.object({
-      'ble.beacons': Joi.array().items(Joi.object()),
-      'channel.id': Joi.number().integer(),
-      'codec.id': Joi.number().integer(),
-      'device.id': Joi.number().integer(),
-      'device.name': Joi.string(),
-      'device.type.id': Joi.number().integer().valid(508),
-      'event.enum': Joi.number().integer(),
-      'event.priority.enum': Joi.number().integer(),
-      'ident': Joi.string(),
+      'ble_beacon': Joi.array().items(Joi.object()),
+      'device_id': Joi.number().integer(),
+      'device_name': Joi.number().integer(),
+      'device_type_id': Joi.number().integer().valid(508),
+      'event_enum': Joi.number().integer(),
+      'event_priority_enum': Joi.number().integer(),
+      'ident': Joi.number().integer(),
       'peer': Joi.string(),
-      'position.altitude': Joi.number(),
-      'position.direction': Joi.number(),
-      'position.satellites': Joi.number().integer(),
-      'position.speed': Joi.number(),
-      'protocol.id': Joi.number().integer(),
-      'server.timestamp': Joi.number(),
-      'timestamp': Joi.number(),
-      'battery.level': Joi.number().integer(),
-      'battery.voltage': Joi.number(),
-      'ble.sensor.humidity.1': Joi.number().integer(),
-      'ble.sensor.low.battery.status.1': Joi.boolean(),
-      'ble.sensor.magnet.count.1': Joi.number().integer(),
-      'ble.sensor.magnet.status.1': Joi.boolean(),
-      'ble.sensor.temperature.1': Joi.number(),
-      'channel.id': Joi.number().integer(),
-      'codec.id': Joi.number().integer(),
-      'custom.param.116': Joi.number().integer(),
-      'device.id': Joi.number().integer(),
-      'device.name': Joi.string(),
-      'device.type.id': Joi.number().integer().valid(508),
-      'event.priority.enum': Joi.number().integer(),
-      'gnss.sleep.mode.status': Joi.boolean(),
-      'gnss.state.enum': Joi.number().integer(),
-      'gsm.mcc': Joi.number().integer(),
-      'gsm.mnc': Joi.number().integer(),
-      'gsm.operator.code': Joi.string(),
-      'gsm.signal.level': Joi.number().integer(),
-      'ident': Joi.string(),
-      'movement.status': Joi.boolean(),
-      'peer': Joi.string(),
-      'position.altitude': Joi.number(),
-      'position.direction': Joi.number(),
-      'position.hdop': Joi.number(),
-      'position.pdop': Joi.number(),
-      'position.satellites': Joi.number().integer(),
-      'position.speed': Joi.number(),
-      'protocol.id': Joi.number().integer(),
-      'server.timestamp': Joi.number(),
-      'sleep.mode.enum': Joi.number().integer(),
-      'timestamp': Joi.number()
+      'altitude': Joi.number(),
+      'direction': Joi.number(),
+      'latitude': Joi.number(),
+      'longitude': Joi.number(),
+      'satellites': Joi.number().integer(),
+      'speed': Joi.number(),
+      'protocol_id': Joi.number().integer(),
+      'server_timestamp': Joi.date(),
+      'timestamp': Joi.date(),
+      'battery_level': Joi.number().integer(),
+      'battery_voltage': Joi.number(),
+      'ble_sensor_humidity_1': Joi.number().integer(),
+      'ble_sensor_low_battery_status_1': Joi.boolean(),
+      'ble_sensor_magnet_status_1': Joi.boolean(),
+      'ble_sensor_magnet_count_1': Joi.number().integer(),
+      'ble_sensor_temperature_1': Joi.number(),
+      'gnss_sleep_mode_status': Joi.boolean(),
+      'gnss_state_enum': Joi.number().integer(),
+      'gsm_mcc': Joi.number().integer(),
+      'gsm_mnc': Joi.number().integer(),
+      'gsm_operator_code': Joi.string(),
+      'gsm_signal_level': Joi.number().integer(),
+      'movement_status': Joi.boolean(),
+      'position_hdop': Joi.number(),
+      'sleep_mode_enum': Joi.number().integer(),
+      'custom_param_116': Joi.number().integer(),
     }).unknown(true)
   }
 };
-
 // Función para ejecutar el proceso de Ubibot
 async function ejecutarProcesoUbibot() {
   try {
@@ -267,10 +211,8 @@ async function ejecutarProcesoUbibot() {
   }
 }
 // Ejecutar el proceso de Ubibot inmediatamente al iniciar el servidor
-ejecutarProcesoUbibot();
+ejecutarProcesoUbibot().then(() => setInterval(ejecutarProcesoUbibot,intervalo_ejecucion_ubibot));
 
-// Programar la ejecución del proceso de Ubibot cada 5 minutos
-const intervaloDatos = setInterval(ejecutarProcesoUbibot,intervalo_ejecucion_ubibot);
 
 // Manejador para detener el intervalo si es necesario
 process.on('SIGINT', () => {
@@ -284,10 +226,10 @@ app.get('/api/ubibot-status', (req, res) => {
 });
 // Nodemailer configuration
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: config.email_transporter.service,
   auth: {
-    user: 'felipe@thenextsecurity.cl',
-    pass: '9516npth8913tqm.'
+    user: config.email_transporter.user,
+    pass: config.email_transporter.pass
   }
 });
 // Agregar esta función de ayuda al principio del archivo
@@ -303,20 +245,25 @@ app.use(express.urlencoded({ extended: false })); // Parse URL-encoded request b
 
 
 // Helper function to get sector name based on beacon ID
-const getSector = (beaconId) => {
-  switch (beaconId) {
-    case '0C403019-61C7-55AA-B7EA-DAC30C720055':
-      return 'E/S Bodega'; // Return sector name for specific beacon ID
-    case 'E9EB8F18-61C7-55AA-9496-3AC30C720055':
-      return 'Farmacia'; // Return sector name for specific beacon ID
-    case 'F7826DA6-BC5B-71E0-893E-4B484D67696F':
-      return 'Entrada'; // Return sector name for specific beacon ID
-    case 'F7826DA6-BC5B-71E0-893E-6D424369696F':
-      return 'Pasillo Central'; // Return sector name for specific beacon ID
-    case 'F7826DA6-BC5B-71E0-893E-54654370696F':
-      return 'Electro'; // Return sector name for specific beacon ID
-    default:
-      return 'Unknown'; // Return 'Unknown' if beacon ID does not match any case
+const getSector = async (beaconId) => {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const [rows] = await connection.execute(
+        'SELECT sector FROM beacons WHERE id_beacons = ?',
+        [beaconId]
+    );
+
+    if (rows.length > 0) {
+      return rows[0].sector;
+    } else {
+      return 'Unknown';
+    }
+  } catch (error) {
+    console.error('Error al obtener el sector del beacon:', error);
+    return 'Unknown';
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -329,26 +276,10 @@ const convertToLocalTime = (timestamp) => {
 // Endpoint to receive GPS data
 app.post('/gps-data', async (req, res) => {
   const gpsDatas = Array.isArray(req.body) ? req.body : [req.body];
-  // console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
-  console.log("Llego datos a gps_data");
+  console.log("Llegaron datos a gps_data");
   try {
     for (const gpsData of gpsDatas) {
       await processGpsData(gpsData);
-      // ejecucion de triggers
-      await procesarDatosGPS({
-        event_enum: gpsData['event.enum'],
-        ident: gpsData.ident,
-        device_id: gpsData['device.id'],
-        altitude: gpsData['position.altitude'],
-        latitude: gpsData['position.latitude'],
-        longitude: gpsData['position.longitude'],
-        timestamp: Math.floor(gpsData.timestamp),
-        ble_beacons: JSON.stringify(gpsData['ble.beacons'] || []),
-        battery_level: gpsData['battery.level'] || -1,
-        ble_sensor_humidity_1: gpsData['ble.sensor.humidity.1'] || -1,
-        ble_sensor_magnet_status_1: gpsData['ble.sensor.magnet.status.1'] || -1,
-        ble_sensor_temperature_1: gpsData['ble.sensor.temperature.1'] || -1
-      });
     }
     res.status(200).send('GPS Data processed successfully');
   } catch (error) {
@@ -356,44 +287,44 @@ app.post('/gps-data', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 async function processGpsData(gpsData) {
   const deviceTypeId = gpsData['device.type.id'];
   const schema = schemas[deviceTypeId];
-  
-  
+
   if (!schema) {
     throw new Error(`Unknown device type: ${deviceTypeId}`);
   }
   console.log('Validating data for device type:', deviceTypeId);
-  // console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
   console.log('ble_beacons:', gpsData['ble.beacons']);
 
   let validatedData;
-  // console.log('TypeB validation failed, attempting typeA schema');
   try {
     validatedData = await schema.typeA.validateAsync(gpsData);
   } catch (err) {
-    console.error('Validation failed for both schemas:', err);
+    console.error('Validation failed for schema:', err);
     throw err;
   }
+
   const columns = [
     'device_id', 'device_name', 'device_type_id', 'event_enum', 'event_priority_enum',
     'ident', 'peer', 'altitude', 'direction', 'latitude', 'longitude', 'satellites', 'speed',
-    'protocol_id', 'server_timestamp', 'timestamp', 'ble_beacons', 'channel_id', 'codec_id',
+    'protocol_id', 'server_timestamp', 'timestamp', 'ble_beacon', 'channel_id', 'codec_id',
     'battery_level', 'battery_voltage', 'battery_current',
     'ble_sensor_humidity_1', 'ble_sensor_humidity_2', 'ble_sensor_humidity_3', 'ble_sensor_humidity_4',
     'ble_sensor_low_battery_status_1', 'ble_sensor_low_battery_status_2',
     'ble_sensor_magnet_status_1', 'ble_sensor_magnet_status_2',
     'ble_sensor_magnet_count_1', 'ble_sensor_magnet_count_2',
     'ble_sensor_temperature_1', 'ble_sensor_temperature_2', 'ble_sensor_temperature_3', 'ble_sensor_temperature_4',
-    'bluetooth_state_enum', 'gnss_state_enum', 'gnss_status',
+    'bluetooth_state_enum', 'gnss_state_enum', 'gnss_status', 'gnss_sleep_mode_status',
     'gsm_mcc', 'gsm_mnc', 'gsm_operator_code', 'gsm_signal_level',
-    'movement_status', 'position_hdop', 'position_pdop', 'position_valid',
-    'position_fix_age', 'sleep_mode_enum', 'custom_param_116', 'vehicle_mileage'
+    'movement_status', 'position_hdop', 'position_valid',
+    'position_fix_age', 'sleep_mode_enum', 'custom_param_116', 'engine_ignition_status',
+    'external_powersource_voltage', 'vehicle_mileage'
   ];
+
   const query = `INSERT INTO gps_data (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`;
 
-  console.log("Datos insertados en gps_data")
   const params = [
     validatedData['device.id'],
     validatedData['device.name'],
@@ -409,172 +340,166 @@ async function processGpsData(gpsData) {
     validatedData['position.satellites'],
     validatedData['position.speed'],
     validatedData['protocol.id'],
-    Math.floor(validatedData['server.timestamp']),
-    Math.floor(validatedData.timestamp),
+    new Date(validatedData['server.timestamp'] * 1000), // Convertir a objeto Date
+    new Date(validatedData.timestamp * 1000), // Convertir a objeto Date
     JSON.stringify(validatedData['ble.beacons'] || []),
-    validatedData['channel.id']|| -1,
-    validatedData['codec.id']|| -1,
-    validatedData['battery.level'] || -1,
-    validatedData['battery.voltage'] || -1,
-    validatedData['battery.current'] || -1,
-    validatedData['ble.sensor.humidity.1'] || -1,
-    validatedData['ble.sensor.humidity.2'] || -1,
-    validatedData['ble.sensor.humidity.3'] || -1,
-    validatedData['ble.sensor.humidity.4'] || -1,
-    validatedData['ble.sensor.low.battery.status.1'] || -1,
-    validatedData['ble.sensor.low.battery.status.2'] || -1,
-    validatedData['ble.sensor.magnet.status.1'] || -1,
-    validatedData['ble.sensor.magnet.status.2'] || -1,
-    validatedData['ble.sensor.magnet.count.1'] || -1,
-    validatedData['ble.sensor.magnet.count.2'] || -1,
-    validatedData['ble.sensor.temperature.1'] || -1,
-    validatedData['ble.sensor.temperature.2'] || -1,
-    validatedData['ble.sensor.temperature.3'] || -1,
-    validatedData['ble.sensor.temperature.4'] || -1,
-    validatedData['bluetooth.state.enum'] || -1,
-    validatedData['gnss.state.enum'] || -1,
-    validatedData['gnss.status'] || -1,
-    validatedData['gsm.mcc'] || -1,
-    validatedData['gsm.mnc'] || -1,
-    validatedData['gsm.operator.code'] || '.',
-    validatedData['gsm.signal.level'] || -1,
-    validatedData['movement.status'] || -1,
-    validatedData['position.hdop'] || -1,
-    validatedData['position.pdop'] || -1,
-    validatedData['position.valid'] || -1,
-    validatedData['position.fix.age'] || -1,
-    validatedData['sleep.mode.enum'] || -1,
-    validatedData['custom.param.116'] || -1,
-    validatedData['vehicle.mileage'] || -1
+    validatedData['channel.id'] || null,
+    validatedData['codec.id'] || null,
+    validatedData['battery.level'] || null,
+    validatedData['battery.voltage'] || null,
+    validatedData['battery.current'] || null,
+    validatedData['ble.sensor.humidity.1'] || null,
+    validatedData['ble.sensor.humidity.2'] || null,
+    validatedData['ble.sensor.humidity.3'] || null,
+    validatedData['ble.sensor.humidity.4'] || null,
+    validatedData['ble.sensor.low.battery.status.1'] || null,
+    validatedData['ble.sensor.low.battery.status.2'] || null,
+    validatedData['ble.sensor.magnet.status.1'] || null,
+    validatedData['ble.sensor.magnet.status.2'] || null,
+    validatedData['ble.sensor.magnet.count.1'] || null,
+    validatedData['ble.sensor.magnet.count.2'] || null,
+    validatedData['ble.sensor.temperature.1'] || null,
+    validatedData['ble.sensor.temperature.2'] || null,
+    validatedData['ble.sensor.temperature.3'] || null,
+    validatedData['ble.sensor.temperature.4'] || null,
+    validatedData['bluetooth.state.enum'] || null,
+    validatedData['gnss.state.enum'] || null,
+    validatedData['gnss.status'] || null,
+    validatedData['gnss.sleep.mode.status'] || null,
+    validatedData['gsm.mcc'] || null,
+    validatedData['gsm.mnc'] || null,
+    validatedData['gsm.operator.code'] || null,
+    validatedData['gsm.signal.level'] || null,
+    validatedData['movement.status'] || null,
+    validatedData['position.hdop'] || null,
+    validatedData['position.valid'] || null,
+    validatedData['position.fix.age'] || null,
+    validatedData['sleep.mode.enum'] || null,
+    validatedData['custom.param.116'] || null,
+    validatedData['engine.ignition.status'] || null,
+    validatedData['external.powersource.voltage'] || null,
+    validatedData['vehicle.mileage'] || null
   ];
 
   try {
     await pool.query(query, params);
+    console.log('GPS data inserted successfully');
   } catch (error) {
     console.error('SQL Error:', error);
     console.error('Query:', query);
     console.error('Params:', params);
     throw error;
   }
-    // Llamada a procesarPosibleIncidencia
-    await procesarPosibleIncidencia(
-      validatedData['device.name'],
-      validatedData['ble.beacons'] || [],
-      Math.floor(validatedData.timestamp),
-      validatedData['event.enum']  // Añadir este parámetro
-    );
 }
 
 // Endpoint para obtener los datos más recientes de GPS para un dispositivo específico
 app.get('/api/get-latest-gps-data', async (req, res) => {
   const { device_name, startTime, endTime } = req.query;
-  
+
   console.log(`Buscando datos para ${device_name} entre ${startTime} y ${endTime}`);
-  
+
   try {
     const query = `
-      SELECT latitude, longitude, timestamp, ble_beacons, event_enum
+      SELECT latitude, longitude, timestamp, ble_beacon, event_enum
       FROM gps_data
       WHERE device_name = ? AND timestamp BETWEEN ? AND ?
       ORDER BY timestamp DESC
       LIMIT 1
     `;
-    const [results] = await pool.query(query, [device_name, startTime, endTime]);
-    
-    console.log(`Resultados para ${device_name}:`, results);
-    
-    res.json({ data: results });
+
+    // Convertir startTime y endTime a objetos Date
+    const startDate = new Date(parseInt(startTime));
+    const endDate = new Date(parseInt(endTime));
+
+    const [results] = await pool.query(query, [device_name, startDate, endDate]);
+
+    // Procesar los resultados
+    const processedResults = results.map(result => ({
+      ...result,
+      ble_beacon: JSON.parse(result.ble_beacon || '[]'),
+      timestamp: result.timestamp.getTime() // Convertir timestamp a milisegundos
+    }));
+
+    console.log(`Resultados para ${device_name}:`, processedResults);
+
+    res.json({ data: processedResults });
   } catch (error) {
     console.error('Error fetching latest GPS data:', error);
     res.status(500).send('Server Error');
   }
 });
+
 app.get('/api/latest-sectors', async (req, res) => {
   try {
-    const [devices] = await pool.query('SELECT id, device_asignado FROM devices');
+    const [devices] = await pool.query('SELECT id_devices, device_asignado FROM devices');
     const latestSectors = [];
     const now = moment().tz('America/Santiago');
-    const startOfDay = now.clone().startOf('day').unix();
+    const startOfDay = now.clone().startOf('day');
 
     console.log(`Tiempo actual: ${now.format('YYYY-MM-DD HH:mm:ss')}`);
-    console.log(`Inicio del día: ${moment.unix(startOfDay).format('YYYY-MM-DD HH:mm:ss')}`);
+    console.log(`Inicio del día: ${startOfDay.format('YYYY-MM-DD HH:mm:ss')}`);
 
     for (const device of devices) {
-      console.log(`\nProcesando dispositivo: ${device.id}`);
-      
-      let tableName;
-      switch (device.id) {
-        case '353201350896384':
-          tableName = 'magic_box_tmt_210_data_353201350896384';
-          break;
-        case '352592573522828':
-          tableName = 'gh_5200_data_352592573522828';
-          break;
-        case '352592576164230':
-          tableName = 'fmb204_data_352592576164230';
-          break;
-        default:
-          console.log(`No se encontró una tabla para el dispositivo ${device.id}`);
-          continue;
-      }
+      console.log(`\nProcesando dispositivo: ${device.id_devices}`);
 
       const query = `
-        SELECT beacon_id, timestamp
-        FROM ${tableName}
-        WHERE timestamp >= ? AND beacon_id IS NOT NULL AND  beacon_id != 'no encontrado: NULL'
-
-        ORDER BY timestamp DESC
+        SELECT ekc.beacon_id, ekc.commonDataTimestamp, b.sector,
+               CASE 
+                 WHEN esd.id_EYE_Specific_Data IS NOT NULL THEN 'EYE'
+                 WHEN ksd.idKTK_Specific_Data IS NOT NULL THEN 'KTK'
+                 ELSE 'Unknown'
+               END AS device_type
+        FROM EYE_KTK_CommonData ekc
+        LEFT JOIN EYE_Specific_Data esd ON ekc.id_EYE_KTK_CommonData = esd.id_EYE_Specific_Data
+        LEFT JOIN KTK_Specific_Data ksd ON ekc.id_EYE_KTK_CommonData = ksd.idKTK_Specific_Data
+        LEFT JOIN beacons b ON ekc.beacon_id = b.id_beacons
+        WHERE ekc.id_dispositivo = ? AND ekc.commonDataTimestamp >= ?
+        ORDER BY ekc.commonDataTimestamp DESC
+        LIMIT 1
       `;
-      
+
       try {
-        const [results] = await pool.query(query, [startOfDay]);
+        const [results] = await pool.query(query, [device.id_devices, startOfDay.toDate()]);
         console.log(`Resultados obtenidos: ${results.length}`);
 
         if (results.length > 0) {
-          let latestBeaconId = results[0].beacon_id;
-          let latestTimestamp = results[0].timestamp;
-          let oldestTimestamp = results[0].timestamp;
-
-          for (let i = 1; i < results.length; i++) {
-            if (results[i].beacon_id !== latestBeaconId) {
-              oldestTimestamp = results[i-1].timestamp;
-              break;
-            }
-            oldestTimestamp = results[i].timestamp;
-          }
-
-          const [sector] = await pool.query('SELECT nombre FROM sectores WHERE id = ?', [latestBeaconId]);
-          const timeDiff = now.unix() - oldestTimestamp;
+          const latestData = results[0];
+          const timeDiff = now.diff(moment(latestData.commonDataTimestamp), 'seconds');
           const hours = Math.floor(timeDiff / 3600);
           const minutes = Math.floor((timeDiff % 3600) / 60);
 
-          console.log(`Beacon más reciente: ${latestBeaconId}`);
-          console.log(`Timestamp más reciente: ${moment.unix(latestTimestamp).format('YYYY-MM-DD HH:mm:ss')}`);
-          console.log(`Timestamp más antiguo del mismo beacon: ${moment.unix(oldestTimestamp).format('YYYY-MM-DD HH:mm:ss')}`);
+          console.log(`Beacon más reciente: ${latestData.beacon_id}`);
+          console.log(`Timestamp más reciente: ${moment(latestData.commonDataTimestamp).format('YYYY-MM-DD HH:mm:ss')}`);
           console.log(`Tiempo transcurrido: ${hours} horas y ${minutes} minutos`);
 
           latestSectors.push({
-            device_id: device.id,
-            sector: sector.length > 0 ? sector[0].nombre : 'Desconocido',
-            timestamp: moment.unix(oldestTimestamp).format('YYYY-MM-DD HH:mm:ss'),
-            timeSinceDetection: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+            device_id: device.id_devices,
+            device_asignado: device.device_asignado,
+            sector: latestData.sector || 'Desconocido',
+            timestamp: moment(latestData.commonDataTimestamp).format('YYYY-MM-DD HH:mm:ss'),
+            timeSinceDetection: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
+            device_type: latestData.device_type
           });
         } else {
-          console.log(`No se encontraron datos para el dispositivo ${device.id} en el día actual`);
+          console.log(`No se encontraron datos para el dispositivo ${device.id_devices} en el día actual`);
           latestSectors.push({
-            device_id: device.id,
+            device_id: device.id_devices,
+            device_asignado: device.device_asignado,
             sector: 'Sin datos para este día',
             timestamp: null,
-            timeSinceDetection: '-'
+            timeSinceDetection: '-',
+            device_type: 'Unknown'
           });
         }
       } catch (innerError) {
-        console.error(`Error fetching data for device ${device.id}:`, innerError);
+        console.error(`Error fetching data for device ${device.id_devices}:`, innerError);
         latestSectors.push({
-          device_id: device.id,
+          device_id: device.id_devices,
+          device_asignado: device.device_asignado,
           sector: 'Error al obtener datos',
           timestamp: null,
-          timeSinceDetection: '-'
+          timeSinceDetection: '-',
+          device_type: 'Unknown'
         });
       }
     }
@@ -588,9 +513,8 @@ app.get('/api/latest-sectors', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-// Definir el endpoint para obtener el estado de las puertas
-// Endpoint to get door status history within a specific date range
-// Endpoint to get door status history within a specific date range
+
+// Endpoint para obtener datos históricos de GPS
 app.get('/api/door-status', async (req, res) => {
   const { startDate, endDate } = req.query;
 
@@ -600,14 +524,29 @@ app.get('/api/door-status', async (req, res) => {
 
   try {
     const query = `
-      SELECT ds.sector, ds.magnet_status, ds.temperature, ds.timestamp
-      FROM door_status ds
-      JOIN beacons b ON ds.sector = b.ubicacion
-      WHERE ds.timestamp BETWEEN ? AND ? AND b.esPuerta = 1
-      ORDER BY ds.timestamp ASC
+      SELECT 
+        b.sector, 
+        esd.magnet AS magnet_status, 
+        esd.temperature, 
+        ekc.commonDataTimestamp AS timestamp
+      FROM EYE_KTK_CommonData ekc
+      JOIN EYE_Specific_Data esd ON ekc.id_EYE_KTK_CommonData = esd.id_EYE_Specific_Data
+      JOIN beacons b ON ekc.beacon_id = b.id_beacons
+      WHERE ekc.commonDataTimestamp BETWEEN ? AND ? AND b.esPuerta = 1
+      ORDER BY ekc.commonDataTimestamp ASC
     `;
+
     const [rows] = await pool.query(query, [startDate, endDate]);
-    res.json(rows);
+
+    // Transformar los datos para que coincidan con el formato esperado
+    const formattedRows = rows.map(row => ({
+      sector: row.sector,
+      magnet_status: row.magnet_status ? 1 : 0, // Convertir a 1 o 0 si es necesario
+      temperature: row.temperature,
+      timestamp: moment(row.timestamp).format('YYYY-MM-DD HH:mm:ss')
+    }));
+
+    res.json(formattedRows);
   } catch (error) {
     console.error('Error fetching door status:', error);
     res.status(500).send('Server Error');
@@ -615,7 +554,8 @@ app.get('/api/door-status', async (req, res) => {
 });
 
 
-// Endpoint para obtener datos históricos de GPS
+
+
 app.get('/api/historical-gps-data', async (req, res) => {
   const { device_id, date, startHour, endHour } = req.query;
 
