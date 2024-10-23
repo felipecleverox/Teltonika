@@ -20,7 +20,7 @@ const Presencia = () => {
 
   useEffect(() => {
     console.log('Fetching beacon data...');
-    axios.get('/api/beacons')
+    axios.get('/api1/beacons')
       .then(response => {
         console.log('Beacons data:', response.data);
         setBeacons(response.data);
@@ -38,7 +38,7 @@ const Presencia = () => {
 
     console.log(`Fetching data for date range: ${startDate} - ${endDate}`);
 
-    axios.get('/api/beacons-detection-status', {
+    axios.get('/api1/beacons-detection-status', {
       params: {
         startDate: startDate,
         endDate: endDate

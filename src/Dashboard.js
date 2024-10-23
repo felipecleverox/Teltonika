@@ -29,7 +29,7 @@ const Dashboard = () => {
     const endDate = dayjs(date).set('hour', 23).set('minute', 30).set('second', 0).format('YYYY-MM-DD HH:mm:ss');
 
     try {
-      const response = await axios.get('/api/beacons-detection-status', {
+      const response = await axios.get('/api1/beacons-detection-status', {
         params: { startDate, endDate }
       });
       console.log('Presence Data Response:', response.data);
@@ -44,7 +44,7 @@ const Dashboard = () => {
     const endDate = dayjs(date).set('hour', 23).set('minute', 0).set('second', 0).format('YYYY-MM-DD HH:mm:ss');
 
     try {
-      const response = await axios.get('/api/door-status', {
+      const response = await axios.get('/api1/door-status', {
         params: { startDate, endDate }
       });
       console.log('Door Status Data Response:', response.data);
@@ -66,8 +66,8 @@ const Dashboard = () => {
 
     try {
       const [responseCurrent, responsePrevious] = await Promise.all([
-        axios.get('/api/door-status', { params: { startDate: startDateCurrent, endDate: endDateCurrent } }),
-        axios.get('/api/door-status', { params: { startDate: startDatePrevious, endDate: endDatePrevious } })
+        axios.get('/api1/door-status', { params: { startDate: startDateCurrent, endDate: endDateCurrent } }),
+        axios.get('/api1/door-status', { params: { startDate: startDatePrevious, endDate: endDatePrevious } })
       ]);
 
       console.log('Door Change Data Response (Current):', responseCurrent.data);
@@ -81,7 +81,7 @@ const Dashboard = () => {
 
   const fetchTemperatureData = async (date) => {
     try {
-      const response = await axios.get('/api/temperature-data', {
+      const response = await axios.get('/api1/temperature-data', {
         params: { date: date.toISOString().split('T')[0] }
       });
       console.log('Temperature Data:', response.data);

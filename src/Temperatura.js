@@ -37,7 +37,7 @@ const Temperatura = () => {
     try {
       const formattedDate = date.toISOString().split('T')[0];
       console.log('Fetching data for date:', formattedDate);
-      const response = await axios.get('/api/temperature-data', {
+      const response = await axios.get('/api1/temperature-data', {
         params: { date: formattedDate }
       });
       console.log('Datos recibidos:', response.data);
@@ -197,7 +197,7 @@ const Temperatura = () => {
           const temperatures = validData.map(point => point.y);
           const maxTemp = Math.max(...temperatures);
           const minTemp = Math.min(...temperatures);
-          
+
           const chartData = {
             datasets: [
               {
@@ -211,13 +211,17 @@ const Temperatura = () => {
           };
 
           return (
-            <div key={beaconData.beacon_id} className="chart-container">
-              <h3>{`Cámara de Frío: ${beaconData.location} - ${beaconData.ubicacion}`}</h3>
-              <div className="temp-legend">
-                <span className="max-temp">Máx: {maxTemp.toFixed(1)}°C</span>
-                <span className="min-temp">Mín: {minTemp.toFixed(1)}°C</span>
+            <div key={beaconData.beacon_id} className="chart-box">
+              <div className="chart-container">
+                <h3>{`Cámara de Frío: ${beaconData.location} - ${beaconData.ubicacion}`}</h3>
+                <div className="temp-legend">
+                  <span className="max-temp">Máx: {maxTemp.toFixed(1)}°C</span>
+                  <span className="min-temp">Mín: {minTemp.toFixed(1)}°C</span>
+                </div>
+                <div className="chart-wrapper">
+                  <Line data={chartData} options={chartOptions} />
+                </div>
               </div>
-              <Line data={chartData} options={chartOptions} />
             </div>
           );
         })}

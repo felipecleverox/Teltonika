@@ -25,7 +25,7 @@ const BlindSpotIntrusions = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('/api/blind-spot-intrusions', {
+      const response = await axios.get('/api1/blind-spot-intrusions', {
         params: {
           date: moment(selectedDate).format('YYYY-MM-DD')
         }

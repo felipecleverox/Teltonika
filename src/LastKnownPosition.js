@@ -24,7 +24,7 @@ function LastKnownPosition({ showHeader = true }) {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await axios.get('/api/devices');
+        const response = await axios.get('/api1/devices');
         console.log('Fetched devices:', response.data);
         setDevices(response.data);
       } catch (error) {
@@ -41,7 +41,7 @@ function LastKnownPosition({ showHeader = true }) {
     setShowTable(false);
     setSelectedPosition(null);
     try {
-      const endpoint = '/api/last-known-position';
+      const endpoint = '/api1/last-known-position';
       const params = { ident: selectedDeviceId };
       const response = await axios.get(endpoint, { params });
 

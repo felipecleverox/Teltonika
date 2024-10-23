@@ -24,7 +24,7 @@ const HistoricalMovementsSearch = () => {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const result = await axios.get('/api/devices');
+        const result = await axios.get('/api1/devices');
         console.log('Fetched devices:', result.data);
         setDevices(result.data);
       } catch (error) {
@@ -52,7 +52,7 @@ const HistoricalMovementsSearch = () => {
     }
 
     try {
-      const result = await axios.get('/api/historical-gps-data', {
+      const result = await axios.get('/api1/historical-gps-data', {
         params: {
           device_id: device,
           date,

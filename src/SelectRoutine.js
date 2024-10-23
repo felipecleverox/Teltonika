@@ -19,6 +19,9 @@ import doorStatusImage from './assets/images/door_status.png';
 import userRegistrationImage from './assets/images/user_registration.png';
 import thermometerImage from './assets/images/thermometer.png';
 import detectionImage from './assets/images/detection.png';
+import dashboardTemperaturaImage from './assets/images/dashboard_temperatura.png';
+import descargadatostemp from './assets/images/descargadatostemp.png';
+import paramTempIcon from './assets/images/param_temp.png';
 
 const routines = [
   { title: "Dashboard", image: dashboardImage, route: "/dashboard", permission: "view_dashboard" },
@@ -30,7 +33,10 @@ const routines = [
   { title: "Sectores Presencia Personal", image: presenciaImage, route: "/presencia", permission: "view_presence" },
   { title: "Mensajes SOS Visualización por Ubicación", image: smsDataImage, route: "/sms-data", permission: "view_sms" },
   { title: "Temperatura", image: temperaturaImage, route: "/temperatura", permission: "view_temperature" },
+  { title: "Dashboard de Temperatura", image: dashboardTemperaturaImage, route: "/dashboard-temperatura", permission: "view_temperature_dashboard"},
   { title: "Temperaturas Cámaras de Frío", image: thermometerImage, route: "/temperatura-camaras", permission: "view_temperature_camaras" },
+  { title: "Inteligencia de Datos Temperatura", image: descargadatostemp, route: "/inteligencia-datos-temperatura", permission: "view_temperature_data_intelligence" },
+  { title: "Parámetros Temperatura Cámaras", image: paramTempIcon, route: "/parametro-temp-camaras", permission: "view_temp_params" },
   { title: "Puertas Status Cierre / Apertura", image: doorStatusImage, route: "/door-status-matrix", permission: "view_door_status" },
   { title: "Datos Análisis Forense", image: dataIntelligenceImage, route: "/inteligencia-de-datos", permission: "view_data_intelligence" },
   { title: "Parametrización", image: configurationImage, route: "/configuracion", permission: "view_configuration" },

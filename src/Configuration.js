@@ -16,7 +16,7 @@ const Configuration = () => {
   useEffect(() => {
     const fetchSectors = async () => {
       try {
-        const response = await axios.get('/api/sectores');
+        const response = await axios.get('/api1/sectores');
         setSectors(response.data);
       } catch (error) {
         console.error('Error fetching sectors:', error);
@@ -26,8 +26,8 @@ const Configuration = () => {
     const fetchConfiguration = async () => {
       try {
         const [configResponse, tempResponse] = await Promise.all([
-          axios.get('/api/configuracion'),
-          axios.get('/api/temperatura-umbrales')
+          axios.get('/api1/configuracion'),
+          axios.get('/api1/temperatura-umbrales')
         ]);
         
         const configData = configResponse.data.reduce((acc, cur) => {
@@ -77,8 +77,8 @@ const Configuration = () => {
 
     try {
       await Promise.all([
-        axios.post('/api/configuracion', configuraciones),
-        axios.post('/api/temperatura-umbrales', temperaturaUmbrales)
+        axios.post('/api1/configuracion', configuraciones),
+        axios.post('/api1/temperatura-umbrales', temperaturaUmbrales)
       ]);
       alert('Configuración guardada exitosamente.');
     } catch (error) {

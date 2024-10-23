@@ -1,0 +1,103 @@
+.inteligencia-datos-temperatura {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.controls {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.device-select {
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 10px;
+  padding: 10px;
+  font-size: 16px;
+}
+
+.date-pickers {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.date-picker {
+  padding: 10px;
+  font-size: 14px;
+}
+
+.fetch-btn {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 10px;
+}
+
+.charts-grid {
+  width: 100%;
+}
+
+.chart-container {
+  width: 100%;
+  max-width: 1000px;
+  height: auto;
+  min-height: 400px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.chart-wrapper {
+  width: 100%;
+  height: 60vh;
+  min-height: 300px;
+  max-height: 600px;
+}
+
+.download-button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  .date-pickers {
+    flex-direction: column;
+  }
+
+  .date-picker {
+    width: 100%;
+  }
+}

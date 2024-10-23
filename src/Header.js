@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import './Header.css';
 import homeIcon from './assets/images/home_white.png';
 import tnsTrackLogo from './assets/images/TNS Track White.png';
-import alertGif from './assets/alert.gif';
-import sirenaGif from './assets/sirena.gif';
+import alertGif from './assets/images/alert.gif';
+import sirenaGif from './assets/images/Sirena.gif';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
 
@@ -18,7 +18,7 @@ const Header = ({ title }) => {
   const routineImage = state?.image;
 
   useEffect(() => {
-    const socket = io('http://thenext.ddns.net:1337');
+    const socket = io('http://tnstrack.ddns.net:1338'); // Correct URL for the socket
     socket.on('new_sms', (data) => {
       console.log("Nuevo SMS recibido:", data);
       setNewSms(true);

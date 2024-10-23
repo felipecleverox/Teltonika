@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import jwt from 'jsonwebtoken';
 import './LandingPage.css';
 import mapImage from './assets/images/map-of-a-map.jpeg';
 import centerImage from './assets/images/TNS Track White.png';
 import rightImage from './assets/images/tns_logo_blanco.png';
+import storageImage from './assets/images/bitumix-logo.png';
 
 const LandingPage = () => {
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -23,7 +23,7 @@ const LandingPage = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch('/api1/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
@@ -45,11 +45,12 @@ const LandingPage = () => {
     return (
         <div className="landing-page">
             <div className="image-container">
-                <img src={mapImage} alt="Map Image" className="map-image" />
-                <img src={centerImage} alt="Center Image" className="center-image" />
+                <img src={mapImage} alt="Map" className="map-image" />
+                <img src={centerImage} alt="TNS Track" className="center-image" />
+                <img src={storageImage} alt="Storage Logo" className="storage-image" />
             </div>
             <div className="form-container">
-                <h2>Welcome</h2>
+                <h2>Bienvenido</h2>
                 <form onSubmit={handleLogin}>
                     <input
                         type="text"
@@ -70,9 +71,7 @@ const LandingPage = () => {
                 {error && <p className="error">{error}</p>}
                 <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
             </div>
-            <div className="footer-images">
-                <img src={rightImage} alt="Right Image" className="right-image" />
-            </div>
+            <img src={rightImage} alt="TNS Logo" className="right-image" />
             <footer className="footer">
                 <div className="footer-left">Version 1.01</div>
                 <div className="footer-right">{currentTime.toLocaleString()}</div>

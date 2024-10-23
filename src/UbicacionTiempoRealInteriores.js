@@ -25,26 +25,22 @@ const UbicacionTiempoRealInteriores = () => {
   const fetchData = async () => {
     try {
       const [mapInfo, sectorInfo, umbralesInfo] = await Promise.all([
-        axios.get('/api/retrive_MapWithQuadrants_information'),
-        axios.get('/api/latest-sectors'),
-        axios.get('/api/umbrales')
+        axios.get('/api1/retrive_MapWithQuadrants_information'),
+        axios.get('/api1/latest-sectors'),
+        axios.get('/api1/umbrales')
       ]);
-
-      console.log('Map Info:', mapInfo.data);
-      console.log('Sector Info:', sectorInfo.data);
-      console.log('Umbrales Info:', umbralesInfo.data);
-      
+  
       setPersonal(mapInfo.data.personal);
       setSectors(mapInfo.data.sectors);
       setDevices(mapInfo.data.devices);
       setUmbrales(umbralesInfo.data);
       
-      const sectorMap = sectorInfo.data.reduce((acc, item) => {
+      const sectorMap = sectorInfo.data.sectors.reduce((acc, item) => {
         acc[item.device_id] = item;
         return acc;
       }, {});
       setLatestSectors(sectorMap);
-      setCurrentTime(moment());
+      setCurrentTime(moment(sectorInfo.data.serverTime));
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -52,7 +48,7 @@ const UbicacionTiempoRealInteriores = () => {
 
   const fetchActiveBeacons = async () => {
     try {
-      const response = await axios.get('/api/active-beacons');
+      const response = await axios.get('/api1/active-beacons');
       const activeBeaconIds = response.data.activeBeaconIds || [];
       console.log('Active Beacons:', activeBeaconIds);
       setActiveBeacons(activeBeaconIds);
@@ -81,11 +77,9 @@ const UbicacionTiempoRealInteriores = () => {
   };
 
   // Función para calcular el tiempo de permanencia
-  const calculatePermanencia = (timestamp) => {
-    if (!timestamp) return '-';
-    const oldestTime = moment(timestamp, 'YYYY-MM-DD HH:mm:ss');
-    const duration = moment.duration(currentTime.diff(oldestTime));
-    return `${duration.hours().toString().padStart(2, '0')}:${duration.minutes().toString().padStart(2, '0')}`;
+  const calculatePermanencia = (timeSinceDetection) => {
+    if (!timeSinceDetection) return '00:00';
+    return timeSinceDetection;
   };
 
   // Función para obtener la clase del semáforo
@@ -191,7 +185,7 @@ const UbicacionTiempoRealInteriores = () => {
                 <td>{persona.Nombre_Personal}</td>
                 <td>{sectorInfo.sector || 'Cargando...'}</td>
                 <td>{horaEntrada}</td>
-                <td>{permanencia}</td>
+                <td>{sectorInfo.timeSinceDetection || '00:00'}</td>
                 <td><span className={`semaphore ${semaphoreClass}`}>{semaphoreText}</span></td>
               </tr>
             );

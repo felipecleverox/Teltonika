@@ -19,7 +19,7 @@ const ResetPassword = () => {
     }
     setIsLoading(true);
     try {
-      const response = await axios.post('/api/reset-password', { token, newPassword });
+      const response = await axios.post('/api1/reset-password', { token, newPassword });
       setMessage(response.data);
       setTimeout(() => navigate('/'), 3000);
     } catch (error) {

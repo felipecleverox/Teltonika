@@ -23,7 +23,7 @@ function PersonSearch() {
     useEffect(() => {
         const fetchThresholds = async () => {
             try {
-                const response = await axios.get('/api/umbrales');
+                const response = await axios.get('/api1/umbrales');
                 setUmbrales(response.data);
             } catch (error) {
                 console.error('Error fetching thresholds:', error);
@@ -33,7 +33,7 @@ function PersonSearch() {
         
         const fetchDevices = async () => {
             try {
-                const response = await axios.get('/api/devices');
+                const response = await axios.get('/api1/devices');
                 setDevices(response.data);
             } catch (error) {
                 console.error('Error fetching devices:', error);
@@ -43,7 +43,7 @@ function PersonSearch() {
 
         const fetchPersonal = async () => {
             try {
-                const response = await axios.get('/api/personal');
+                const response = await axios.get('/api1/personal');
                 setPersonal(response.data);
             } catch (error) {
                 console.error('Error fetching personal:', error);
@@ -57,7 +57,7 @@ function PersonSearch() {
         const endDateTime = `${selectedDay}T${endTime}:00`;
 
         try {
-            const response = await axios.get('/api/beacon-entries-exits', {
+            const response = await axios.get('/api1/beacon-entries-exits', {
                 params: {
                     startDate: startDateTime,
                     endDate: endDateTime,

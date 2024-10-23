@@ -13,16 +13,26 @@
 }
 
 .chart-container {
-  height: 400px;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 400px;
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 15px;
+  margin-bottom: 20px;
 }
 
 .chart-container h3 {
   color: #333;
   margin-bottom: 10px;
+}
+
+.chart-wrapper {
+  flex-grow: 1;
+  position: relative;
+  height: 350px;
 }
 
 h1 {
@@ -38,12 +48,33 @@ h1 {
   border: 1px solid #ccc;
 }
 
+.download-button {
+  align-self: center;
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  width: auto;
+}
+
+.download-button:hover {
+  background-color: #45a049;
+}
+
 @media (max-width: 768px) {
   .charts-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .chart-container {
-    height: 300px;
+    min-height: 350px;
+  }
+  
+  .chart-wrapper {
+    height: 250px;
   }
 }

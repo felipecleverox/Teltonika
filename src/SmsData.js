@@ -13,7 +13,7 @@ const SmsData = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://thenext.ddns.net:1337/api/sms-data');
+        const response = await axios.get('http://thenext.ddns.net:1338/api1/sms-data');
         const sortedData = response.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         setSmsData(sortedData);
       } catch (error) {

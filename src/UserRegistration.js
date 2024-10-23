@@ -18,7 +18,7 @@ const UserRegistration = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('/api/users');
+        const response = await axios.get('/api1/users');
         setUsers(response.data);
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -49,7 +49,7 @@ const UserRegistration = () => {
       const updatedPermissions = permissions.join(',');
       if (selectedUser) {
         // Actualizar usuario existente
-        await axios.post('/api/register', { 
+        await axios.post('/api1/register', { 
           userId: selectedUser.id, 
           username, 
           email, 
@@ -58,7 +58,7 @@ const UserRegistration = () => {
         setMessage('Permisos actualizados con éxito');
       } else {
         // Crear nuevo usuario
-        await axios.post('/api/register', { 
+        await axios.post('/api1/register', { 
           username, 
           password, 
           email, 
@@ -68,7 +68,7 @@ const UserRegistration = () => {
       }
       
       // Actualizar la lista de usuarios después de crear/actualizar
-      const response = await axios.get('/api/users');
+      const response = await axios.get('/api1/users');
       setUsers(response.data);
       
       setTimeout(() => {
@@ -93,7 +93,10 @@ const UserRegistration = () => {
     { label: 'Inteligencia de Datos', value: 'view_data_intelligence' },
     { label: 'Configuración', value: 'view_configuration' },
     { label: 'Ver Temperatura', value: 'view_temperature' },
-    { label: 'Ver Temperaturas Cámaras de Frío', value: 'view_temperature_camaras' }
+    { label: 'Ver Temperaturas Cámaras de Frío', value: 'view_temperature_camaras' },
+    { label: 'Ver Dashboard de Temperatura', value: 'view_temperature_dashboard' },
+    { label: 'Ver y Editar Parámetros de Temperatura de Cámaras', value: 'view_temp_params' },
+    { label: 'Inteligencia de Datos Temperatura', value: 'view_temperature_data_intelligence' },
   ];
 
   return (

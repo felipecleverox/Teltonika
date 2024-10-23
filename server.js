@@ -15,12 +15,12 @@ const http = require('http');
 const { Server } = require('socket.io'); // Import Socket.IO
 const config = require('./config/config.json');
 const { procesarDatosUbibot } = require('./ubibot');
-const { procesarPosibleIncidencia } = require('./control_incidencias');
-const controlIncidencias = require('./control_incidencias');
-
-
-const intervalo_ejecucion_ubibot= 5 * 60 * 1000;
-
+const { procesarPosibleIncidencia } = require('../servicios/src/utils/control_incidencias');
+// const { procesarDatosGPS } = require('../servicios/src/utils/dataProcesing');
+const ddbb_data = require('./config/ddbb.json');
+const path = require('path');
+const intervalo_ejecucion_ubibot= 4 * 60 * 1000;
+const router = express.Router();
 // Configurar SendGrid
 sgMail.setApiKey(config.email.SENDGRID_API_KEY);
 
@@ -32,14 +32,17 @@ const server = http.createServer(app); // Create HTTP server with Express app
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://tnstrack.ddns.net:3000", "http://localhost:3000","http://tnstrack.ddns.net:3001", "http://localhost:3001"], // Allow both origins
-    methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type"],
-    credentials: true
+    // Allow requests from these origins
+    origin: ["http://tnstrack.ddns.net/bitumix", "http://192.168.1.10:3000/bitumix", "http://localhost:3000", "http://localhost:3001", "http://tnstrack.ddns.net"],
+    methods: ["GET", "POST"], 
+    allowedHeaders: ["Content-Type"], 
+    credentials: true 
   }
 });
+
+
 // Initialize control_incidencias with Socket.IO
-controlIncidencias.init(io);
+//controlIncidencias.init(io);
 // Configure Socket.IO connection and disconnection events
 io.on('connection', (socket) => {
   console.log('A user connected'); // Log when a user connects
@@ -48,26 +51,25 @@ io.on('connection', (socket) => {
   });
 });
 
-// Define the port to listen on, default to 1337 if not specified in environment variables
-const port = process.env.PORT || 1337;
+// Define the port to listen on, default to 1338 if not specified in environment variables
+const port = process.env.PORT || 1338;
 
 // Create a MySQL connection pool for efficient database access
 const pool = mysql.createPool({
-  host: 'localhost', // Database host
-  user: 'root', // Database user
-  password: 'admin', // Database password
-  database: 'teltonika', // Database name
-  waitForConnections: true, // Wait for connections if none are available
-  connectionLimit: 10, // Maximum number of connections in the pool
-  queueLimit: 0 // No limit on the number of queued connection requests
+  host: ddbb_data.host,
+  user: ddbb_data.user,
+  password: ddbb_data.password,
+  database: ddbb_data.database,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
-
 // Define default position coordinates
 const defaultPosition = { lat: -33.4489, lng: -70.6693 }; // Coordinates for Santiago, Chile
 
 // Middleware CORS (debe estar antes de otros middleware o rutas)
 const corsOptions = {
-  origin: ['http://tnstrack.ddns.net:3000', 'http://localhost:3000','http://tnstrack.ddns.net:3001', 'http://localhost:3001'],
+  origin: ['http://tnstrack.ddns.net/bitumix', 'http://tnstrack.ddns.net', 'http://localhost:3000/bitumix', 'http://localhost:3001'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
   credentials: true
@@ -198,7 +200,6 @@ const schemas = {
       'timestamp': Joi.number()
     }).unknown(true)
   },
-  
   508: { // TMT250
     typeA: Joi.object({
       'ble.beacons': Joi.array().items(Joi.object()),
@@ -252,9 +253,50 @@ const schemas = {
       'sleep.mode.enum': Joi.number().integer(),
       'timestamp': Joi.number()
     }).unknown(true)
+  },
+  579: { // Nuevo esquema para device_type_id 579
+    typeA: Joi.object({
+      'device.type.id': Joi.number().valid(579),
+      'event.enum': Joi.number().valid(240, 385, 11317),
+      'ble.beacons': Joi.array().items(Joi.object({
+        id: Joi.string(),
+        rssi: Joi.number()
+      })).allow(null),
+      'battery.current': Joi.number(),
+      'battery.voltage': Joi.number(),
+      'channel.id': Joi.number().integer(),
+      'codec.id': Joi.number().integer(),
+      'device.id': Joi.number().integer(),
+      'device.name': Joi.string(),
+      'engine.ignition.status': Joi.boolean(),
+      'event.priority.enum': Joi.number().integer(),
+      'external.powersource.voltage': Joi.number(),
+      'gnss.state.enum': Joi.number().integer(),
+      'gnss.status': Joi.boolean(),
+      'gsm.mcc': Joi.number().integer(),
+      'gsm.mnc': Joi.number().integer(),
+      'gsm.operator.code': Joi.string(),
+      'gsm.signal.level': Joi.number().integer(),
+      'ident': Joi.string(),
+      'movement.status': Joi.boolean(),
+      'peer': Joi.string(),
+      'position.altitude': Joi.number(),
+      'position.direction': Joi.number(),
+      'position.hdop': Joi.number(),
+      'position.latitude': Joi.number(),
+      'position.longitude': Joi.number(),
+      'position.pdop': Joi.number(),
+      'position.satellites': Joi.number().integer(),
+      'position.speed': Joi.number(),
+      'position.valid': Joi.boolean(),
+      'protocol.id': Joi.number().integer(),
+      'server.timestamp': Joi.number(),
+      'sleep.mode.enum': Joi.number().integer(),
+      'timestamp': Joi.number(),
+      'vehicle.mileage': Joi.number()
+    }).unknown(true)
   }
 };
-
 // Función para ejecutar el proceso de Ubibot
 async function ejecutarProcesoUbibot() {
   try {
@@ -266,10 +308,10 @@ async function ejecutarProcesoUbibot() {
   }
 }
 // Ejecutar el proceso de Ubibot inmediatamente al iniciar el servidor
-ejecutarProcesoUbibot();
+// ejecutarProcesoUbibot();
 
 // Programar la ejecución del proceso de Ubibot cada 5 minutos
-const intervaloDatos = setInterval(ejecutarProcesoUbibot,intervalo_ejecucion_ubibot);
+// const intervaloDatos = setInterval(ejecutarProcesoUbibot,intervalo_ejecucion_ubibot);
 
 // Manejador para detener el intervalo si es necesario
 process.on('SIGINT', () => {
@@ -278,7 +320,7 @@ process.on('SIGINT', () => {
     process.exit();
 });
 // Justo antes de iniciar el servidor, agrega:
-app.get('/api/ubibot-status', (req, res) => {
+app.get('/api1/ubibot-status', (req, res) => {
   res.json({ status: 'Ubibot process running', lastExecution: new Date() });
 });
 // Nodemailer configuration
@@ -299,7 +341,8 @@ app.use(cors(corsOptions)); // Enable CORS for all routes
 // Otros middleware (deben estar después del middleware CORS)
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: false })); // Parse URL-encoded request bodies
-
+//STORAGE
+app.use('/bitumix', express.static(path.join(__dirname, 'dist')));
 
 // Helper function to get sector name based on beacon ID
 const getSector = (beaconId) => {
@@ -326,6 +369,31 @@ const convertToLocalTime = (timestamp) => {
 //const moment = require('moment-timezone');
 
 // Endpoint to receive GPS data
+/**
+ * Endpoint para recibir y procesar datos GPS
+ * 
+ * @route POST /gps-data
+ * @param {Object|Array} req.body - Datos GPS a procesar. Puede ser un objeto único o un array de objetos.
+ * @returns {Object} 200 - Mensaje de éxito
+ * @returns {Object} 500 - Error del servidor
+ * 
+ * @description
+ * Este endpoint recibe datos GPS de dispositivos de seguimiento, los procesa y los almacena en la base de datos.
+ * Puede manejar tanto solicitudes individuales como lotes de datos GPS.
+ * 
+ * El proceso incluye:
+ * 1. Validación de los datos recibidos contra esquemas predefinidos.
+ * 2. Inserción de los datos validados en la tabla 'gps_data'.
+ * 3. Procesamiento adicional para detectar posibles incidencias.
+ * 
+ * Los datos GPS deben incluir información como:
+ * - Identificación del dispositivo
+ * - Coordenadas (latitud, longitud, altitud)
+ * - Timestamp
+ * - Información adicional del dispositivo (nivel de batería, datos de sensores, etc.)
+ * 
+ * En caso de error durante el procesamiento, se registra el error y se envía una respuesta de error al cliente.
+ */
 app.post('/gps-data', async (req, res) => {
   const gpsDatas = Array.isArray(req.body) ? req.body : [req.body];
   // console.log('GPS Data Received:', JSON.stringify(gpsDatas, null, 2));
@@ -333,6 +401,8 @@ app.post('/gps-data', async (req, res) => {
   try {
     for (const gpsData of gpsDatas) {
       await processGpsData(gpsData);
+      // ejecucion de triggers
+      // await procesarDatosGPS();
     }
     res.status(200).send('GPS Data processed successfully');
   } catch (error) {
@@ -351,6 +421,7 @@ async function processGpsData(gpsData) {
   console.log('Validating data for device type:', deviceTypeId);
   // console.log('Incoming data:', JSON.stringify(gpsData, null, 2));
   console.log('ble_beacons:', gpsData['ble.beacons']);
+  console.log('timestamp:', convertUnixTimestamp( gpsData['timestamp']));
 
   let validatedData;
   // console.log('TypeB validation failed, attempting typeA schema');
@@ -448,9 +519,8 @@ async function processGpsData(gpsData) {
       validatedData['event.enum']  // Añadir este parámetro
     );
 }
-
 // Endpoint para obtener los datos más recientes de GPS para un dispositivo específico
-app.get('/api/get-latest-gps-data', async (req, res) => {
+app.get('/api1/get-latest-gps-data', async (req, res) => {
   const { device_name, startTime, endTime } = req.query;
   
   console.log(`Buscando datos para ${device_name} entre ${startTime} y ${endTime}`);
@@ -473,7 +543,7 @@ app.get('/api/get-latest-gps-data', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-app.get('/api/latest-sectors', async (req, res) => {
+app.get('/api1/latest-sectors', async (req, res) => {
   try {
     const [devices] = await pool.query('SELECT id, device_asignado FROM devices');
     const latestSectors = [];
@@ -505,8 +575,7 @@ app.get('/api/latest-sectors', async (req, res) => {
       const query = `
         SELECT beacon_id, timestamp
         FROM ${tableName}
-        WHERE timestamp >= ? AND beacon_id IS NOT NULL AND  beacon_id != 'no encontrado: NULL'
-
+        WHERE timestamp >= ? AND beacon_id IS NOT NULL AND beacon_id != 'no encontrado: NULL'
         ORDER BY timestamp DESC
       `;
       
@@ -549,7 +618,7 @@ app.get('/api/latest-sectors', async (req, res) => {
             device_id: device.id,
             sector: 'Sin datos para este día',
             timestamp: null,
-            timeSinceDetection: '-'
+            timeSinceDetection: '00:00'
           });
         }
       } catch (innerError) {
@@ -558,7 +627,7 @@ app.get('/api/latest-sectors', async (req, res) => {
           device_id: device.id,
           sector: 'Error al obtener datos',
           timestamp: null,
-          timeSinceDetection: '-'
+          timeSinceDetection: '00:00'
         });
       }
     }
@@ -566,7 +635,13 @@ app.get('/api/latest-sectors', async (req, res) => {
     console.log('\nDatos finales a enviar:');
     console.log(JSON.stringify(latestSectors, null, 2));
 
-    res.json(latestSectors);
+    // Añadir el tiempo del servidor a la respuesta
+    const serverTime = now.format('YYYY-MM-DD HH:mm:ss');
+
+    res.json({
+      sectors: latestSectors,
+      serverTime: serverTime
+    });
   } catch (error) {
     console.error('Error fetching latest sectors:', error);
     res.status(500).send('Server Error');
@@ -575,7 +650,7 @@ app.get('/api/latest-sectors', async (req, res) => {
 // Definir el endpoint para obtener el estado de las puertas
 // Endpoint to get door status history within a specific date range
 // Endpoint to get door status history within a specific date range
-app.get('/api/door-status', async (req, res) => {
+app.get('/api1/door-status', async (req, res) => {
   const { startDate, endDate } = req.query;
 
   if (!startDate || !endDate) {
@@ -600,7 +675,7 @@ app.get('/api/door-status', async (req, res) => {
 
 
 // Endpoint para obtener datos históricos de GPS
-app.get('/api/historical-gps-data', async (req, res) => {
+app.get('/api1/historical-gps-data', async (req, res) => {
   const { device_id, date, startHour, endHour } = req.query;
 
   // Convertir la fecha y hora a Unix timestamp usando la zona horaria de Chile
@@ -636,7 +711,7 @@ app.get('/api/historical-gps-data', async (req, res) => {
 });
 
 // Endpoint para obtener los datos de personal
-app.get('/api/personal', async (req, res) => {
+app.get('/api1/personal', async (req, res) => {
   try {
       const [rows] = await pool.query('SELECT * FROM personal');
       res.json(rows);
@@ -646,7 +721,7 @@ app.get('/api/personal', async (req, res) => {
   }
 });
 
-app.get('/api/get-gps-data', async (req, res) => {
+app.get('/api1/get-gps-data', async (req, res) => {
   const { startDate, endDate, device_name } = req.query;
 
   // Agregar logs para verificar los valores de los parámetros recibidos
@@ -682,7 +757,7 @@ app.get('/api/get-gps-data', async (req, res) => {
 
 
 // Endpoint to get the last known position
-app.get('/api/last-known-position', async (req, res) => {
+app.get('/api1/last-known-position', async (req, res) => {
   // Extract ident from query parameters
   const { ident } = req.query;
   
@@ -753,7 +828,7 @@ app.get('/api/last-known-position', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-app.get('/api/previous-valid-position', async (req, res) => {
+app.get('/api1/previous-valid-position', async (req, res) => {
   const { ident, timestamp } = req.query;
 
   try {
@@ -780,7 +855,7 @@ app.get('/api/previous-valid-position', async (req, res) => {
 
 
 // Endpoint to get active beacons
-app.get('/api/active-beacons', async (req, res) => {
+app.get('/api1/active-beacons', async (req, res) => {
   try {
     // Query to get the latest record with non-empty ble_beacons from gps_data table
     const [latestRecord] = await pool.query(`
@@ -815,7 +890,7 @@ app.get('/api/active-beacons', async (req, res) => {
 
 // Endpoint to search for beacon entries and exits for a specific device
 // Endpoint para obtener las entradas y salidas de beacons para un dispositivo específico
-app.get('/api/beacon-entries-exits', async (req, res) => {
+app.get('/api1/beacon-entries-exits', async (req, res) => {
   const { startDate, endDate, device_id } = req.query;
 
   // Determinar la tabla a utilizar basado en el device_id
@@ -888,7 +963,7 @@ app.get('/api/beacon-entries-exits', async (req, res) => {
 
 
 // Endpoint to get the oldest timestamp for a specific active beacon
-app.get('/api/oldest-active-beacon-detections', async (req, res) => {
+app.get('/api1/oldest-active-beacon-detections', async (req, res) => {
   try {
     // Extract activeBeaconId from query parameters
     const activeBeaconId = req.query.activeBeaconId;
@@ -950,7 +1025,7 @@ app.get('/api/oldest-active-beacon-detections', async (req, res) => {
 });
 
 // Endpoint para obtener los datos de beacons
-app.get('/api/beacons', async (req, res) => {
+app.get('/api1/beacons', async (req, res) => {
   try {
     // Ejecutar una consulta SQL para seleccionar todos los registros de la tabla 'beacons'
     const [rows] = await pool.query('SELECT * FROM beacons WHERE esTemperatura = 0');
@@ -968,7 +1043,7 @@ app.get('/api/beacons', async (req, res) => {
 
 
 // Endpoint para obtener los estados de detección de beacons
-app.get('/api/beacons-detection-status', async (req, res) => {
+app.get('/api1/beacons-detection-status', async (req, res) => {
   // Extraer startDate y endDate de los parámetros de la solicitud
   const { startDate, endDate } = req.query;
   
@@ -1002,7 +1077,7 @@ app.get('/api/beacons-detection-status', async (req, res) => {
 
 
 // Endpoint to get the list of assigned devices
-app.get('/api/devices', async (req, res) => {
+app.get('/api1/devices', async (req, res) => {
   try {
     // Execute a SQL query to select all records from the 'devices' table
     const [results] = await pool.query('SELECT * FROM devices');
@@ -1020,7 +1095,7 @@ app.get('/api/devices', async (req, res) => {
 
 
 // Endpoint para obtener la lista de sectores
-app.get('/api/sectores', async (req, res) => {
+app.get('/api1/sectores', async (req, res) => {
   try {
     // Ejecutar una consulta SQL para seleccionar todos los registros de la tabla 'sectores'
     const [results] = await pool.query('SELECT * FROM sectores');
@@ -1038,7 +1113,7 @@ app.get('/api/sectores', async (req, res) => {
 
 
 // Endpoint para obtener la configuración
-app.get('/api/configuracion', async (req, res) => {
+app.get('/api1/configuracion', async (req, res) => {
   
   try {
     // Ejecutar una consulta SQL para seleccionar todos los registros de la tabla 'configuracion'
@@ -1057,7 +1132,7 @@ app.get('/api/configuracion', async (req, res) => {
 
 
 // Endpoint para actualizar la configuración
-app.post('/api/configuracion', async (req, res) => {
+app.post('/api1/configuracion', async (req, res) => {
   // Obtener las configuraciones del cuerpo de la solicitud
   const configuraciones = req.body;
 
@@ -1091,7 +1166,7 @@ app.post('/api/configuracion', async (req, res) => {
   }
 });
 
-app.get('/api/configuracion_uno_solo/:beaconID', async (req, res) => {
+app.get('/api1/configuracion_uno_solo/:beaconID', async (req, res) => {
   try {
     // Obtener el beaconID de los parámetros de la URL
     const { beaconID } = req.params;
@@ -1113,7 +1188,7 @@ app.get('/api/configuracion_uno_solo/:beaconID', async (req, res) => {
 // ...
 
 // Endpoint consolidado para obtener sectores, configuración, umbrales y dispositivos
-app.get('/api/retrive_MapWithQuadrants_information', async (req, res) => {
+app.get('/api1/retrive_MapWithQuadrants_information', async (req, res) => {
   try {
     // Obtener sectores
     const [sectors] = await pool.query('SELECT * FROM sectores');
@@ -1149,7 +1224,7 @@ app.get('/api/retrive_MapWithQuadrants_information', async (req, res) => {
 
 
 // Endpoint para obtener los umbrales
-app.get('/api/umbrales', async (req, res) => {
+app.get('/api1/umbrales', async (req, res) => {
   try {
     // Ejecutar una consulta SQL para seleccionar el primer registro de la tabla 'umbrales'
     const [results] = await pool.query('SELECT * FROM configuracion LIMIT 1');
@@ -1166,7 +1241,7 @@ app.get('/api/umbrales', async (req, res) => {
 });
 
 // Endpoint para actualizar los umbrales
-app.post('/api/umbrales', async (req, res) => {
+app.post('/api1/umbrales', async (req, res) => {
   // Extraer los umbrales del cuerpo de la solicitud
   const { umbral_verde, umbral_amarillo, umbral_rojo } = req.body;
 
@@ -1192,7 +1267,7 @@ app.post('/api/umbrales', async (req, res) => {
 });
 
 // Endpoint for user login
-app.post('/api/login', async (req, res) => {
+app.post('/api1/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
@@ -1214,7 +1289,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 // Endpoint to get the list of users
-app.get('/api/users', async (req, res) => {
+app.get('/api1/users', async (req, res) => {
   try {
     const [users] = await pool.query('SELECT id, username, email, permissions FROM users');
     res.json(users);
@@ -1225,7 +1300,7 @@ app.get('/api/users', async (req, res) => {
 });
 
 // Endpoint for user registration
-app.post('/api/register', async (req, res) => {
+app.post('/api1/register', async (req, res) => {
   const { userId, username, password, email, permissions } = req.body;
   const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
@@ -1253,12 +1328,14 @@ app.post('/api/register', async (req, res) => {
   }
 });
 // Endpoint for requesting a password reset
-app.post('/api/request-password-reset', async (req, res) => {
+app.post('/api1/request-password-reset', async (req, res) => {
   const { email } = req.body;
-  console
+  console.log('Password reset requested for email:', email);
+  
   try {
     const [user] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     if (user.length === 0) {
+      console.log('User not found for email:', email);
       return res.status(404).send('Usuario no encontrado');
     }
 
@@ -1275,13 +1352,21 @@ app.post('/api/request-password-reset', async (req, res) => {
       text: `Para restablecer tu contraseña, haz clic en el siguiente enlace: ${resetUrl}`,
     };
 
-    await sgMail.send(msg).then(() => {
-      console.log('Email sent');
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-    res.send('Se ha enviado un enlace de restablecimiento a su email');
+    console.log('Attempting to send email with message:', JSON.stringify(msg, null, 2));
+
+    try {
+      await sgMail.send(msg);
+      console.log('Email sent successfully to:', email);
+      res.send('Se ha enviado un enlace de restablecimiento a su email');
+    } catch (sendError) {
+      console.error('SendGrid Error:', sendError.toString());
+      if (sendError.response) {
+        console.error('Error body:', sendError.response.body);
+        console.error('Error status code:', sendError.response.statusCode);
+        console.error('Error headers:', sendError.response.headers);
+      }
+      res.status(500).send('Error al enviar el correo de restablecimiento');
+    }
   } catch (error) {
     console.error('Error al solicitar restablecimiento de contraseña:', error);
     res.status(500).send('Error del servidor');
@@ -1289,18 +1374,21 @@ app.post('/api/request-password-reset', async (req, res) => {
 });
 
 // Endpoint for resetting the password
-app.post('/api/reset-password', async (req, res) => {
+app.post('/api1/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
+  console.log('Password reset attempt with token:', token);
   
   try {
     const [user] = await pool.query('SELECT * FROM users WHERE resetToken = ? AND resetTokenExpiry > ?', [token, Date.now()]);
     if (user.length === 0) {
+      console.log('Invalid or expired token:', token);
       return res.status(400).send('Token inválido o expirado');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await pool.query('UPDATE users SET password = ?, resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?', [hashedPassword, user[0].id]);
 
+    console.log('Password reset successful for user ID:', user[0].id);
     res.send('Contraseña restablecida con éxito');
   } catch (error) {
     console.error('Error al restablecer la contraseña:', error);
@@ -1377,7 +1465,7 @@ app.post('/sms', async (req, res) => {
 });
 
 // Endpoint to fetch SMS data
-app.get('/api/sms-data', async (req, res) => {
+app.get('/api1/sms-data', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM sms_data');
     res.json(rows);
@@ -1514,7 +1602,7 @@ async function getUbicacionFromIdent(ident, timestamp) {
   }
 }
 // En server.js, modifica el endpoint /api/temperature-data
-app.get('/api/temperature-data', async (req, res) => {
+app.get('/api1/temperature-data', async (req, res) => {
   try {
     const { date } = req.query;
     const query = `
@@ -1554,7 +1642,7 @@ app.get('/api/temperature-data', async (req, res) => {
 });
 
 // Endpoint para obtener los umbrales de temperatura
-app.get('/api/temperatura-umbrales', async (req, res) => {
+app.get('/api1/temperatura-umbrales', async (req, res) => {
   try {
     const [results] = await pool.query('SELECT minimo, maximo FROM parametrizaciones WHERE param_id = 6');
     res.json(results[0]);
@@ -1565,7 +1653,7 @@ app.get('/api/temperatura-umbrales', async (req, res) => {
 });
 
 // Endpoint para actualizar los umbrales de temperatura
-app.post('/api/temperatura-umbrales', async (req, res) => {
+app.post('/api1/temperatura-umbrales', async (req, res) => {
   const { minimo, maximo } = req.body;
   try {
     await pool.query('UPDATE parametrizaciones SET minimo = ?, maximo = ? WHERE param_id = 6', [minimo, maximo]);
@@ -1576,54 +1664,133 @@ app.post('/api/temperatura-umbrales', async (req, res) => {
   }
 });
 // Temperaturas en camaras de frio
-app.get('/api/temperature-camaras-data', async (req, res) => {
+app.get('/api1/temperature-camaras-data', async (req, res) => {
   try {
     const { date } = req.query;
 
-    // Convertir la fecha a la zona horaria de Chile
-    const startDate = moment.tz(date, 'America/Santiago').startOf('day');
-    const endDate = moment(startDate).add(1, 'day');
+    console.log('Received request for date:', date);
 
-    console.log('Fecha de inicio (Chile):', startDate.format());
-    console.log('Fecha de fin (Chile):', endDate.format());
+    if (!date) {
+      return res.status(400).json({ error: 'Se requiere una fecha' });
+    }
+
+    // Crear el rango de fechas para el día seleccionado en la zona horaria de Santiago
+    const start = moment.tz(date, 'YYYY-MM-DD', 'America/Santiago').startOf('day');
+    const end = moment.tz(date, 'YYYY-MM-DD', 'America/Santiago').endOf('day');
+
+    console.log('Querying from:', start.format(), 'to:', end.format());
 
     const query = `
-      SELECT sr.channel_id, sr.temperature, sr.timestamp, c.name
+      SELECT sr.channel_id, sr.external_temperature, sr.timestamp, c.name
       FROM sensor_readings_ubibot sr
       JOIN channels_ubibot c ON sr.channel_id = c.channel_id
-      WHERE sr.timestamp >= ? AND sr.timestamp < ?
+      WHERE sr.timestamp >= ? AND sr.timestamp <= ?
       ORDER BY sr.channel_id, sr.timestamp ASC
     `;
-    
-    const [rows] = await pool.query(query, [startDate.toDate(), endDate.toDate()]);
 
+    const [rows] = await pool.query(query, [start.toDate(), end.toDate()]);
+
+    console.log('Query returned', rows.length, 'rows');
+
+    // Agrupar los datos por canal
     const groupedData = rows.reduce((acc, row) => {
       if (!acc[row.channel_id]) {
         acc[row.channel_id] = {
           channel_id: row.channel_id,
           name: row.name,
-          temperatures: [],
-          timestamps: []
+          data: []
         };
       }
-      acc[row.channel_id].temperatures.push(row.temperature);
-      // Convertir el timestamp a la zona horaria de Chile
-      const timestamp = moment(row.timestamp).tz('America/Santiago').format();
-      acc[row.channel_id].timestamps.push(timestamp);
+      acc[row.channel_id].data.push({
+        timestamp: moment(row.timestamp).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss'),
+        external_temperature: parseFloat(row.external_temperature)
+      });
       return acc;
     }, {});
 
-    const result = Object.values(groupedData);
-    console.log('Datos agrupados:', JSON.stringify(result, null, 2));
+    const processedData = Object.values(groupedData);
 
-    res.json(result);
+    console.log('Processed data:', processedData.map(d => ({
+      channel_id: d.channel_id,
+      name: d.name,
+      dataPoints: d.data.length
+    })));
+
+    res.json(processedData);
   } catch (error) {
     console.error('Error fetching temperature data:', error);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Error del servidor' });
   }
 });
+app.get('/api1/temperature-range-data', async (req, res) => {
+  try {
+    const { startDate, endDate, deviceId } = req.query;
+
+    console.log('Received request for:', { startDate, endDate, deviceId });
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'Se requieren fechas de inicio y fin' });
+    }
+
+    // Crear el rango de fechas en la zona horaria de Santiago
+    const start = moment.tz(startDate, 'YYYY-MM-DD', 'America/Santiago').startOf('day');
+    const end = moment.tz(endDate, 'YYYY-MM-DD', 'America/Santiago').endOf('day');
+
+    console.log('Querying from:', start.format(), 'to:', end.format());
+
+    let query = `
+      SELECT sr.channel_id, sr.external_temperature, sr.timestamp, c.name
+      FROM sensor_readings_ubibot sr
+      JOIN channels_ubibot c ON sr.channel_id = c.channel_id
+      WHERE sr.timestamp >= ? AND sr.timestamp <= ?
+    `;
+    
+    let params = [start.toDate(), end.toDate()];
+
+    if (deviceId) {
+      query += ' AND sr.channel_id = ?';
+      params.push(deviceId);
+    }
+
+    query += ' ORDER BY sr.channel_id, sr.timestamp ASC';
+
+    const [rows] = await pool.query(query, params);
+
+    console.log('Query returned', rows.length, 'rows');
+
+    // Agrupar los datos por canal
+    const groupedData = rows.reduce((acc, row) => {
+      if (!acc[row.channel_id]) {
+        acc[row.channel_id] = {
+          channel_id: row.channel_id,
+          name: row.name,
+          data: []
+        };
+      }
+      acc[row.channel_id].data.push({
+        timestamp: moment(row.timestamp).tz('America/Santiago').format('YYYY-MM-DD HH:mm:ss'),
+        external_temperature: parseFloat(row.external_temperature)
+      });
+      return acc;
+    }, {});
+
+    const processedData = Object.values(groupedData);
+
+    console.log('Processed data:', processedData.map(d => ({
+      channel_id: d.channel_id,
+      name: d.name,
+      dataPoints: d.data.length
+    })));
+
+    res.json(processedData);
+  } catch (error) {
+    console.error('Error fetching temperature data:', error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
 // En server.js, modifica el endpoint /api/blind-spot-intrusions
-app.get('/api/blind-spot-intrusions', async (req, res) => {
+app.get('/api1/blind-spot-intrusions', async (req, res) => {
   try {
     const { date } = req.query;
 
@@ -1636,7 +1803,7 @@ app.get('/api/blind-spot-intrusions', async (req, res) => {
              d.device_asignado, b.ubicacion
       FROM historico_llamadas_blindspot hc
       LEFT JOIN devices d ON hc.dispositivo = d.id
-      LEFT JOIN beacons b ON hc.mac_address = b.mac
+      LEFT JOIN beacons b ON hc.mac_address = b.id
       WHERE hc.timestamp BETWEEN ? AND ?
       ORDER BY hc.timestamp ASC
     `;
@@ -1654,6 +1821,69 @@ app.get('/api/blind-spot-intrusions', async (req, res) => {
     console.error('Error fetching blind spot intrusions:', error);
     res.status(500).send('Server Error');
   }
+});
+// Api para el dashboard de temperatua solamente
+app.get('/api1/temperature-dashboard-data', async (req, res) => {
+  try {
+    const query = `
+      SELECT c.channel_id, c.name, s.external_temperature, s.insercion
+      FROM channels_ubibot c
+      JOIN (
+        SELECT channel_id, external_temperature, insercion,
+               ROW_NUMBER() OVER (PARTITION BY channel_id ORDER BY insercion DESC) as rn
+        FROM sensor_readings_ubibot
+      ) s ON c.channel_id = s.channel_id
+      WHERE s.rn = 1
+    `;
+    const [results] = await pool.query(query);
+    
+    const processedResults = results.map(item => ({
+      ...item,
+      external_temperature: item.external_temperature != null ? parseFloat(item.external_temperature) : null,
+      insercion: item.insercion // Enviamos el valor de insercion sin modificar
+    }));
+    
+    res.json(processedResults);
+  } catch (error) {
+    console.error('Error fetching temperature dashboard data:', error);
+    res.status(500).send('Server Error');
+  }
+});
+// Endpoint para obtener los dispositivos de temperatura
+app.get('/api1/temperature-devices', async (req, res) => {
+  try {
+    const [devices] = await pool.query('SELECT channel_id, name FROM channels_ubibot');
+    res.json(devices);
+  } catch (error) {
+    console.error('Error fetching temperature devices:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
+function convertUnixTimestamp(unixTimestamp) {
+  // Crear un objeto Date a partir del timestamp Unix (en milisegundos)
+  const date = new Date(unixTimestamp * 1000);
+
+  // Opciones para formatear la fecha y hora en la zona horaria de Santiago de Chile
+  const options = {
+    timeZone: 'America/Santiago',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  };
+
+  // Formatear la fecha y hora
+  const formattedDate = date.toLocaleString('es-CL', options);
+
+  return formattedDate;
+}
+// Añadir esta ruta al final del archivo para manejar todas las rutas frontend
+app.get('/bitumix/*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 // Start the server
 server.listen(port, '0.0.0.0', () => {

@@ -12,7 +12,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await axios.post('/api/request-password-reset', { email });
+      const response = await axios.post('/api1/request-password-reset', { email });
       setMessage(response.data);
     } catch (error) {
       setMessage('Error al solicitar el restablecimiento de contraseña.');

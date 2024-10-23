@@ -36,7 +36,7 @@ const DoorStatusMatrix = () => {
     const endDate = dayjs(date).endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
     try {
-      const response = await axios.get('/api/door-status', {
+      const response = await axios.get('/api1/door-status', {
         params: { startDate, endDate }
       });
       const fetchedData = response.data;
